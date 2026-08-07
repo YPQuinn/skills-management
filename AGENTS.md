@@ -10,7 +10,7 @@ This repository uses a single-context domain documentation layout with its gloss
 
 ## Delegation
 
-Never use `pi-subagents` for delegated work in this repository. Use Herdr-managed agents instead. Research tasks must use a Herdr-managed Pi agent with `xai/grok-4.5` at `high` thinking unless the user explicitly overrides it.
+Never use `pi-subagents` for delegated work in this repository. Use Herdr-managed agents directly in the primary checkout; do not create a worktree unless the user explicitly requests one. Research tasks must use a Herdr-managed Pi agent with `xai/grok-4.5` at `high` thinking unless the user explicitly overrides it.
 
 ## Appica UI
 
