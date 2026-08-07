@@ -32,6 +32,8 @@ Deliver a runnable, local-first Skill Manager MVP for macOS and Linux, preferabl
 
 <!-- One linked gist is appended here for each resolved child ticket. -->
 
+- [Research Vercel Skills compatibility surface](issues/01-research-vercel-skills-compatibility.md) — Captured the commit-specific six-Source compatibility surface, discovery rules, 76-Agent path matrix, installation behavior, ambient authentication, and lock/update models that the MVP must deliberately select from.
+
 ## Not yet specified
 
 - The implementation sequence and vertical slices will become specifiable after the source, target, lifecycle, experience, and architecture decisions are resolved.
