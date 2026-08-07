@@ -8,6 +8,10 @@ Issues are tracked as local Markdown files under `.scratch/`. See `docs/agents/i
 
 This repository uses a single-context domain documentation layout with its glossary at `docs/CONTEXT.md`. See `docs/agents/domain.md`.
 
+## Delegation
+
+Never use `pi-subagents` for delegated work in this repository. Use Herdr-managed agents instead. Research tasks must use a Herdr-managed Pi agent with `xai/grok-4.5` at `high` thinking unless the user explicitly overrides it.
+
 ## Appica UI
 
 All WebUI page styling and UI components **must use Appica**. Do not introduce another component library or hand-build a substitute when Appica provides the required component or pattern.
