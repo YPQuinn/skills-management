@@ -16,6 +16,14 @@ _Avoid_: Truth source, skills directory, registry
 An upstream location from which one or more Skills can be imported and checked for changes. A Source is not part of the Skill Store.
 _Avoid_: Skill Store, destination, registry
 
+**Source Inventory**:
+The last observed set of valid upstream Skill entries exposed by a Source, each identified by its relative directory.
+_Avoid_: Skill Store, catalog
+
+**Source Binding**:
+The association from one managed Skill to one Source Inventory entry. Removing the association does not remove the Skill.
+_Avoid_: Assignment, installation
+
 **Group**:
 A named, non-owning collection of Skills. A Skill may belong to multiple Groups.
 _Avoid_: Folder, category directory
