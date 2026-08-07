@@ -1,7 +1,7 @@
 # Define the Source and import contract
 
 Type: grilling
-Status: open
+Status: claimed
 Blocked by: 01
 
 ## Question
