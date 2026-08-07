@@ -34,6 +34,7 @@ Deliver a runnable, local-first Skill Manager MVP for macOS and Linux, preferabl
 
 - [Research Vercel Skills compatibility surface](issues/01-research-vercel-skills-compatibility.md) — Captured the commit-specific six-Source compatibility surface, discovery rules, 76-Agent path matrix, installation behavior, ambient authentication, and lock/update models that the MVP must deliberately select from.
 - [Research Appica's embedded-WebUI constraints](issues/02-research-appica-embedded-webui.md) — Established the React 19, Tailwind v4, Appica package and theming contract while isolating Vite asset paths, client routing, SPA fallback, and Go embedding as architecture decisions.
+- [Define the Source and import contract](issues/03-define-source-and-import-contract.md) — Chose structured Local/Git Sources, deterministic depth-three inventories, explicit full-tree atomic imports, safe slug replacement, and detachable path-based Source Bindings.
 
 ## Not yet specified
 
