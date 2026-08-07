@@ -10,6 +10,7 @@ Deliver a runnable, local-first Skill Manager MVP for macOS and Linux, preferabl
 
 - This effort explicitly carries execution through the map: the destination is a validated working MVP, not only a specification.
 - Before each session, read `AGENTS.md` and `docs/CONTEXT.md`; use `/grilling` and `/domain-modeling` for unresolved decisions.
+- Never use `pi-subagents` for delegation. Use Herdr-managed agents; research tasks use Pi with `xai/grok-4.5` at `high` thinking unless explicitly overridden.
 - The product is single-machine, single-user, and local-first. The WebUI listens only on localhost; accounts, authorization, remote service, and collaboration are excluded.
 - Product name: **Skill Manager**. CLI command: `skillctl`.
 - Core and CLI: Go + Cobra. Local HTTP service: Go + chi. State: SQLite through `modernc.org/sqlite`.
