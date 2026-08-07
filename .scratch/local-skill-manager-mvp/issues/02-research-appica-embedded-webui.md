@@ -1,7 +1,7 @@
 # Research Appica's embedded-WebUI constraints
 
 Type: research
-Status: open
+Status: claimed
 Blocked by:
 
 ## Question

@@ -1,7 +1,7 @@
 # Research Vercel Skills compatibility surface
 
 Type: research
-Status: open
+Status: claimed
 Blocked by:
 
 ## Question
