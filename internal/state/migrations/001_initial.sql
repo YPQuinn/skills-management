@@ -1,0 +1,2 @@
+-- Baseline schema version 1. Capability tables (sources, skills, groups,
+-- targets) arrive in later numbered migrations with their own tickets.

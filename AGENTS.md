@@ -10,7 +10,7 @@ This repository uses a single-context domain documentation layout with its gloss
 
 ## Delegation
 
-Never use `pi-subagents` for delegated work in this repository. Use Herdr-managed agents directly in the primary checkout; do not create a worktree unless the user explicitly requests one. Research tasks must use a Herdr-managed Pi agent with `xai/grok-4.5` at `high` thinking unless the user explicitly overrides it.
+When using `pi-subagents`, if the scene is researching / websearching, use `herdr` to launch `grok-build` + `grok-4.5` + `high` as a subagent in new a tab(tab name is 'research'). If the scene is visaul engineering / UIUX designing and implementing , use `herdr` to launch `agy` (`antigravity-cli`) + `gemini-3.1-pro` + `high` as a subagent in a new tab(tab name is 'uiux'). If a subagent is delegated by this way, tell him to reply to sender when finished his job. For other scenes, just use `pi-subagents` to delegate subagents inside `pi` session.
 
 ## Appica UI
 

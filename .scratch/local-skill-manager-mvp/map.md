@@ -10,7 +10,7 @@ Deliver a runnable, local-first Skill Manager MVP for macOS and Linux, preferabl
 
 - This effort explicitly carries execution through the map: the destination is a validated working MVP, not only a specification.
 - Before each session, read `AGENTS.md` and `docs/CONTEXT.md`; use `/grilling` and `/domain-modeling` for unresolved decisions.
-- Never use `pi-subagents` for delegation. Use Herdr-managed agents directly in the primary checkout and do not create worktrees unless explicitly requested; research tasks use Pi with `xai/grok-4.5` at `high` thinking unless explicitly overridden.
+- Follow `AGENTS.md` for delegation: research uses Herdr-managed Grok in a `research` tab, visual/UI work uses Herdr-managed AGY with Gemini 3.1 Pro in a `uiux` tab, and other work uses `pi-subagents`; delegated agents report back to the sender. Work in the primary checkout and do not create worktrees unless explicitly requested.
 - The product is single-machine, single-user, and local-first. The WebUI listens only on localhost; accounts, authorization, remote service, and collaboration are excluded.
 - Product name: **Skill Manager**. CLI command: `skillctl`.
 - Core and CLI: Go + Cobra. Local HTTP service: Go + chi. State: SQLite through `modernc.org/sqlite`.
@@ -41,6 +41,7 @@ Deliver a runnable, local-first Skill Manager MVP for macOS and Linux, preferabl
 - [Prototype the Skill Manager operator workflow](issues/07-prototype-operator-workflow.md) — Chose an Appica resource-explorer WebUI, responsive master–detail routes, separate status dimensions, and a matching noun-first `skillctl` command language.
 - [Design the core architecture and REST boundary](issues/08-design-core-architecture.md) — Chose an in-process modular core with exclusive filesystem and SQLite ownership, recoverable cross-process writes, synchronous versioned REST, and a root-mounted embedded Appica SPA.
 - [Define MVP packaging and acceptance](issues/09-define-mvp-acceptance.md) — Set four native single-binary releases, deterministic offline quality gates, CLI and browser journeys, crash/concurrency/state-loss recovery, and documentation plus public-GitHub final validation.
+- [Establish the runtime and bootstrap foundation](issues/10-establish-runtime-bootstrap-foundation.md) — Delivered the tested Go/bootstrap/SQLite/locking runtime, secure Cobra/chi setup boundary, and embedded Appica shell with restart and deep-link support.
 
 ## Not yet specified
 
