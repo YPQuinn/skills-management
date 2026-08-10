@@ -42,6 +42,7 @@ Deliver a runnable, local-first Skill Manager MVP for macOS and Linux, preferabl
 - [Design the core architecture and REST boundary](issues/08-design-core-architecture.md) — Chose an in-process modular core with exclusive filesystem and SQLite ownership, recoverable cross-process writes, synchronous versioned REST, and a root-mounted embedded Appica SPA.
 - [Define MVP packaging and acceptance](issues/09-define-mvp-acceptance.md) — Set four native single-binary releases, deterministic offline quality gates, CLI and browser journeys, crash/concurrency/state-loss recovery, and documentation plus public-GitHub final validation.
 - [Establish the runtime and bootstrap foundation](issues/10-establish-runtime-bootstrap-foundation.md) — Delivered the tested Go/bootstrap/SQLite/locking runtime, secure Cobra/chi setup boundary, and embedded Appica shell with restart and deep-link support.
+- [Implement Source registration and inventory](issues/11-implement-source-registration-inventory.md) — Delivered stable Local/Git observation, safe ambient GitHub authentication, canonical Inventory digests, transactional Source state, noun-first CLI and strict REST operations, and the Appica Source explorer.
 
 ## Not yet specified
 

@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"skillctl/internal/source"
 	"skillctl/internal/state"
 )
 
@@ -39,7 +40,8 @@ type App struct {
 	StorePath   string
 	StateDBPath string
 
-	db *sql.DB
+	db       *sql.DB
+	observer source.Observer
 }
 
 // New opens the state database at stateDBPath and returns the App bound to
@@ -49,7 +51,7 @@ func New(storePath, stateDBPath string) (*App, error) {
 	if err != nil {
 		return nil, Errorf(CodeInternal, "opening state database: %v", err)
 	}
-	return &App{StorePath: storePath, StateDBPath: stateDBPath, db: db}, nil
+	return &App{StorePath: storePath, StateDBPath: stateDBPath, db: db, observer: dispatchObserver{}}, nil
 }
 
 // Close releases the state database.

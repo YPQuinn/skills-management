@@ -48,19 +48,28 @@ func testBinary(t *testing.T) string {
 // and the exit code.
 func run(t *testing.T, home string, args ...string) (string, int) {
 	t.Helper()
+	stdout, stderr, code := runOut(t, home, args...)
+	return stdout + stderr, code
+}
+
+// runOut executes the binary with an isolated HOME and returns stdout,
+// stderr, and the exit code separately, so JSON-output contracts can be
+// asserted without human stderr corrupting stdout.
+func runOut(t *testing.T, home string, args ...string) (string, string, int) {
+	t.Helper()
 	cmd := exec.Command(testBinary(t), args...)
 	cmd.Env = append(os.Environ(), "HOME="+home)
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &out
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 	err := cmd.Run()
 	if err == nil {
-		return out.String(), 0
+		return stdout.String(), stderr.String(), 0
 	}
 	var ee *exec.ExitError
 	if errors.As(err, &ee) {
-		return out.String(), ee.ExitCode()
+		return stdout.String(), stderr.String(), ee.ExitCode()
 	}
 	t.Fatalf("running %v: %v", args, err)
-	return "", -1
+	return "", "", -1
 }
