@@ -32,6 +32,10 @@ _Avoid_: Folder, category directory
 A specific user-level, project-level, or custom Agent location that receives selected Skills from the Skill Store.
 _Avoid_: Source, install directory, destination directory
 
+**Target Adapter**:
+A built-in rule that detects a supported Agent and resolves its user-level or project-level Skills container when creating a Target. It is a path-discovery aid, not the Target's identity or owner.
+_Avoid_: Target, Assignment, Agent installation
+
 **Assignment**:
 A declaration that a Skill or Group should be present at a Target. Multiple Assignments combine into the Target's desired Skill set.
 _Avoid_: Copy, installation
@@ -40,17 +44,25 @@ _Avoid_: Copy, installation
 The reconciliation of a Target with its Assignments. Distributed Skills remain authoritative in the Skill Store.
 _Avoid_: Import, synchronization
 
+**Managed Link**:
+A Target symlink that Skill Manager created or explicitly adopted and still owns according to its recorded identity. Only a Managed Link may be changed or removed by Distribution.
+_Avoid_: Any symlink, installed Skill, copied Skill
+
 **Distribution Status**:
-The desired and observed presence of a Skill at a Target, including the latest reconciliation outcome.
+The desired and last-observed presence of a Skill at a Target, together with observation freshness and the latest reconciliation outcome.
 _Avoid_: Installation status, sync status
 
 **Synchronization**:
 The explicit comparison and one-way retrieval of Source changes into the Skill Store.
 _Avoid_: Distribution, publishing
 
+**Synchronization Baseline**:
+The accepted Source content against which current Source and Skill Store content are compared during synchronization. It is comparison state, not user-visible version history.
+_Avoid_: Version, backup, rollback snapshot
+
 **Sync Status**:
-The relationship between a Skill in the Skill Store and its bound Source, including whether either side has changed since their last successful synchronization.
-_Avoid_: Distribution status, version
+The observed content relationship between a Skill in the Skill Store and its bound Source relative to their Synchronization Baseline. Source availability and observation freshness are separate from this relationship.
+_Avoid_: Distribution status, version, availability
 
 **Conflict**:
 A state where synchronization or distribution cannot proceed safely without choosing which existing content should prevail.
