@@ -35,11 +35,16 @@ Deliver a runnable, local-first Skill Manager MVP for macOS and Linux, preferabl
 - [Research Vercel Skills compatibility surface](issues/01-research-vercel-skills-compatibility.md) — Captured the commit-specific six-Source compatibility surface, discovery rules, 76-Agent path matrix, installation behavior, ambient authentication, and lock/update models that the MVP must deliberately select from.
 - [Research Appica's embedded-WebUI constraints](issues/02-research-appica-embedded-webui.md) — Established the React 19, Tailwind v4, Appica package and theming contract while isolating Vite asset paths, client routing, SPA fallback, and Go embedding as architecture decisions.
 - [Define the Source and import contract](issues/03-define-source-and-import-contract.md) — Chose structured Local/Git Sources, deterministic depth-three inventories, explicit full-tree atomic imports, safe slug replacement, and detachable path-based Source Bindings.
+- [Define the Target adapter contract](issues/04-define-target-adapter-contract.md) — Chose eight path-based built-in adapters, safe fixed-path custom Targets, physical-path identity, and advisory on-demand Agent detection.
+- [Define the synchronization and recovery lifecycle](issues/05-define-synchronization-lifecycle.md) — Chose SHA-256 three-way state, conservative explicit conflict actions, stable Source observations, crash-recoverable atomic replacement, and one-step rollback.
+- [Define the Distribution reconciliation lifecycle](issues/06-define-distribution-lifecycle.md) — Chose Assignment-derived desired sets, ledger-proven absolute symlinks, two-dimensional observed state, no-overwrite reconciliation, explicit adoption, and crash-safe cleanup.
+- [Prototype the Skill Manager operator workflow](issues/07-prototype-operator-workflow.md) — Chose an Appica resource-explorer WebUI, responsive master–detail routes, separate status dimensions, and a matching noun-first `skillctl` command language.
+- [Design the core architecture and REST boundary](issues/08-design-core-architecture.md) — Chose an in-process modular core with exclusive filesystem and SQLite ownership, recoverable cross-process writes, synchronous versioned REST, and a root-mounted embedded Appica SPA.
+- [Define MVP packaging and acceptance](issues/09-define-mvp-acceptance.md) — Set four native single-binary releases, deterministic offline quality gates, CLI and browser journeys, crash/concurrency/state-loss recovery, and documentation plus public-GitHub final validation.
 
 ## Not yet specified
 
-- The implementation sequence and vertical slices will become specifiable after the source, target, lifecycle, experience, and architecture decisions are resolved.
-- End-to-end hardening, release checks, and user onboarding artifacts depend on the implemented shape and validation contract.
+<!-- No remaining in-scope fog. -->
 
 ## Out of scope
 
