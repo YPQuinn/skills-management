@@ -1,0 +1,6 @@
+/skillctl
+/scaffold_go.py
+/scaffold_react.py
+internal/webui/dist
+internal/webui/node_modules
+/.pi-subagents
