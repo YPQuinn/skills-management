@@ -40,9 +40,24 @@ func (l Local) Observe(ctx context.Context, loc Locator, _ string) (Observation,
 		if err != nil {
 			return localScan{}, err
 		}
-		for i := range obs.Entries {
-			obs.Entries[i].Digest = snapshotDigest(snap, obs.Entries[i].RelativeDir)
+		// Entry digests are the effective materialized digests: safe
+		// internal symlinks are dereferenced, so each digest equals the
+		// Store copy import produces. A tree that cannot be materialized
+		// (broken or escaping symlink, special node) is an invalid entry
+		// reported as an Issue rather than a digest import could never
+		// satisfy.
+		kept := obs.Entries[:0]
+		for _, e := range obs.Entries {
+			digest, err := snapshotEffectiveDigest(snap, e.RelativeDir)
+			if err != nil {
+				obs.Issues = append(obs.Issues, Issue{RelativeDir: e.RelativeDir, Reason: err.Error()})
+				continue
+			}
+			e.Digest = digest
+			kept = append(kept, e)
 		}
+		obs.Entries = kept
+		sortObservation(&obs)
 		obs.Digest = inventoryDigest(obs.Entries, obs.Issues)
 		return localScan{obs: obs, snap: snap}, nil
 	})

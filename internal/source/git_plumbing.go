@@ -11,11 +11,12 @@ import (
 	"strings"
 )
 
-// parseTreeRecords parses `git ls-tree -z` output. Records are NUL
-// separated and paths are never quoted, so paths may contain tabs,
-// newlines, and any Unicode regardless of the repository's quoting
-// configuration. The path is everything after the first tab; the metadata
-// before it is exactly mode, type, and object id.
+// parseTreeRecords parses `git ls-tree -z` output, with or without the
+// `-l` size column. Records are NUL separated and paths are never quoted,
+// so paths may contain tabs, newlines, and any Unicode regardless of the
+// repository's quoting configuration. The path is everything after the
+// first tab; the metadata before it is mode, type, object id, and an
+// optional size ("-" for tree entries).
 func parseTreeRecords(out string) ([]treeLine, error) {
 	var rows []treeLine
 	for _, rec := range strings.Split(out, "\x00") {
@@ -27,10 +28,18 @@ func parseTreeRecords(out string) ([]treeLine, error) {
 			return nil, fmt.Errorf("malformed ls-tree record")
 		}
 		fields := strings.Fields(meta)
-		if len(fields) != 3 {
+		if len(fields) != 3 && len(fields) != 4 {
 			return nil, fmt.Errorf("malformed ls-tree metadata %q", fields)
 		}
-		rows = append(rows, treeLine{mode: fields[0], typ: fields[1], oid: fields[2], path: path})
+		row := treeLine{mode: fields[0], typ: fields[1], oid: fields[2], path: path, size: -1}
+		if len(fields) == 4 && fields[3] != "-" {
+			size, err := strconv.ParseInt(fields[3], 10, 64)
+			if err != nil || size < 0 {
+				return nil, fmt.Errorf("malformed ls-tree size %q", fields[3])
+			}
+			row.size = size
+		}
+		rows = append(rows, row)
 	}
 	return rows, nil
 }

@@ -1,0 +1,319 @@
+// Package skillstore exclusively owns the Skill Store tree: the live Skill
+// directories and the internal .skillctl layout (staging, baselines,
+// previous, recovery) on the same filesystem. It never executes SQL; the
+// application boundary coordinates persistence and recovery through
+// internal/state, and every mutation runs under the Store exclusive lock
+// the application acquires. Every slug is validated against the decision-03
+// grammar before it is joined into any Store path, so a crafted or
+// persisted-operation slug can never escape the Store.
+package skillstore
+
+import (
+	"errors"
+	"fmt"
+	"os"
+	"path"
+	"path/filepath"
+	"strconv"
+
+	"skillctl/internal/domain"
+)
+
+// Per-Skill import guards (decision 03): 10,000 files, 100 MiB total, 50
+// MiB per file. allow-large bypasses these; unsafe paths and special nodes
+// can never be overridden. The limits themselves live in internal/domain so
+// Source materialization and Store staging enforce one shared contract.
+const (
+	MaxFilesPerSkill = domain.MaxFilesPerSkill
+	MaxBytesPerSkill = domain.MaxBytesPerSkill
+	MaxBytesPerFile  = domain.MaxBytesPerFile
+)
+
+// Operation kinds and phases recorded in the durable Store journal.
+const (
+	KindImport  = "import"
+	KindReplace = "replace"
+
+	PhasePending   = "pending"
+	PhaseCommitted = "committed"
+	// PhaseAborted is the terminal journal phase of a pre-install refusal:
+	// Stage failed or Install refused before any live mutation, so recovery
+	// discards only the operation's own staging and never touches live
+	// content. It never carries a terminal receipt: the abort is certified
+	// by the provable absence of operation evidence.
+	PhaseAborted = "aborted"
+	// PhaseFinalized is the terminal journal phase of a completed commit:
+	// the Store performed the semantic finalization and the durable
+	// terminal receipt authorizes the receipt-bound evidence cleanup.
+	PhaseFinalized = "finalized"
+	// PhaseRestored is the terminal journal phase of a completed restore:
+	// the Store unwound the pending operation and the durable terminal
+	// receipt authorizes the receipt-bound evidence cleanup.
+	PhaseRestored = "restored"
+)
+
+// Sentinel errors the application maps onto stable outcomes. ErrAmbiguous
+// preserves every candidate and blocks writes.
+var (
+	ErrUnmanaged = errors.New("a directory exists in the Skill Store that Skill Manager does not manage")
+	ErrAmbiguous = errors.New("Skill Store state cannot be proven valid; all candidate content is preserved")
+	ErrMissing   = errors.New("managed Skill content is missing from the Skill Store")
+
+	// errDestinationExists reports a no-replace rename that found its
+	// destination already present.
+	errDestinationExists = errors.New("destination already exists")
+)
+
+// HookPoint identifies one deterministic test seam inside a Store
+// operation. The hooks are nil in production; tests use them to swap
+// content at the exact windows the Stage-A invariants protect.
+type HookPoint int
+
+const (
+	// HookAfterStagedHash runs after the staged tree was hashed, before
+	// its source name is re-proven for the staged→live rename.
+	HookAfterStagedHash HookPoint = iota
+	// HookAfterOldLiveHash runs after the old live tree was hashed, before
+	// it is re-proven for the live→recovery move.
+	HookAfterOldLiveHash
+	// HookAfterQuarantineOpen runs after the quarantined tree was opened
+	// and verified against the install proof, before it is drained.
+	HookAfterQuarantineOpen
+	// HookAfterLayoutOpen runs after the layout handles were pinned,
+	// before the public operation's first layout re-validation.
+	HookAfterLayoutOpen
+	// HookBeforeBaselineMoves runs after the Baseline, candidate, and
+	// saved-Baseline slots were sampled for committed finalization, before
+	// the first Baseline/previous source move.
+	HookBeforeBaselineMoves
+	// HookAfterStageHash runs after the staged tree was hashed, before
+	// Stage re-proves the operation directory and the staged tree name.
+	HookAfterStageHash
+	// HookBeforeEnsureLayoutVerify runs before EnsureLayout's final
+	// re-validation of the Store root and internal layout.
+	HookBeforeEnsureLayoutVerify
+	// HookBeforeRemoveOp runs before an operation directory is drained.
+	HookBeforeRemoveOp
+	// HookAfterRemoveOp runs after an operation directory was drained,
+	// before its absence is re-checked.
+	HookAfterRemoveOp
+	// HookBeforeMoveRollback runs after a move's destination proof failed,
+	// before the rollback authority is re-proven from a fresh open of the
+	// destination.
+	HookBeforeMoveRollback
+	// HookAfterMoveRename runs after the forward rename completed and both
+	// parents were synced, before the destination is opened for its proof.
+	HookAfterMoveRename
+	// HookBeforeTransientDrain runs before a transient slot (a moved-aside
+	// Baseline or stale previous snapshot) is drained with its retained
+	// identity.
+	HookBeforeTransientDrain
+	// HookAfterTransientDrain runs after a transient slot was drained,
+	// before its final absence is re-checked.
+	HookAfterTransientDrain
+)
+
+// Operation is one durable Store mutation intent: the journal record that
+// makes live-tree replacement crash-recoverable. It is persisted in SQLite
+// (state) before any filesystem mutation, and every transition references
+// it by ID. Receipt carries the opaque terminal receipt bytes of a
+// finalized or restored row; the application persists and passes them
+// through without interpreting them.
+type Operation struct {
+	ID        int64  // the journal id; names the operation's staging and recovery paths
+	SkillID   int64  // the committed Skill id (0 while a fresh import is pending)
+	Slug      string // the live Skill directory name
+	Kind      string // KindImport or KindReplace
+	OldDigest string // the live digest before a replace ("" for imports)
+	NewDigest string // the digest of the content being installed
+	Phase     string // PhasePending, PhaseCommitted, PhaseAborted, PhaseFinalized, or PhaseRestored
+	Receipt   []byte // the opaque terminal receipt of a finalized/restored row
+}
+
+// Store is the Skill Store tree root. All methods assume the caller holds
+// the Store exclusive lock for the whole operation.
+type Store struct {
+	Root string
+
+	// hook is the deterministic test seam for the Stage-A invariants; nil
+	// in production.
+	hook func(HookPoint)
+}
+
+// runHook invokes the test seam at the given point, if set.
+func (s Store) runHook(p HookPoint) {
+	if s.hook != nil {
+		s.hook(p)
+	}
+}
+
+// SetHook installs the deterministic test seam (nil in production). It is
+// exported so the application-boundary tests can exercise the same narrow
+// race windows as the Store's own tests.
+func (s *Store) SetHook(h func(HookPoint)) {
+	s.hook = h
+}
+
+// New returns the Store rooted at root.
+func New(root string) Store {
+	return Store{Root: root}
+}
+
+// SkillDir is the live directory of one Skill. The slug is validated before
+// it is joined into a path, so a slug can never escape the Store root or
+// target the internal .skillctl layout.
+func (s Store) SkillDir(slug string) (string, error) {
+	if err := domain.ValidateSlug(slug); err != nil {
+		return "", err
+	}
+	return filepath.Join(s.Root, slug), nil
+}
+
+// InternalDir is the internal .skillctl layout, excluded from Skill
+// enumeration, import, and Distribution.
+func (s Store) InternalDir() string {
+	return filepath.Join(s.Root, ".skillctl")
+}
+
+// BaselineDir is the immutable Synchronization Baseline tree of one Skill.
+func (s Store) BaselineDir(skillID int64) string {
+	return filepath.Join(s.InternalDir(), "baselines", strconv.FormatInt(skillID, 10))
+}
+
+// PreviousDir is the single previous snapshot of one Skill.
+func (s Store) PreviousDir(skillID int64) string {
+	return filepath.Join(s.InternalDir(), "previous", strconv.FormatInt(skillID, 10))
+}
+
+func (s Store) opRel(opID int64) string {
+	return path.Join(".skillctl", "staging", strconv.FormatInt(opID, 10))
+}
+
+func (s Store) opDir(opID int64) string {
+	return filepath.Join(s.Root, filepath.FromSlash(s.opRel(opID)))
+}
+
+func (s Store) stagedTreeDir(opID int64) string {
+	return filepath.Join(s.opDir(opID), "tree")
+}
+
+func (s Store) baselineCandidateDir(opID int64) string {
+	return filepath.Join(s.opDir(opID), "baseline")
+}
+
+func (s Store) baselineBackupDir(opID int64) string {
+	return filepath.Join(s.opDir(opID), "baseline-old")
+}
+
+func (s Store) recoveryDir(opID int64) string {
+	return filepath.Join(s.InternalDir(), "recovery", strconv.FormatInt(opID, 10))
+}
+
+// EnsureLayout lazily creates the Store root and the internal .skillctl
+// layout before the first Store write. Every component is created and
+// pinned one at a time through an already-open parent handle, so a relative
+// or absolute .skillctl symlink raced into place between components can
+// never redirect the creation of staging/baselines/previous/recovery into
+// a live Skill subtree. Every logical name is re-proven before success.
+func (s Store) EnsureLayout() error {
+	if err := os.MkdirAll(s.Root, 0o755); err != nil {
+		return err
+	}
+	info, err := os.Lstat(s.Root)
+	if err != nil {
+		return err
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("Skill Store root is not a directory")
+	}
+	root, err := os.OpenRoot(s.Root)
+	if err != nil {
+		return err
+	}
+	defer root.Close()
+	rid, rerr := rootID(root)
+	if rerr != nil {
+		return rerr
+	}
+	if fid, ferr := fileIDOf(info); ferr != nil || fid != rid {
+		return fmt.Errorf("Skill Store root changed while it was being opened")
+	}
+	internal, internalID, err := ensurePinnedDir(root, ".skillctl", 0o755)
+	if err != nil {
+		return err
+	}
+	defer internal.Close()
+	childIDs := map[string]fileID{}
+	for _, name := range []string{"staging", "baselines", "previous", "recovery"} {
+		child, childID, err := ensurePinnedDir(internal, name, 0o755)
+		if err != nil {
+			return err
+		}
+		childID, err = rootID(child)
+		child.Close()
+		if err != nil {
+			return err
+		}
+		childIDs[name] = childID
+	}
+	// Revalidate every logical name before returning success: the Store
+	// root must still identify the opened root, .skillctl must still
+	// identify the pinned internal handle, and every internal child name
+	// must still identify its pinned directory, so a swap at any level
+	// during layout creation is never blessed as the layout.
+	s.runHook(HookBeforeEnsureLayoutVerify)
+	if info, err := os.Lstat(s.Root); err != nil {
+		return err
+	} else if fid, ferr := fileIDOf(info); ferr != nil || fid != rid {
+		return fmt.Errorf("Skill Store root changed while the layout was being created")
+	}
+	if err := nameRefersTo(root, ".skillctl", internalID); err != nil {
+		return err
+	}
+	for _, name := range []string{"staging", "baselines", "previous", "recovery"} {
+		if err := nameRefersTo(internal, name, childIDs[name]); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// DiscardStaging removes one operation's staging through the opaque proof
+// Stage handed back: the exact creation manifest of that Stage invocation
+// authorizes every removal leaf→root, and the operation directory must
+// still carry the identity Stage proved. An expected operation directory
+// that is missing, an identity or name mismatch, an unknown child, or a
+// reappeared operation directory is ErrAmbiguous with everything preserved:
+// a fresh sample of the operation name never authorizes deletion. Only
+// after every recorded object is provably gone and the final absence is
+// re-checked does DiscardStaging succeed. It is safe only when the caller
+// can prove Install never mutated the live path; any pre-commit failure
+// after a live mutation must go through Restore instead, so unprovable
+// state stays preserved for recovery.
+func (s Store) DiscardStaging(opID int64, staged StagedProof) error {
+	if staged.opID != opID || staged.ownership == nil {
+		return errWrap(ErrAmbiguous, "staged proof does not bind operation %d", opID)
+	}
+	if err := s.EnsureLayout(); err != nil {
+		return err
+	}
+	layout, err := s.openLayout()
+	if err != nil {
+		return errWrap(ErrAmbiguous, "opening the Store layout for the discard: %v", err)
+	}
+	defer layout.close()
+	s.runHook(HookAfterLayoutOpen)
+	if err := layout.verify(); err != nil {
+		return err
+	}
+	if err := cleanupOwnership(layout.staging, opID, staged.ownership, s.hook); err != nil {
+		return err
+	}
+	return layout.verify()
+}
+
+// errWrap attaches context to a sentinel error while preserving it for
+// errors.Is.
+func errWrap(sentinel error, format string, args ...any) error {
+	return fmt.Errorf("%w: %s", sentinel, fmt.Sprintf(format, args...))
+}

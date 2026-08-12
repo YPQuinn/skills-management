@@ -16,6 +16,7 @@ type treeLine struct {
 	oid  string
 	path string
 	rel  string
+	size int64 // byte size from `ls-tree -l`; -1 when unknown
 }
 
 // discoverCommit validates the Source subpath at the commit, lists the tree
@@ -41,15 +42,14 @@ func discoverCommit(ctx context.Context, cache, commit string, loc Locator) (Obs
 		return Observation{}, err
 	}
 
-	prefix := ""
-	if loc.Subpath != "" {
-		prefix = loc.Subpath + "/"
-	}
 	all := make([]treeLine, 0, len(rows))
 	// relative Skill directory -> its SKILL.md listing row
 	skills := map[string]treeLine{}
 	for _, r := range rows {
-		r.rel = strings.TrimPrefix(r.path, prefix)
+		r.rel, err = gitRelativePath(r.path, loc.Subpath)
+		if err != nil {
+			return Observation{}, err
+		}
 		all = append(all, r)
 		if !strings.HasSuffix(r.rel, "/SKILL.md") && r.rel != "SKILL.md" {
 			continue
@@ -121,10 +121,20 @@ func (obs *Observation) addSkill(ctx context.Context, cache string, all []treeLi
 	if err != nil {
 		return fmt.Errorf("reading Skill tree: %v", err)
 	}
-	digest := skillTreeDigest(rows, dir, blobs)
 	relDir := dir
 	if relDir == "" {
 		relDir = "."
+	}
+	// The entry digest is the effective materialized digest: safe internal
+	// symlinks are dereferenced, so it equals the digest of the Store copy
+	// import produces. A tree that cannot be materialized (broken or
+	// escaping symlink, gitlink, special node, non-canonical path) is an
+	// invalid entry reported as an Issue rather than a digest that import
+	// could never satisfy.
+	digest, err := skillTreeEffectiveDigest(rows, dir, blobs)
+	if err != nil {
+		obs.Issues = append(obs.Issues, Issue{RelativeDir: relDir, Reason: err.Error()})
+		return nil
 	}
 	data, ok := blobs[marker.oid]
 	obs.addSkillBlob(marker, relDir, digest, data, ok)
@@ -148,63 +158,6 @@ func skillRows(all []treeLine, dir string) []treeLine {
 		rows = append(rows, l)
 	}
 	return rows
-}
-
-// skillTreeDigest returns the canonical content digest of one Skill tree,
-// with paths relative to the Skill root. Directory nodes are implicit and
-// synthesized, so the digest matches an equivalent materialized Local
-// Source tree.
-func skillTreeDigest(rows []treeLine, dir string, blobs map[string][]byte) string {
-	var nodes []canonNode
-	seenDirs := map[string]bool{}
-	addDirs := func(fileRel string) {
-		dir := fileRel
-		for {
-			if i := strings.LastIndex(dir, "/"); i < 0 {
-				dir = "."
-			} else {
-				dir = dir[:i]
-			}
-			if !seenDirs[dir] {
-				seenDirs[dir] = true
-				nodes = append(nodes, canonNode{relPath: dir, kind: canonKindDir})
-			}
-			if dir == "." {
-				return
-			}
-		}
-	}
-	for _, l := range rows {
-		rel := l.rel
-		if dir != "" {
-			rel = strings.TrimPrefix(rel, dir+"/")
-		}
-		addDirs(rel)
-		n := canonNode{relPath: rel}
-		switch {
-		case l.mode == "100644":
-			n.kind = canonKindFile
-			n.content = hashBytes(blobs[l.oid])
-		case l.mode == "100755":
-			n.kind = canonKindFile
-			n.exec = true
-			n.content = hashBytes(blobs[l.oid])
-		case l.mode == "120000":
-			n.kind = canonKindSymlink
-			n.content = string(blobs[l.oid])
-		case l.mode == "160000":
-			n.kind = canonKindGitlink
-			n.content = l.oid
-		default:
-			n.kind = canonKindOther
-			n.content = l.oid
-		}
-		nodes = append(nodes, n)
-	}
-	if len(nodes) == 0 {
-		addDirs("SKILL.md") // an empty tree still has its root directory
-	}
-	return canonDigest(nodes)
 }
 
 // isNestedSkillDir reports whether dir lies inside another Skill directory.
