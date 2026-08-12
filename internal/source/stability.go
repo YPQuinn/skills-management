@@ -2,10 +2,7 @@ package source
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -105,8 +102,9 @@ func snapshotRoot(ctx context.Context, root string) (snapshot, error) {
 
 // snapshotTree appends every node below dir (including dir itself) to snap,
 // with paths prefixed by base (relative to the Source root; "." for the
-// root candidate). Only Source .git metadata directories are excluded; all
-// other content, however deep, is part of the Skill's tree.
+// root candidate). Source .git metadata is excluded whether it is a
+// directory, a linked-worktree file, or a symlink; all other content,
+// however deep, is part of the Skill's tree.
 func snapshotTree(ctx context.Context, dir, base string, snap *snapshot) error {
 	return filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if err := ctx.Err(); err != nil {
@@ -115,8 +113,11 @@ func snapshotTree(ctx context.Context, dir, base string, snap *snapshot) error {
 		if err != nil {
 			return err
 		}
-		if d.IsDir() && d.Name() == ".git" {
-			return filepath.SkipDir
+		if d.Name() == ".git" {
+			if d.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
 		}
 		rel, err := filepath.Rel(dir, path)
 		if err != nil {
@@ -228,25 +229,7 @@ func hashFileCtx(ctx context.Context, path string) (string, error) {
 		return "", err
 	}
 	defer f.Close()
-	h := sha256.New()
-	buf := make([]byte, 1<<20)
-	for {
-		if err := ctx.Err(); err != nil {
-			return "", err
-		}
-		n, rerr := f.Read(buf)
-		if n > 0 {
-			if _, werr := h.Write(buf[:n]); werr != nil {
-				return "", werr
-			}
-		}
-		if rerr == io.EOF {
-			return hex.EncodeToString(h.Sum(nil)), nil
-		}
-		if rerr != nil {
-			return "", rerr
-		}
-	}
+	return hashReaderCtx(ctx, f)
 }
 
 // localScan is one Local observation attempt: the inventory and the content

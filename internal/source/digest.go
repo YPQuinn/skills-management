@@ -1,6 +1,7 @@
 package source
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -62,4 +63,18 @@ func canonDigest(nodes []canonNode) string {
 func hashBytes(b []byte) string {
 	sum := sha256.Sum256(b)
 	return hex.EncodeToString(sum[:])
+}
+
+// TreeDigest computes the canonical content digest of the directory tree
+// rooted at dir, with paths relative to dir itself and .git metadata
+// excluded. It is the same computation the observers use for one Skill
+// entry, so a materialized copy can be verified against an observation and
+// Store trees and Synchronization Baselines share one content identity.
+// Symlinks are recorded as symlink nodes, never followed.
+func TreeDigest(ctx context.Context, dir string) (string, error) {
+	var snap snapshot
+	if err := snapshotTree(ctx, dir, ".", &snap); err != nil {
+		return "", err
+	}
+	return snapshotDigest(snap, "."), nil
 }

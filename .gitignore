@@ -4,3 +4,4 @@
 internal/webui/dist
 internal/webui/node_modules
 /.pi-subagents
+.DS_Store
