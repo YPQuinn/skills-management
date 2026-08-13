@@ -7,6 +7,8 @@ import { Field, FieldLabel } from '@appica/ui-react/field'
 import { Spinner } from '@appica/ui-react/spinner'
 import { SourcesIndex, SourceExplorer } from './sources'
 import { SkillsIndex, SkillExplorer } from './skills'
+import { GroupsIndex, GroupExplorer } from './groups'
+import { TargetsIndex, TargetExplorer } from './targets'
 import { Layout } from './layout'
 import { useLocale } from './locale-context'
 import { LocaleProvider } from './locale-provider'
@@ -101,7 +103,7 @@ function Setup({ status }: { status: StatusResponse }) {
             />
           </Field>
           <Button type="submit" disabled={loading} focusableWhenDisabled className="w-full">
-            {loading && <Spinner data-icon="start" currentColor />}
+            {loading && <Spinner data-icon="start" currentColor className="text-[1.2em]" />}
             {loading ? t('btnInitializing') : t('btnInitialize')}
           </Button>
         </form>
@@ -133,21 +135,23 @@ function Sources() {
 }
 
 function Groups() {
-  const { t } = useLocale()
   return (
     <Layout>
-      <h1 className="text-2xl font-bold mb-4">{t('groupsTitle')}</h1>
-      <p className="text-foreground-subtle">{t('groupsText')}</p>
+      <Routes>
+        <Route path="/" element={<GroupsIndex />} />
+        <Route path="/:name" element={<GroupExplorer />} />
+      </Routes>
     </Layout>
   )
 }
 
 function Targets() {
-  const { t } = useLocale()
   return (
     <Layout>
-      <h1 className="text-2xl font-bold mb-4">{t('targetsTitle')}</h1>
-      <p className="text-foreground-subtle">{t('targetsText')}</p>
+      <Routes>
+        <Route path="/" element={<TargetsIndex />} />
+        <Route path="/:name" element={<TargetExplorer />} />
+      </Routes>
     </Layout>
   )
 }

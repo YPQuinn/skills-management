@@ -16,7 +16,8 @@ Before implementing or reviewing any WebUI work:
 
 1. **First read `docs/design/llms.md`** to locate the appropriate Appica component.
 2. **Then search `docs/design/llms-full.md` by component name or keyword** for its exact API and usage. Do not guess component APIs or read the full file linearly.
-3. Use the live [Appica UI documentation](https://appica.dev/ui/docs) as an additional reference when the local documentation is insufficient.
+3. **Search `docs/design/icons.md` by icon name or keyword** for Appica native icons. Learn how to use by reading `Itegrations` and `Naming` chapter in `docs/design/icons.md`.
+4. Use the live [Appica UI documentation](https://appica.dev/ui/docs) as an additional reference when the local documentation is insufficient.
 
 ## Rules
 

@@ -58,19 +58,28 @@ func (a *App) importItem(ctx context.Context, src *source.Source, entry source.E
 		return importOutcome{result: failedImportMeta(entry, requested, 0, nil, CodeInternal, "reading Skill %q: %v", requested, err)}
 	}
 	if existing != nil && !sel.Replace {
+		impact, err := a.replaceImpact(existing.Skill.ID)
+		if err != nil {
+			return importOutcome{result: failedImportMeta(entry, requested, existing.Skill.ID, nil, CodeInternal, "reading the replace impact: %v", err)}
+		}
 		return importOutcome{result: ImportItemResult{
 			Status: StatusSkippedConflict, RelativeDir: entry.RelativeDir,
 			RequestedSlug: requested, Slug: existing.Skill.Slug,
-			SkillID: existing.Skill.ID, Replaces: previewSkill(existing),
+			SkillID: existing.Skill.ID, Replaces: previewSkill(existing), Impact: impact,
 		}}
 	}
-	// Once an existing managed Skill is the Replace target, its id and
-	// preview are known and belong on every later failure outcome.
+	// Once an existing managed Skill is the Replace target, its id, preview,
+	// and impact are known and belong on every later failure outcome.
 	skillID := int64(0)
 	var replaces *Skill
+	var impact *ReplaceImpact
 	if existing != nil {
 		skillID = existing.Skill.ID
 		replaces = previewSkill(existing)
+		impact, err = a.replaceImpact(skillID)
+		if err != nil {
+			return importOutcome{result: failedImportMeta(entry, requested, skillID, replaces, CodeInternal, "reading the replace impact: %v", err)}
+		}
 	}
 
 	// Materialize the exact fresh observation into caller-owned temp
@@ -199,6 +208,7 @@ func (a *App) importItem(ctx context.Context, src *source.Source, entry source.E
 	if existing != nil {
 		item.Status = StatusReplaced
 		item.Replaces = replaces
+		item.Impact = impact
 	}
 	return importOutcome{result: item}
 }

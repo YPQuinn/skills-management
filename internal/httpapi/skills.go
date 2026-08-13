@@ -61,7 +61,8 @@ type importSkillsRequest struct {
 
 // importItemResultJSON is one batch item's stable outcome; failed items
 // carry code and message, replaced items preview the superseded Skill in
-// replaces. Field names are the WebUI-frozen contract.
+// replaces, and conflict/replaced items preview the affected Groups and
+// Targets in impact. Field names are the WebUI-frozen contract.
 type importItemResultJSON struct {
 	Status        string                  `json:"status"`
 	RelativeDir   string                  `json:"relative_dir"`
@@ -71,6 +72,30 @@ type importItemResultJSON struct {
 	Code          string                  `json:"code,omitempty"`
 	Message       string                  `json:"message,omitempty"`
 	Replaces      *importReplacesInfoJSON `json:"replaces,omitempty"`
+	Impact        *importImpactJSON       `json:"impact,omitempty"`
+}
+
+// importImpactGroupJSON is one affected Group in the replace-impact
+// preview.
+type importImpactGroupJSON struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
+// importImpactTargetJSON is one affected Target with how the Skill reaches
+// it.
+type importImpactTargetJSON struct {
+	ID     int64                   `json:"id"`
+	Name   string                  `json:"name"`
+	Direct bool                    `json:"direct"`
+	Groups []importImpactGroupJSON `json:"groups,omitempty"`
+}
+
+// importImpactJSON previews the Groups and Targets affected by an explicit
+// Replace.
+type importImpactJSON struct {
+	Groups  []importImpactGroupJSON  `json:"groups"`
+	Targets []importImpactTargetJSON `json:"targets"`
 }
 
 // importReplacesInfoJSON previews the existing managed Skill an explicit
@@ -135,6 +160,22 @@ func newImportSkillsResultJSON(r *app.ImportSkillsResult) importSkillsResultJSON
 		if it.Replaces != nil {
 			item.Replaces = &importReplacesInfoJSON{
 				SkillID: it.Replaces.ID, Slug: it.Replaces.Slug, Name: it.Replaces.Name,
+			}
+		}
+		if it.Impact != nil {
+			item.Impact = &importImpactJSON{
+				Groups:  make([]importImpactGroupJSON, 0, len(it.Impact.Groups)),
+				Targets: make([]importImpactTargetJSON, 0, len(it.Impact.Targets)),
+			}
+			for _, g := range it.Impact.Groups {
+				item.Impact.Groups = append(item.Impact.Groups, importImpactGroupJSON{ID: g.ID, Name: g.Name})
+			}
+			for _, tg := range it.Impact.Targets {
+				t := importImpactTargetJSON{ID: tg.ID, Name: tg.Name, Direct: tg.Direct, Groups: []importImpactGroupJSON{}}
+				for _, g := range tg.Groups {
+					t.Groups = append(t.Groups, importImpactGroupJSON{ID: g.ID, Name: g.Name})
+				}
+				item.Impact.Targets = append(item.Impact.Targets, t)
 			}
 		}
 		out.Items = append(out.Items, item)

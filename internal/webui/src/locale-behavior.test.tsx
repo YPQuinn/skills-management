@@ -118,12 +118,12 @@ describe('WebUI Localization Behavior - No Extra Fetch / Delayed Status', () => 
     expect(await screen.findByRole('heading', { name: 'source-one' })).toBeTruthy()
     const initialFetchCount = fetchCount
 
-    // Switch language to zh-CN via Language Select
+    // Switch language to zh-CN via Settings DropdownMenu
     const user = userEvent.setup()
-    const langTrigger = screen.getByRole('combobox', { name: 'Language' })
-    await user.click(langTrigger)
+    const settingsTrigger = screen.getByRole('button', { name: 'Settings' })
+    await user.click(settingsTrigger)
 
-    const optionZh = await screen.findByRole('option', { name: '简体中文' })
+    const optionZh = await screen.findByRole('menuitemradio', { name: '简体中文' })
     await user.click(optionZh)
 
     await waitFor(() => {
@@ -170,12 +170,12 @@ describe('WebUI Localization Behavior - No Extra Fetch / Delayed Status', () => 
     expect(await screen.findByRole('heading', { name: 'Alpha Skill' })).toBeTruthy()
     const initialFetchCount = fetchCount
 
-    // Switch language to zh-CN via Language Select
+    // Switch language to zh-CN via Settings DropdownMenu
     const user = userEvent.setup()
-    const langTrigger = screen.getByRole('combobox', { name: 'Language' })
-    await user.click(langTrigger)
+    const settingsTrigger = screen.getByRole('button', { name: 'Settings' })
+    await user.click(settingsTrigger)
 
-    const optionZh = await screen.findByRole('option', { name: '简体中文' })
+    const optionZh = await screen.findByRole('menuitemradio', { name: '简体中文' })
     await user.click(optionZh)
 
     await waitFor(() => {

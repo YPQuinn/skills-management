@@ -1,20 +1,18 @@
-import { Link } from 'react-router-dom'
+import { useMemo, useState, type ChangeEvent, type MouseEvent } from 'react'
 import { Button } from '@appica/ui-react/button'
-import { Badge } from '@appica/ui-react/badge'
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
-import { Table, TableCaption, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@appica/ui-react/table'
-import { Spinner } from '@appica/ui-react/spinner'
-import { ScrollArea } from '@appica/ui-react/scroll-area'
 import { Checkbox } from '@appica/ui-react/checkbox'
-import { CheckboxGroup } from '@appica/ui-react/checkbox-group'
 import { Input } from '@appica/ui-react/input'
+import { Pagination, PaginationList, PaginationItem, PaginationLink, PaginationEllipsis } from '@appica/ui-react/pagination'
+import { Spinner } from '@appica/ui-react/spinner'
+import { ChevronLeft, ChevronRight, Search } from '@appica/icons-react'
+import { SourceInventoryTable } from './source-inventory-table'
+import { paginationItems } from './pagination-items'
 import type { SourceEntry } from './source-api'
-import type { Skill, ImportResponse, ImportItemResult } from './skill-api'
+import type { Skill, ImportResponse } from './skill-api'
 import { useLocale } from './locale-context'
 
-function truncate(value: string, max = 80): string {
-  return value.length > max ? value.slice(0, max - 1) + '…' : value
-}
+const PAGE_SIZE = 10
 
 interface SourceInventoryProps {
   inventory: SourceEntry[]
@@ -46,17 +44,39 @@ export function SourceInventory({
   onImport,
 }: SourceInventoryProps) {
   const { t } = useLocale()
-  const allRelativeDirs = inventory.map((e) => e.relative_dir)
+  const [query, setQuery] = useState('')
+  const [page, setPage] = useState(1)
 
-  const resultItemMap = new Map<string, ImportItemResult>()
-  if (importResult) {
-    for (const item of importResult.items) {
-      resultItemMap.set(item.relative_dir, item)
-    }
-  }
+  const trimmedQuery = query.trim()
+  const filtered = useMemo(() => {
+    if (trimmedQuery === '') return inventory
+    const needle = trimmedQuery.toLowerCase()
+    return inventory.filter((e) => e.name.toLowerCase().includes(needle))
+  }, [inventory, trimmedQuery])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+  const visible = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
 
   const summary = importResult?.summary
   const alertVariant = summary?.failed ? 'error' : summary?.skipped_conflict ? 'warning' : 'success'
+
+  const handleQueryChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setQuery(event.target.value)
+    setPage(1)
+  }
+
+  const handleClearQuery = () => {
+    setQuery('')
+    setPage(1)
+  }
+
+  const goToPage = (target: number) => (event: MouseEvent) => {
+    event.preventDefault()
+    setPage(Math.min(Math.max(target, 1), totalPages))
+  }
+
+  const pageItems = paginationItems(currentPage, totalPages)
 
   return (
     <div className="space-y-4">
@@ -81,7 +101,7 @@ export function SourceInventory({
               onClick={() => onImport({ all: false })}
               focusableWhenDisabled
             >
-              {importing && <Spinner data-icon="start" currentColor />}
+              {importing && <Spinner data-icon="start" currentColor className="text-[1.2em]" />}
               {t('btnImportSelected', { count: selectedDirs.length })}
             </Button>
 
@@ -92,7 +112,7 @@ export function SourceInventory({
               onClick={() => onImport({ all: true })}
               focusableWhenDisabled
             >
-              {importing && <Spinner data-icon="start" currentColor />}
+              {importing && <Spinner data-icon="start" currentColor className="text-[1.2em]" />}
               {t('btnImportAll')}
             </Button>
           </div>
@@ -122,124 +142,72 @@ export function SourceInventory({
       {inventory.length === 0 ? (
         <p className="text-foreground-subtle">{t('emptyInventory')}</p>
       ) : (
-        <CheckboxGroup
-          aria-label={t('ariaInventorySelection')}
-          allValues={allRelativeDirs}
-          value={selectedDirs}
-          onValueChange={setSelectedDirs}
-        >
-          <ScrollArea className="w-full" orientation="horizontal">
-            <div className="min-w-[800px]">
-              <Table aria-label={t('captionSourceInventory')}>
-                <TableCaption className="sr-only">{t('captionSourceInventory')}</TableCaption>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-10">
-                      <Checkbox parent aria-label={t('ariaSelectAllInventory')} disabled={importing || !available} />
-                    </TableHead>
-                    <TableHead>{t('navSkills')}</TableHead>
-                    <TableHead>{t('colDirectory')}</TableHead>
-                    <TableHead>{t('colSlugOverride')}</TableHead>
-                    <TableHead>{t('colStatus')}</TableHead>
-                    <TableHead>{t('colDescription')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {inventory.map((e) => {
-                    const boundSkill = boundSkillMap.get(e.relative_dir)
-                    const itemResult = resultItemMap.get(e.relative_dir)
-                    return (
-                      <TableRow key={e.relative_dir}>
-                        <TableCell>
-                          <Checkbox name={e.relative_dir} aria-label={t('ariaSelectItem', { name: e.name })} disabled={importing || !available} />
-                        </TableCell>
-                        <TableCell className="font-medium text-foreground-strong">
-                          {boundSkill ? (
-                            <Link
-                              to={`/skills/${encodeURIComponent(boundSkill.slug)}`}
-                              className="underline decoration-border underline-offset-2 hover:decoration-foreground"
-                            >
-                              {e.name}
-                            </Link>
-                          ) : (
-                            e.name
-                          )}
-                        </TableCell>
-                        <TableCell className="font-mono text-foreground-subtle">{e.relative_dir}</TableCell>
-                        <TableCell>
-                          <Input
-                            inputSize="sm"
-                            placeholder={t('phSlugDefault')}
-                            aria-label={t('ariaSlugOverrideFor', { name: e.name })}
-                            value={slugOverrides[e.relative_dir] || ''}
-                            onChange={(ev) => onSlugOverrideChange(e.relative_dir, ev.target.value)}
-                            disabled={importing || !available}
-                            className="w-32 font-mono text-xs"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col gap-1 items-start">
-                            {boundSkill && !itemResult && (
-                              <Badge variant="success" className="text-xs">
-                                {t('statusImported')}
-                              </Badge>
-                            )}
-                            {!boundSkill && !itemResult && (
-                              <Badge variant="soft" className="text-xs">
-                                {t('statusAvailable')}
-                              </Badge>
-                            )}
-                            {itemResult && (
-                              <div className="space-y-1">
-                                {itemResult.status === 'imported' && (
-                                  <Badge variant="success" className="text-xs">
-                                    {t('statusImported')}
-                                  </Badge>
-                                )}
-                                {itemResult.status === 'already_imported' && (
-                                  <Badge variant="soft" className="text-xs">
-                                    {t('statusAlreadyImported')}
-                                  </Badge>
-                                )}
-                                {itemResult.status === 'replaced' && (
-                                  <Badge variant="success" className="text-xs">
-                                    {t('statusReplaced')}
-                                  </Badge>
-                                )}
-                                {itemResult.status === 'skipped_conflict' && (
-                                  <Badge variant="warning" className="text-xs">
-                                    {t('statusConflict')}
-                                  </Badge>
-                                )}
-                                {itemResult.status === 'failed' && (
-                                  <Badge variant="error" className="text-xs">
-                                    {t('statusFailed')}
-                                  </Badge>
-                                )}
-                                {itemResult.slug && (
-                                  <Link
-                                    to={`/skills/${encodeURIComponent(itemResult.slug)}`}
-                                    className="block text-xs underline text-foreground-subtle hover:text-foreground"
-                                  >
-                                    {t('linkViewSlug', { slug: itemResult.slug })}
-                                  </Link>
-                                )}
-                                {itemResult.message && (
-                                  <span className="block text-xs text-foreground-subtle">{itemResult.message}</span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-foreground-subtle">{truncate(e.description)}</TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
+        <div className="space-y-4">
+          <Input
+            className="w-full max-w-xs"
+            value={query}
+            onChange={handleQueryChange}
+            onClear={handleClearQuery}
+            clearable
+            startSlot={<Search />}
+            placeholder={t('phSearchInventory')}
+            aria-label={t('ariaSearchInventory')}
+          />
+          {filtered.length === 0 ? (
+            <div role="status" className="rounded-xl border border-border bg-background p-8 text-center">
+              <p className="text-foreground-subtle">{t('emptyInventorySearch')}</p>
             </div>
-          </ScrollArea>
-        </CheckboxGroup>
+          ) : (
+            <>
+              <SourceInventoryTable
+                entries={visible}
+                boundSkillMap={boundSkillMap}
+                importResult={importResult}
+                selectedDirs={selectedDirs}
+                setSelectedDirs={setSelectedDirs}
+                slugOverrides={slugOverrides}
+                onSlugOverrideChange={onSlugOverrideChange}
+                available={available}
+                importing={importing}
+              />
+              {totalPages > 1 && (
+                <div className="max-w-full overflow-x-auto">
+                  <Pagination aria-label={t('ariaPagination')}>
+                    <PaginationList>
+                      <PaginationItem>
+                        <PaginationLink href="#!" aria-label={t('ariaPreviousPage')} className="px-0" disabled={currentPage === 1} onClick={goToPage(currentPage - 1)}>
+                          <ChevronLeft />
+                        </PaginationLink>
+                      </PaginationItem>
+                      {pageItems.map((item, index) =>
+                        item === 'gap' ? (
+                          <PaginationItem key={`gap-${index}`}>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        ) : item === currentPage ? (
+                          <PaginationItem key={`page-${item}`}>
+                            <PaginationLink active tabIndex={-1}>{item}</PaginationLink>
+                          </PaginationItem>
+                        ) : (
+                          <PaginationItem key={`page-${item}`}>
+                            <PaginationLink href="#!" aria-label={t('ariaGoToPage', { page: item })} onClick={goToPage(item)}>
+                              {item}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ),
+                      )}
+                      <PaginationItem>
+                        <PaginationLink href="#!" aria-label={t('ariaNextPage')} className="px-0" disabled={currentPage === totalPages} onClick={goToPage(currentPage + 1)}>
+                          <ChevronRight />
+                        </PaginationLink>
+                      </PaginationItem>
+                    </PaginationList>
+                  </Pagination>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       )}
     </div>
   )

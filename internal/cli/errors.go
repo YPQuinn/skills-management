@@ -73,3 +73,14 @@ func exactArgs(n int) cobra.PositionalArgs {
 		return nil
 	}
 }
+
+// minArgs requires at least n positional arguments as argument-validation
+// errors.
+func minArgs(n int) cobra.PositionalArgs {
+	return func(cmd *cobra.Command, args []string) error {
+		if len(args) < n {
+			return app.Errorf(app.CodeInvalidArgument, "accepts at least %d arg(s), received %d", n, len(args))
+		}
+		return nil
+	}
+}

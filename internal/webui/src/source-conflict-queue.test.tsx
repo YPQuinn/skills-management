@@ -194,4 +194,49 @@ describe('Source Import Multi-Conflict FIFO Queue', () => {
 
     expect(await screen.findByText(/Beta Skill/)).toBeTruthy()
   })
+
+  it('renders preserved groups and targets with both direct and group reasons in replace impact preview', async () => {
+    const user = userEvent.setup()
+    const conflictWithImpact = {
+      items: [
+        {
+          status: 'skipped_conflict',
+          relative_dir: 'skills/alpha',
+          replaces: { skill_id: 101, slug: 'alpha', name: 'Alpha Skill' },
+          impact: {
+            groups: [{ id: 1, name: 'backend-tools' }],
+            targets: [
+              {
+                id: 10,
+                name: 'Dev Server',
+                direct: true,
+                groups: [{ id: 1, name: 'backend-tools' }],
+              },
+            ],
+          },
+        },
+      ],
+      summary: { total: 1, imported: 0, already_imported: 0, skipped_conflict: 1, replaced: 0, failed: 0 },
+    }
+
+    window.fetch = vi.fn().mockImplementation(async (url: RequestInfo | URL, init?: RequestInit) => {
+      const urlStr = String(url)
+      if (init?.method === 'POST' && urlStr === '/api/v1/skills/import') {
+        return mockResponse(conflictWithImpact)
+      }
+      if (urlStr === '/api/v1/sources') return mockResponse({ items: [summary], total: 1 })
+      if (urlStr === '/api/v1/sources/1') return mockResponse(detail)
+      if (urlStr === '/api/v1/skills') return mockResponse({ items: [], total: 0 })
+      return mockResponse({ error: { message: 'Not found' } }, false, 404)
+    })
+
+    renderSourceDetail()
+    await screen.findByRole('heading', { name: 'local-one' })
+    await user.click(screen.getByRole('button', { name: 'Import all' }))
+
+    expect(await screen.findByText('Preserved Memberships & Assignments')).toBeTruthy()
+    expect(screen.getByText('Dev Server')).toBeTruthy()
+    expect(screen.getByText('Direct')).toBeTruthy()
+    expect(screen.getByText('via Group "backend-tools"')).toBeTruthy()
+  })
 })

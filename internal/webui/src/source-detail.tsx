@@ -3,13 +3,15 @@ import { Link, useParams } from 'react-router-dom'
 import { Button } from '@appica/ui-react/button'
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
 import { Spinner } from '@appica/ui-react/spinner'
+import { ArrowLeft } from '@appica/icons-react'
 import { SourceStatusBadge } from './source-status'
 import type { SourceDetail, SourceSummary } from './source-api'
 import { fetchSkills } from './skill-api'
 import type { Skill } from './skill-api'
 import { SourceInventory } from './source-inventory'
 import { SourceReplaceDialog } from './source-replace-dialog'
-import { SourceFactsGrid } from './source-facts'
+import { SourceFacts } from './source-facts'
+import { SourceLocationIcon } from './source-location'
 import { SourceIssuesList } from './source-issues-list'
 import { useSourceImport } from './use-source-import'
 import { useLocale } from './locale-context'
@@ -23,7 +25,7 @@ function isAbortError(err: unknown): boolean {
   return typeof err === 'object' && err !== null && (err as { name?: unknown }).name === 'AbortError'
 }
 
-export function SourceDetailPage({ onCheckSuccess }: { onCheckSuccess?: () => void }) {
+export function SourceDetailPage() {
   const { name } = useParams()
   const { t, formatTime, getErrorMessage } = useLocale()
   const [source, setSource] = useState<SourceDetail | null>(null)
@@ -137,10 +139,7 @@ export function SourceDetailPage({ onCheckSuccess }: { onCheckSuccess?: () => vo
         throw new ApiError(data?.error?.message, 'errCheckingSourceFailed')
       }
       const data = (await res.json()) as SourceDetail
-      if (inflight.current === controller) {
-        setSource(data)
-        onCheckSuccess?.()
-      }
+      if (inflight.current === controller) setSource(data)
     } catch (err: unknown) {
       if (isAbortError(err)) return
       if (inflight.current === controller) setError(err)
@@ -176,17 +175,32 @@ export function SourceDetailPage({ onCheckSuccess }: { onCheckSuccess?: () => vo
         <div>
           <Link
             to="/sources"
-            className="text-sm text-foreground-subtle underline decoration-border underline-offset-2 hover:decoration-foreground"
+            className="inline-flex items-center gap-1 text-sm text-foreground-subtle underline decoration-border underline-offset-2 hover:decoration-foreground"
           >
+            <ArrowLeft className="size-4" />
             {t('linkAllSources')}
           </Link>
           <h1 className="text-2xl font-bold mt-1">{source.name}</h1>
-          <p className="text-foreground-subtle text-sm break-all">{source.location}</p>
+          <p className="mt-0.5 flex items-start gap-1.5 text-sm text-foreground-subtle break-all">
+            <SourceLocationIcon source={source} />
+            {/^https?:\/\//i.test(source.location) ? (
+              <a
+                href={source.location}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="min-w-0 underline decoration-border underline-offset-2 hover:decoration-foreground"
+              >
+                {source.location}
+              </a>
+            ) : (
+              <span className="min-w-0">{source.location}</span>
+            )}
+          </p>
         </div>
         <div className="flex flex-col items-end gap-2">
           <SourceStatusBadge available={source.available} stale={source.stale} />
           <Button onClick={check} disabled={checking} focusableWhenDisabled>
-            {checking && <Spinner data-icon="start" currentColor />}
+            {checking && <Spinner data-icon="start" currentColor className="text-[1.2em]" />}
             {checking ? t('btnChecking') : t('btnCheckAgain')}
           </Button>
         </div>
@@ -218,7 +232,7 @@ export function SourceDetailPage({ onCheckSuccess }: { onCheckSuccess?: () => vo
         </Alert>
       )}
 
-      <SourceFactsGrid source={source} />
+      <SourceFacts source={source} />
 
       <SourceInventory
         inventory={source.inventory}

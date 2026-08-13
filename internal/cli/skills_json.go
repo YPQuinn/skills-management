@@ -17,9 +17,32 @@ type importReplacesView struct {
 	Name    string `json:"name"`
 }
 
+// importImpactGroupView is one affected Group in the replace-impact
+// preview.
+type importImpactGroupView struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
+// importImpactTargetView is one affected Target with how the Skill reaches
+// it.
+type importImpactTargetView struct {
+	ID     int64                   `json:"id"`
+	Name   string                  `json:"name"`
+	Direct bool                    `json:"direct"`
+	Groups []importImpactGroupView `json:"groups,omitempty"`
+}
+
+// importImpactView previews the Groups and Targets affected by an explicit
+// Replace.
+type importImpactView struct {
+	Groups  []importImpactGroupView  `json:"groups"`
+	Targets []importImpactTargetView `json:"targets"`
+}
+
 // importItemView is one batch item's stable outcome. Code and Message are
-// present only for failed items; Replaces only for conflict and replaced
-// items.
+// present only for failed items; Replaces and Impact only for conflict and
+// replaced items.
 type importItemView struct {
 	Status        string              `json:"status"`
 	RelativeDir   string              `json:"relative_dir"`
@@ -29,6 +52,7 @@ type importItemView struct {
 	Code          string              `json:"code,omitempty"`
 	Message       string              `json:"message,omitempty"`
 	Replaces      *importReplacesView `json:"replaces,omitempty"`
+	Impact        *importImpactView   `json:"impact,omitempty"`
 }
 
 // importSummaryView tallies the per-item statuses of one batch.
@@ -67,6 +91,22 @@ func newImportResultView(r *app.ImportSkillsResult) importResultView {
 		if it.Replaces != nil {
 			item.Replaces = &importReplacesView{
 				SkillID: it.Replaces.ID, Slug: it.Replaces.Slug, Name: it.Replaces.Name,
+			}
+		}
+		if it.Impact != nil {
+			item.Impact = &importImpactView{
+				Groups:  make([]importImpactGroupView, 0, len(it.Impact.Groups)),
+				Targets: make([]importImpactTargetView, 0, len(it.Impact.Targets)),
+			}
+			for _, g := range it.Impact.Groups {
+				item.Impact.Groups = append(item.Impact.Groups, importImpactGroupView{ID: g.ID, Name: g.Name})
+			}
+			for _, tg := range it.Impact.Targets {
+				t := importImpactTargetView{ID: tg.ID, Name: tg.Name, Direct: tg.Direct, Groups: []importImpactGroupView{}}
+				for _, g := range tg.Groups {
+					t.Groups = append(t.Groups, importImpactGroupView{ID: g.ID, Name: g.Name})
+				}
+				item.Impact.Targets = append(item.Impact.Targets, t)
 			}
 		}
 		out.Items = append(out.Items, item)

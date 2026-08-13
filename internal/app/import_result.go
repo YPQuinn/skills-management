@@ -38,6 +38,9 @@ type ImportItemResult struct {
 	ErrorCode     string       `json:"error_code,omitempty"`
 	ErrorMessage  string       `json:"error_message,omitempty"`
 	Replaces      *Skill       `json:"replaces,omitempty"`
+	// Impact previews the Groups and Targets affected when an explicit
+	// Replace supersedes the existing Skill (ticket 13).
+	Impact *ReplaceImpact `json:"impact,omitempty"`
 }
 
 // ImportSkillsSummary is the batch-level tally of per-item statuses.

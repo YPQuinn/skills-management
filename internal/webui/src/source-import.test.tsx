@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, cleanup, waitFor } from '@testing-library/react'
+import { render, screen, cleanup, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { SourceDetailPage } from './source-detail'
@@ -75,7 +75,7 @@ describe('Source Import & Conflict Replace UI', () => {
     expect(screen.getByText(/Total: 1, 1 imported/)).toBeTruthy()
   })
 
-  it('imports selected items with slug override', async () => {
+  it('imports selected items with slug override saved from the dialog', async () => {
     let importBody: any
     window.fetch = vi.fn().mockImplementation(async (url: RequestInfo | URL, init?: RequestInit) => {
       const urlStr = String(url)
@@ -93,16 +93,56 @@ describe('Source Import & Conflict Replace UI', () => {
     await screen.findByRole('heading', { name: 'local-one' })
 
     const user = userEvent.setup()
-    const checkbox = screen.getByRole('checkbox', { name: 'Select Alpha' })
-    await user.click(checkbox)
+    await user.click(screen.getByRole('checkbox', { name: 'Select Alpha' }))
 
-    const slugInput = screen.getByRole('textbox', { name: 'Slug override for Alpha' })
-    await user.type(slugInput, 'alpha-custom')
+    // open the low-key trigger and edit inside the Dialog
+    await user.click(screen.getByRole('button', { name: 'Slug override for Alpha (skills/alpha)' }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByRole('textbox'), 'alpha-custom')
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }))
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(screen.getByRole('button', { name: 'Slug override for Alpha (skills/alpha)' }).textContent).toContain('alpha-custom')
 
     await user.click(screen.getByRole('button', { name: /Import selected/ }))
 
     expect(importBody).toBeDefined()
     expect(importBody.selectors).toEqual([{ relative_dir: 'skills/alpha', slug: 'alpha-custom' }])
+  })
+
+  it('does not apply a slug override cancelled in the dialog', async () => {
+    let importBody: any
+    window.fetch = vi.fn().mockImplementation(async (url: RequestInfo | URL, init?: RequestInit) => {
+      const urlStr = String(url)
+      if (init?.method === 'POST' && urlStr === '/api/v1/skills/import') {
+        importBody = JSON.parse(String(init.body))
+        return mockResponse(mockImportSuccess)
+      }
+      if (urlStr === '/api/v1/sources') return mockResponse({ items: [summary], total: 1 })
+      if (urlStr === '/api/v1/sources/1') return mockResponse(detail)
+      if (urlStr === '/api/v1/skills') return mockResponse({ items: [], total: 0 })
+      return mockResponse({ error: { message: 'Not found' } }, false, 404)
+    })
+
+    renderSourceDetail()
+    await screen.findByRole('heading', { name: 'local-one' })
+
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('checkbox', { name: 'Select Alpha' }))
+
+    await user.click(screen.getByRole('button', { name: 'Slug override for Alpha (skills/alpha)' }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByRole('textbox'), 'alpha-temp')
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    // trigger still shows the default state and nothing was saved
+    expect(screen.getByRole('button', { name: 'Slug override for Alpha (skills/alpha)' }).textContent).toContain('Default')
+
+    await user.click(screen.getByRole('button', { name: /Import selected/ }))
+
+    expect(importBody).toBeDefined()
+    expect(importBody.selectors).toEqual([{ relative_dir: 'skills/alpha' }])
   })
 
   it('shows error alert on import failure', async () => {

@@ -11,6 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@appica/icons-react": "^1.0.0",
     "@appica/ui-react": "^1.0.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
