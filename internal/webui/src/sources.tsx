@@ -9,12 +9,10 @@ import { fetchSources } from './source-api'
 import type { SourceSummary } from './source-api'
 import { SourceStatusBadge } from './source-status'
 import { AddSourceForm } from './add-source-form'
-import { SourceListPane } from './source-list-pane'
 import { SourceDetailPage } from './source-detail'
 import { useLocale } from './locale-context'
 
 export { SourceStatusBadge } from './source-status'
-export { SourceListPane } from './source-list-pane'
 export type { SourceDetail, SourceEntry, SourceIssue, SourceSummary } from './source-api'
 
 function truncate(value: string, max = 48): string {
@@ -126,13 +124,5 @@ export function SourcesIndex() {
 
 export function SourceExplorer() {
   const { name } = useParams()
-  const [refreshCounter, setRefreshCounter] = useState(0)
-  return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)] lg:items-start">
-      <div className="hidden lg:block">
-        <SourceListPane refreshCounter={refreshCounter} />
-      </div>
-      <SourceDetailPage key={name} onCheckSuccess={() => setRefreshCounter(c => c + 1)} />
-    </div>
-  )
+  return <SourceDetailPage key={name} />
 }

@@ -48,6 +48,23 @@ export interface ImportReplacesInfo {
   name: string
 }
 
+export interface ImportImpactGroup {
+  id: number
+  name: string
+}
+
+export interface ImportImpactTarget {
+  id: number
+  name: string
+  direct: boolean
+  groups?: ImportImpactGroup[]
+}
+
+export interface ImportImpact {
+  groups?: ImportImpactGroup[]
+  targets?: ImportImpactTarget[]
+}
+
 export type ImportStatus = 'imported' | 'already_imported' | 'skipped_conflict' | 'replaced' | 'failed'
 
 export interface ImportItemResult {
@@ -57,6 +74,7 @@ export interface ImportItemResult {
   slug?: string
   skill_id?: number
   replaces?: ImportReplacesInfo
+  impact?: ImportImpact
   code?: string
   message?: string
 }

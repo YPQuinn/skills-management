@@ -4,6 +4,7 @@ import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
 import { Badge } from '@appica/ui-react/badge'
 import { Spinner } from '@appica/ui-react/spinner'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@appica/ui-react/tabs'
+import { ArrowLeft } from '@appica/icons-react'
 import { fetchSkill } from './skill-api'
 import type { Skill } from './skill-api'
 import { useLocale } from './locale-context'
@@ -67,8 +68,9 @@ export function SkillDetailPage() {
       <div>
         <Link
           to="/skills"
-          className="text-sm text-foreground-subtle underline decoration-border underline-offset-2 hover:decoration-foreground"
+          className="inline-flex items-center gap-1 text-sm text-foreground-subtle underline decoration-border underline-offset-2 hover:decoration-foreground"
         >
+          <ArrowLeft className="size-4" />
           {t('linkAllSkills')}
         </Link>
         <div className="flex items-start justify-between gap-4 mt-2">

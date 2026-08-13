@@ -112,7 +112,7 @@ export function AddSourceForm() {
       </div>
 
       <Button type="submit" disabled={loading} focusableWhenDisabled>
-        {loading && <Spinner data-icon="start" currentColor />}
+        {loading && <Spinner data-icon="start" currentColor className="text-[1.2em]" />}
         {loading ? t('btnScanning') : t('btnRegisterAndScan')}
       </Button>
     </form>
