@@ -91,7 +91,7 @@ describe('App routing and state', () => {
     renderApp()
     
     expect(await screen.findByText('Server Error')).toBeTruthy()
-    expect(screen.getByText('Failed to fetch application status: Network offline')).toBeTruthy()
+    expect(screen.getByText(/Failed to fetch application status/)).toBeTruthy()
   })
 })
 

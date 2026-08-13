@@ -41,8 +41,11 @@ export const mockImportSuccess: ImportResponse = {
     },
   ],
   summary: {
+    total: 1,
     imported: 1,
-    skipped: 0,
+    already_imported: 0,
+    skipped_conflict: 0,
+    replaced: 0,
     failed: 0,
   },
 }
@@ -63,8 +66,49 @@ export const mockImportConflict: ImportResponse = {
     },
   ],
   summary: {
+    total: 1,
     imported: 0,
-    skipped: 1,
+    already_imported: 0,
+    skipped_conflict: 1,
+    replaced: 0,
     failed: 0,
+  },
+}
+
+export const mockImportReplaced: ImportResponse = {
+  items: [
+    {
+      status: 'replaced',
+      relative_dir: 'skills/alpha',
+      requested_slug: 'alpha',
+      slug: 'alpha',
+      skill_id: 101,
+    },
+  ],
+  summary: {
+    total: 1,
+    imported: 0,
+    already_imported: 0,
+    skipped_conflict: 0,
+    replaced: 1,
+    failed: 0,
+  },
+}
+
+export const mockImportAllFiveStatuses: ImportResponse = {
+  items: [
+    { status: 'imported', relative_dir: 'skills/one', slug: 'one', skill_id: 201 },
+    { status: 'already_imported', relative_dir: 'skills/two', slug: 'two', skill_id: 202 },
+    { status: 'skipped_conflict', relative_dir: 'skills/three', replaces: { skill_id: 203, slug: 'three', name: 'Three' } },
+    { status: 'replaced', relative_dir: 'skills/four', slug: 'four', skill_id: 204 },
+    { status: 'failed', relative_dir: 'skills/five', message: 'Failed size check' },
+  ],
+  summary: {
+    total: 5,
+    imported: 1,
+    already_imported: 1,
+    skipped_conflict: 1,
+    replaced: 1,
+    failed: 1,
   },
 }

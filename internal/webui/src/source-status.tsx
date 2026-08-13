@@ -1,15 +1,16 @@
 import { Badge } from '@appica/ui-react/badge'
+import { useLocale } from './locale-context'
 
-// SourceStatusBadge is the operator-facing availability label shared by the
-// index table, the master–detail list pane, and the detail page.
 export function SourceStatusBadge({ available, stale }: { available: boolean; stale: boolean }) {
+  const { t } = useLocale()
+
   if (available) {
-    return <Badge variant="success">Available</Badge>
+    return <Badge variant="success">{t('statusAvailable')}</Badge>
   }
   return (
     <>
-      <Badge variant="error">Unavailable</Badge>
-      {stale && <Badge variant="warning">Stale</Badge>}
+      <Badge variant="error">{t('statusUnavailable')}</Badge>
+      {stale && <Badge variant="warning">{t('statusStale')}</Badge>}
     </>
   )
 }

@@ -1,12 +1,16 @@
-import { useEffect, useState } from 'react'
-import { Routes, Route, useNavigate } from 'react-router-dom'
+import { useEffect, useState, useRef } from 'react'
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { Button } from '@appica/ui-react/button'
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
 import { Input } from '@appica/ui-react/input'
 import { Field, FieldLabel } from '@appica/ui-react/field'
 import { Spinner } from '@appica/ui-react/spinner'
 import { SourcesIndex, SourceExplorer } from './sources'
+import { SkillsIndex, SkillExplorer } from './skills'
 import { Layout } from './layout'
+import { useLocale } from './locale-context'
+import { LocaleProvider } from './locale-provider'
+import { ApiError } from './locale-dictionary'
 
 type BootstrapState = 'uninitialized' | 'state_missing' | 'invalid' | 'ready'
 
@@ -19,15 +23,11 @@ interface ErrorEnvelope {
   error?: { message?: string }
 }
 
-function getErrorMessage(err: unknown): string {
-  if (err instanceof Error) return err.message
-  return String(err)
-}
-
 function Setup({ status }: { status: StatusResponse }) {
   const navigate = useNavigate()
+  const { t, getErrorMessage } = useLocale()
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<unknown | null>(null)
   const [storePath, setStorePath] = useState('')
 
   if (status.state === 'state_missing' || status.state === 'invalid') {
@@ -35,11 +35,11 @@ function Setup({ status }: { status: StatusResponse }) {
       <div className="min-h-dvh flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-md p-6 border border-border rounded-xl shadow-sm bg-background">
           <Alert variant="error" className="mb-4">
-            <AlertTitle>Error: {status.state}</AlertTitle>
-            <AlertDescription>{status.message || 'Cannot proceed with setup due to invalid or missing state.'}</AlertDescription>
+            <AlertTitle>{t('alertStateError', { state: status.state })}</AlertTitle>
+            <AlertDescription>{status.message || t('defaultStateErrorMsg')}</AlertDescription>
           </Alert>
           <p className="text-sm text-foreground-subtle">
-            Please resolve the issue externally before restarting the application.
+            {t('stateErrorHelpText')}
           </p>
         </div>
       </div>
@@ -51,7 +51,7 @@ function Setup({ status }: { status: StatusResponse }) {
     
     const trimmedPath = storePath.trim()
     if (trimmedPath !== '' && !trimmedPath.startsWith('/')) {
-      setError('Path must be absolute (e.g. starting with "/")')
+      setError(new ApiError(undefined, 'errAbsoluteMatch'))
       return
     }
 
@@ -63,13 +63,13 @@ function Setup({ status }: { status: StatusResponse }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ store_path: trimmedPath }),
       })
+      const data = (await res.json().catch(() => ({}))) as ErrorEnvelope
       if (!res.ok) {
-        const data = (await res.json()) as ErrorEnvelope
-        throw new Error(data?.error?.message || 'Setup failed')
+        throw new ApiError(data?.error?.message, 'errSetupFailed')
       }
       navigate('/skills', { replace: true })
     } catch (err: unknown) {
-      setError(getErrorMessage(err))
+      setError(err)
     } finally {
       setLoading(false)
     }
@@ -78,31 +78,31 @@ function Setup({ status }: { status: StatusResponse }) {
   return (
     <div className="min-h-dvh flex items-center justify-center p-4">
       <div className="w-full max-w-md p-6 border border-border rounded-xl shadow-sm bg-background">
-        <h1 className="text-xl font-semibold mb-2">Welcome to Skill Manager</h1>
-        <p className="text-foreground-subtle mb-6 text-sm">Initialize your local Skill Store to get started.</p>
+        <h1 className="text-xl font-semibold mb-2">{t('welcomeTitle')}</h1>
+        <p className="text-foreground-subtle mb-6 text-sm">{t('welcomeSubtitle')}</p>
         
-        {error && (
+        {error !== null && (
           <Alert variant="error" className="mb-6">
-            <AlertTitle>Setup Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
+            <AlertTitle>{t('alertSetupError')}</AlertTitle>
+            <AlertDescription>{getErrorMessage(error, 'errSetupFailed')}</AlertDescription>
           </Alert>
         )}
 
         <form onSubmit={handleSetup} className="space-y-4">
           <Field name="storePath">
-            <FieldLabel>Store Path (Optional)</FieldLabel>
+            <FieldLabel>{t('storePathLabel')}</FieldLabel>
             <Input 
               value={storePath} 
               onChange={e => {
                 setStorePath(e.target.value)
                 setError(null)
               }} 
-              placeholder="Leave blank for default"
+              placeholder={t('storePathPlaceholder')}
             />
           </Field>
           <Button type="submit" disabled={loading} focusableWhenDisabled className="w-full">
             {loading && <Spinner data-icon="start" currentColor />}
-            {loading ? 'Initializing...' : 'Initialize'}
+            {loading ? t('btnInitializing') : t('btnInitialize')}
           </Button>
         </form>
       </div>
@@ -110,12 +110,13 @@ function Setup({ status }: { status: StatusResponse }) {
   )
 }
 
-
 function Skills() {
   return (
     <Layout>
-      <h1 className="text-2xl font-bold mb-4">Skills</h1>
-      <p className="text-foreground-subtle">Your local skill store is ready.</p>
+      <Routes>
+        <Route path="/" element={<SkillsIndex />} />
+        <Route path="/:slug" element={<SkillExplorer />} />
+      </Routes>
     </Layout>
   )
 }
@@ -132,67 +133,77 @@ function Sources() {
 }
 
 function Groups() {
+  const { t } = useLocale()
   return (
     <Layout>
-      <h1 className="text-2xl font-bold mb-4">Groups</h1>
-      <p className="text-foreground-subtle">Group management will appear here.</p>
+      <h1 className="text-2xl font-bold mb-4">{t('groupsTitle')}</h1>
+      <p className="text-foreground-subtle">{t('groupsText')}</p>
     </Layout>
   )
 }
 
 function Targets() {
+  const { t } = useLocale()
   return (
     <Layout>
-      <h1 className="text-2xl font-bold mb-4">Targets</h1>
-      <p className="text-foreground-subtle">Agent target configuration will appear here.</p>
+      <h1 className="text-2xl font-bold mb-4">{t('targetsTitle')}</h1>
+      <p className="text-foreground-subtle">{t('targetsText')}</p>
     </Layout>
   )
 }
 
-export default function App() {
+function AppRoutes() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const { t, getErrorMessage } = useLocale()
   const [checking, setChecking] = useState(true)
   const [status, setStatus] = useState<StatusResponse | null>(null)
-  const [fetchError, setFetchError] = useState<string | null>(null)
+  const [fetchError, setFetchError] = useState<unknown | null>(null)
+
+  const fetchedRef = useRef(false)
 
   useEffect(() => {
+    if (fetchedRef.current) return
+    fetchedRef.current = true
+
     fetch('/api/v1/status')
       .then(async (res) => {
+        const data = await res.json().catch(() => ({}))
         if (!res.ok) {
-          throw new Error(`Server responded with ${res.status}`)
+          throw new ApiError(data?.error?.message, 'errServerResponded', { status: res.status })
         }
-        return res.json()
+        return data as StatusResponse
       })
       .then((data: StatusResponse) => {
         setStatus(data)
         if (data.state === 'uninitialized' || data.state === 'state_missing' || data.state === 'invalid') {
           navigate('/setup', { replace: true })
-        } else if (window.location.pathname === '/' || window.location.pathname === '/setup') {
+        } else if (location.pathname === '/' || location.pathname === '/setup') {
           navigate('/skills', { replace: true })
         }
       })
       .catch((err: unknown) => {
         console.error(err)
-        setFetchError(getErrorMessage(err))
+        setFetchError(err)
       })
       .finally(() => setChecking(false))
-  }, [navigate])
+  }, [navigate, location.pathname])
 
   if (checking) {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center p-4 bg-background text-foreground">
-        <Spinner className="text-3xl text-foreground-subtle" />
+        <Spinner className="text-3xl text-foreground-subtle" aria-label={t('ariaCheckingStatus')} />
       </div>
     )
   }
 
-  if (fetchError) {
+  if (fetchError !== null) {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center p-4 bg-background text-foreground">
         <div className="w-full max-w-md">
           <Alert variant="error">
-            <AlertTitle>Server Error</AlertTitle>
-            <AlertDescription>Failed to fetch application status: {fetchError}</AlertDescription>
+            <AlertTitle>{t('alertServerError')}</AlertTitle>
+            <AlertDescription>{t('failedFetchStatus', { error: getErrorMessage(fetchError, 'errServerResponded') })}</AlertDescription>
           </Alert>
         </div>
       </div>
@@ -208,7 +219,15 @@ export default function App() {
       <Route path="/sources/*" element={<Sources />} />
       <Route path="/groups/*" element={<Groups />} />
       <Route path="/targets/*" element={<Targets />} />
-      <Route path="*" element={<div className="p-4 bg-background text-foreground min-h-dvh">Not Found</div>} />
+      <Route path="*" element={<div className="p-4 bg-background text-foreground min-h-dvh">{t('notFound')}</div>} />
     </Routes>
+  )
+}
+
+export default function App() {
+  return (
+    <LocaleProvider>
+      <AppRoutes />
+    </LocaleProvider>
   )
 }

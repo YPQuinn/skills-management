@@ -79,6 +79,6 @@ func newRootCmd(bm *bootstrap.Manager) *cobra.Command {
 	root.SetFlagErrorFunc(func(c *cobra.Command, err error) error {
 		return app.Errorf(app.CodeInvalidArgument, "%v", err)
 	})
-	root.AddCommand(NewInitCmd(bm), NewStatusCmd(bm), NewUICmd(bm), NewSourceCmd(bm))
+	root.AddCommand(NewInitCmd(bm), NewStatusCmd(bm), NewUICmd(bm), NewSourceCmd(bm), NewSkillCmd(bm))
 	return root
 }

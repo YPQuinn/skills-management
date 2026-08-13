@@ -1,0 +1,137 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
+import { Badge } from '@appica/ui-react/badge'
+import { ScrollArea } from '@appica/ui-react/scroll-area'
+import { Spinner } from '@appica/ui-react/spinner'
+import { Table, TableCaption, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@appica/ui-react/table'
+import { fetchSkills } from './skill-api'
+import type { Skill } from './skill-api'
+import { useLocale } from './locale-context'
+
+function isAbortError(err: unknown): boolean {
+  return typeof err === 'object' && err !== null && (err as { name?: unknown }).name === 'AbortError'
+}
+
+export function SkillsIndex() {
+  const { t, formatTime, getErrorMessage } = useLocale()
+  const [skills, setSkills] = useState<Skill[] | null>(null)
+  const [error, setError] = useState<unknown | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  const inflight = useRef<AbortController | null>(null)
+
+  const load = useCallback(() => {
+    inflight.current?.abort()
+    const controller = new AbortController()
+    inflight.current = controller
+    setLoading(true)
+    setError(null)
+    fetchSkills(controller.signal)
+      .then((data) => {
+        if (inflight.current === controller) setSkills(data)
+      })
+      .catch((err: unknown) => {
+        if (isAbortError(err)) return
+        if (inflight.current === controller) setError(err)
+      })
+      .finally(() => {
+        if (inflight.current === controller) setLoading(false)
+      })
+  }, [])
+
+  useEffect(() => {
+    load()
+    return () => {
+      const active = inflight.current
+      inflight.current = null
+      active?.abort()
+    }
+  }, [load])
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">{t('skillsTitle')}</h1>
+          <p className="text-foreground-subtle text-sm">{t('skillsSubtitle')}</p>
+        </div>
+      </div>
+
+      {error !== null && (
+        <Alert variant="error">
+          <AlertTitle>{t('alertCouldNotLoadSkills')}</AlertTitle>
+          <AlertDescription>{getErrorMessage(error, 'alertCouldNotLoadSkills')}</AlertDescription>
+        </Alert>
+      )}
+
+      {loading && skills === null ? (
+        <div className="flex justify-center py-12">
+          <Spinner className="text-3xl text-foreground-subtle" aria-label={t('ariaLoadingSkills')} />
+        </div>
+      ) : skills === null ? null : skills.length === 0 ? (
+        <div className="rounded-xl border border-border bg-background p-8 text-center space-y-3">
+          <p className="text-foreground-subtle">{t('emptySkillsIndexTitle')}</p>
+          <p className="text-sm text-foreground-subtle">{t('emptySkillsIndexSubtitle')}</p>
+          <Link
+            to="/sources"
+            className="inline-block text-sm font-medium underline decoration-border underline-offset-2 hover:decoration-foreground"
+          >
+            {t('linkGoToSources')}
+          </Link>
+        </div>
+      ) : (
+        <ScrollArea className="w-full" orientation="horizontal">
+          <div className="min-w-[700px]">
+            <Table>
+              <TableCaption className="sr-only">{t('captionSkillStore')}</TableCaption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('colName')}</TableHead>
+                  <TableHead>{t('colSlug')}</TableHead>
+                  <TableHead>{t('colDescription')}</TableHead>
+                  <TableHead>{t('colSourceBinding')}</TableHead>
+                  <TableHead>{t('colUpdated')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {skills.map((s) => (
+                  <TableRow key={s.id}>
+                    <TableCell className="font-medium text-foreground-strong">
+                      <Link
+                        to={`/skills/${encodeURIComponent(s.slug)}`}
+                        className="underline decoration-border underline-offset-2 hover:decoration-foreground"
+                      >
+                        {s.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="font-mono text-foreground-subtle">{s.slug}</TableCell>
+                    <TableCell className="text-foreground-subtle">{s.description}</TableCell>
+                    <TableCell>
+                      {s.binding ? (
+                        <div className="flex flex-col text-xs">
+                          <Link
+                            to={`/sources/${encodeURIComponent(s.binding.source_name)}`}
+                            className="font-medium underline decoration-border underline-offset-2 hover:decoration-foreground"
+                          >
+                            {s.binding.source_name}
+                          </Link>
+                          <span className="font-mono text-foreground-subtle">{s.binding.relative_dir}</span>
+                        </div>
+                      ) : (
+                        <Badge variant="outline" className="text-xs">
+                          {t('badgeUnbound')}
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-foreground-subtle text-xs">{formatTime(s.updated_at)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </ScrollArea>
+      )}
+    </div>
+  )
+}

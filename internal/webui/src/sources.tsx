@@ -2,35 +2,29 @@ import { useCallback, useEffect, useState, useRef } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
 import { Badge } from '@appica/ui-react/badge'
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@appica/ui-react/table'
+import { Table, TableCaption, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@appica/ui-react/table'
 import { ScrollArea } from '@appica/ui-react/scroll-area'
 import { Spinner } from '@appica/ui-react/spinner'
-import { fetchSources, getErrorMessage } from './source-api'
+import { fetchSources } from './source-api'
 import type { SourceSummary } from './source-api'
 import { SourceStatusBadge } from './source-status'
 import { AddSourceForm } from './add-source-form'
 import { SourceListPane } from './source-list-pane'
 import { SourceDetailPage } from './source-detail'
+import { useLocale } from './locale-context'
 
-// Re-exports keep the public surface used by App.tsx and source-detail.tsx
-// stable after the split into feature modules.
 export { SourceStatusBadge } from './source-status'
 export { SourceListPane } from './source-list-pane'
 export type { SourceDetail, SourceEntry, SourceIssue, SourceSummary } from './source-api'
-
-function formatTime(value?: string): string {
-  if (!value) return 'never'
-  const d = new Date(value)
-  return Number.isNaN(d.getTime()) ? value : d.toLocaleString()
-}
 
 function truncate(value: string, max = 48): string {
   return value.length > max ? value.slice(0, max - 1) + '…' : value
 }
 
 export function SourcesIndex() {
+  const { t, formatTime, getErrorMessage } = useLocale()
   const [sources, setSources] = useState<SourceSummary[] | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<unknown | null>(null)
   const [loading, setLoading] = useState(true)
 
   const inflight = useRef<AbortController | null>(null)
@@ -47,7 +41,7 @@ export function SourcesIndex() {
       })
       .catch((err: unknown) => {
         if (typeof err === 'object' && err !== null && (err as { name?: unknown }).name === 'AbortError') return
-        if (inflight.current === controller) setError(getErrorMessage(err))
+        if (inflight.current === controller) setError(err)
       })
       .finally(() => {
         if (inflight.current === controller) setLoading(false)
@@ -67,38 +61,39 @@ export function SourcesIndex() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Sources</h1>
-          <p className="text-foreground-subtle text-sm">Upstream locations Skills are imported and checked from.</p>
+          <h1 className="text-2xl font-bold">{t('sourcesTitle')}</h1>
+          <p className="text-foreground-subtle text-sm">{t('sourcesSubtitle')}</p>
         </div>
       </div>
 
       <AddSourceForm />
 
-      {error && (
+      {error !== null && (
         <Alert variant="error">
-          <AlertTitle>Could not load Sources</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertTitle>{t('alertCouldNotLoadSources')}</AlertTitle>
+          <AlertDescription>{getErrorMessage(error, 'alertCouldNotLoadSources')}</AlertDescription>
         </Alert>
       )}
 
       {loading && sources === null ? (
         <div className="flex justify-center py-12">
-          <Spinner className="text-3xl text-foreground-subtle" aria-label="Loading sources" />
+          <Spinner className="text-3xl text-foreground-subtle" aria-label={t('ariaLoadingSources')} />
         </div>
       ) : sources === null ? null : sources.length === 0 ? (
-        <p className="text-foreground-subtle">No Sources registered yet.</p>
+        <p className="text-foreground-subtle">{t('emptySourcesIndex')}</p>
       ) : (
         <ScrollArea className="w-full" orientation="horizontal">
           <div className="min-w-[800px]">
-            <Table>
+            <Table aria-label={t('captionSourcesIndex')}>
+              <TableCaption className="sr-only">{t('captionSourcesIndex')}</TableCaption>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Kind</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-end">Skills</TableHead>
-                  <TableHead>Last checked</TableHead>
+                  <TableHead>{t('colName')}</TableHead>
+                  <TableHead>{t('colKind')}</TableHead>
+                  <TableHead>{t('colLocation')}</TableHead>
+                  <TableHead>{t('colStatus')}</TableHead>
+                  <TableHead className="text-end">{t('colSkills')}</TableHead>
+                  <TableHead>{t('colLastChecked')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -129,9 +124,6 @@ export function SourcesIndex() {
   )
 }
 
-// SourceExplorer is the desktop resource-explorer master–detail view: a
-// compact Source list stays visible beside the selected Source. On narrow
-// screens the list pane is hidden and the detail is its own route view.
 export function SourceExplorer() {
   const { name } = useParams()
   const [refreshCounter, setRefreshCounter] = useState(0)
@@ -140,9 +132,6 @@ export function SourceExplorer() {
       <div className="hidden lg:block">
         <SourceListPane refreshCounter={refreshCounter} />
       </div>
-      {/* keying by name remounts the detail on route change so the previous
-          Source never renders as the new selection and an older response
-          can never overwrite the current route */}
       <SourceDetailPage key={name} onCheckSuccess={() => setRefreshCounter(c => c + 1)} />
     </div>
   )

@@ -1,5 +1,6 @@
 // Skill REST/JSON boundary: resource shapes returned by /api/v1/skills
 // and /api/v1/skills/import. The REST adapter owns snake_case field names.
+import { ApiError, type DictionaryKey } from './locale-dictionary'
 
 export interface SkillBinding {
   source_id: number
@@ -47,8 +48,10 @@ export interface ImportReplacesInfo {
   name: string
 }
 
+export type ImportStatus = 'imported' | 'already_imported' | 'skipped_conflict' | 'replaced' | 'failed'
+
 export interface ImportItemResult {
-  status: 'imported' | 'skipped_imported' | 'skipped_conflict' | 'error' | string
+  status: ImportStatus
   relative_dir: string
   requested_slug?: string
   slug?: string
@@ -59,10 +62,12 @@ export interface ImportItemResult {
 }
 
 export interface ImportSummary {
-  imported?: number
-  skipped?: number
-  failed?: number
-  [key: string]: unknown
+  total: number
+  imported: number
+  already_imported: number
+  skipped_conflict: number
+  replaced: number
+  failed: number
 }
 
 export interface ImportResponse {
@@ -74,42 +79,37 @@ interface ErrorEnvelope {
   error?: { message?: string; code?: string }
 }
 
-export function getErrorMessage(err: unknown): string {
-  if (err instanceof Error) return err.message
-  return String(err)
-}
-
-async function responseError(res: Response, fallback: string): Promise<Error> {
-  let message = fallback
+async function responseError(
+  res: Response,
+  fallbackKey: DictionaryKey,
+  params?: Record<string, string | number>,
+): Promise<ApiError> {
+  let serverMessage: string | undefined
   try {
     const data = (await res.json()) as ErrorEnvelope
     if (data?.error?.message) {
-      message = data.error.message
+      serverMessage = data.error.message
     }
-  } catch {
-    // Keep fallback HTTP status message
-  }
-  return new Error(message)
+  } catch {}
+  return new ApiError(serverMessage, fallbackKey, params || { status: res.status })
 }
 
 export function fetchSkills(signal?: AbortSignal): Promise<Skill[]> {
   return fetch('/api/v1/skills', { signal })
     .then(async (res) => {
-      if (!res.ok) throw await responseError(res, `Server responded with ${res.status}`)
+      if (!res.ok) throw await responseError(res, 'errServerResponded', { status: res.status })
       return (await res.json()) as SkillListResponse
     })
     .then((data) => data.items || [])
 }
 
 export function fetchSkill(idOrSlug: string | number, signal?: AbortSignal): Promise<Skill> {
-  // If idOrSlug is string slug, first fetch skills list to find matching skill ID or slug
   return fetchSkills(signal).then(async (skills) => {
     const found = skills.find((s) => s.slug === String(idOrSlug) || s.id === Number(idOrSlug))
-    if (!found) throw new Error('Skill not found')
-    
-    // Fetch detail endpoint by ID
+    if (!found) throw new ApiError(undefined, 'errSkillNotFound')
+
     const res = await fetch(`/api/v1/skills/${found.id}`, { signal })
-    if (!res.ok) throw await responseError(res, `Server responded with ${res.status}`)
+    if (!res.ok) throw await responseError(res, 'errServerResponded', { status: res.status })
     return (await res.json()) as Skill
   })
 }
@@ -121,7 +121,7 @@ export function importSkills(body: ImportRequest, signal?: AbortSignal): Promise
     body: JSON.stringify(body),
     signal,
   }).then(async (res) => {
-    if (!res.ok) throw await responseError(res, 'Importing skills failed')
+    if (!res.ok) throw await responseError(res, 'errImportingSkillsFailed')
     return (await res.json()) as ImportResponse
   })
 }
