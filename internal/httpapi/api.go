@@ -57,6 +57,11 @@ func (s *Server) Handler() http.Handler {
 			r.Get("/{id}", s.handleShowSource)
 			r.With(jsonMutationsOnly).Post("/{id}/check", s.handleCheckSource)
 		})
+		r.Route("/skills", func(r chi.Router) {
+			r.Get("/", s.handleListSkills)
+			r.Get("/{id}", s.handleShowSkill)
+			r.With(jsonMutationsOnly).Post("/import", s.handleImportSkills)
+		})
 		r.NotFound(handleAPINotFound)
 		r.MethodNotAllowed(handleAPINotFound)
 	})

@@ -2,18 +2,16 @@ import { useEffect, useState, useRef } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
 import { Spinner } from '@appica/ui-react/spinner'
-import { fetchSources, getErrorMessage } from './source-api'
+import { fetchSources } from './source-api'
 import type { SourceSummary } from './source-api'
 import { SourceStatusBadge } from './source-status'
+import { useLocale } from './locale-context'
 
-// SourceListPane is the compact master–detail companion to SourceDetailPage:
-// concise name, status, entry count, and location context with links to the
-// stable /sources/:name route. Registration and the full table live on the
-// /sources index, never in this pane.
 export function SourceListPane({ refreshCounter = 0 }: { refreshCounter?: number }) {
   const { name } = useParams()
+  const { t, getErrorMessage } = useLocale()
   const [sources, setSources] = useState<SourceSummary[] | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<unknown | null>(null)
   const [loading, setLoading] = useState(true)
 
   const inflight = useRef<AbortController | null>(null)
@@ -30,7 +28,7 @@ export function SourceListPane({ refreshCounter = 0 }: { refreshCounter?: number
       })
       .catch((err: unknown) => {
         if (typeof err === 'object' && err !== null && (err as { name?: unknown }).name === 'AbortError') return
-        if (inflight.current === controller) setError(getErrorMessage(err))
+        if (inflight.current === controller) setError(err)
       })
       .finally(() => {
         if (inflight.current === controller) setLoading(false)
@@ -43,28 +41,28 @@ export function SourceListPane({ refreshCounter = 0 }: { refreshCounter?: number
   }, [refreshCounter])
 
   return (
-    <nav aria-label="Source list" className="rounded-xl border border-border bg-background p-4">
-      <h2 className="mb-3 text-sm font-semibold text-foreground-strong">Sources</h2>
+    <nav aria-label={t('ariaSourceList')} className="rounded-xl border border-border bg-background p-4">
+      <h2 className="mb-3 text-sm font-semibold text-foreground-strong">{t('sourcesTitle')}</h2>
 
-      {error && (
+      {error !== null && (
         <Alert variant="error">
-          <AlertTitle>Could not load Sources</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertTitle>{t('alertCouldNotLoadSources')}</AlertTitle>
+          <AlertDescription>{getErrorMessage(error)}</AlertDescription>
         </Alert>
       )}
 
       {loading && sources === null ? (
         <div className="flex justify-center py-8">
-          <Spinner className="text-2xl text-foreground-subtle" aria-label="Loading sources" />
+          <Spinner className="text-2xl text-foreground-subtle" aria-label={t('ariaLoadingSources')} />
         </div>
       ) : sources === null ? null : sources.length === 0 ? (
         <div className="space-y-2">
-          <p className="text-sm text-foreground-subtle">No Sources registered yet.</p>
+          <p className="text-sm text-foreground-subtle">{t('emptySourcesListPane')}</p>
           <Link
             to="/sources"
             className="text-sm font-medium underline decoration-border underline-offset-2 hover:decoration-foreground"
           >
-            Register a Source
+            {t('linkRegisterSource')}
           </Link>
         </div>
       ) : (
@@ -86,7 +84,9 @@ export function SourceListPane({ refreshCounter = 0 }: { refreshCounter?: number
                   </span>
                   <span className="mt-0.5 flex items-center justify-between gap-2">
                     <span className="truncate text-xs text-foreground-subtle" title={s.location}>{s.location}</span>
-                    <span className="shrink-0 text-xs text-foreground-subtle tabular-nums">{s.entry_count} skills</span>
+                    <span className="shrink-0 text-xs text-foreground-subtle tabular-nums">
+                      {t('countSkills', { count: s.entry_count })}
+                    </span>
                   </span>
                 </Link>
               </li>

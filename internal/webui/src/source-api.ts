@@ -2,6 +2,8 @@
 // and the request helpers every Source view shares. The REST adapter owns
 // the same snake_case field names, so these types mirror the Go DTOs rather
 // than inventing a camelCase view layer.
+import { ApiError, type DictionaryKey } from './locale-dictionary'
+
 export interface SourceEntry {
   relative_dir: string
   name: string
@@ -40,22 +42,25 @@ interface ErrorEnvelope {
   error?: { message?: string }
 }
 
-export function getErrorMessage(err: unknown): string {
-  if (err instanceof Error) return err.message
-  return String(err)
-}
-
-// responseError converts a failed response into the server's envelope
-// message, or a stable fallback when the body is not an envelope.
-async function responseError(res: Response, fallback: string): Promise<Error> {
-  const data = (await res.json()) as ErrorEnvelope
-  return new Error(data?.error?.message || fallback)
+async function responseError(
+  res: Response,
+  fallbackKey: DictionaryKey,
+  params?: Record<string, string | number>,
+): Promise<ApiError> {
+  let serverMessage: string | undefined
+  try {
+    const data = (await res.json()) as ErrorEnvelope
+    if (data?.error?.message) {
+      serverMessage = data.error.message
+    }
+  } catch {}
+  return new ApiError(serverMessage, fallbackKey, params || { status: res.status })
 }
 
 export function fetchSources(signal?: AbortSignal): Promise<SourceSummary[]> {
   return fetch('/api/v1/sources', { signal })
     .then(async (res) => {
-      if (!res.ok) throw await responseError(res, `Server responded with ${res.status}`)
+      if (!res.ok) throw await responseError(res, 'errServerResponded', { status: res.status })
       return (await res.json()) as { items: SourceSummary[] }
     })
     .then((data) => data.items)
@@ -68,7 +73,7 @@ export function createSource(body: Record<string, string>, signal?: AbortSignal)
     body: JSON.stringify(body),
     signal,
   }).then(async (res) => {
-    if (!res.ok) throw await responseError(res, 'Registering the Source failed')
+    if (!res.ok) throw await responseError(res, 'errRegisteringSourceFailed')
     return (await res.json()) as SourceDetail
   })
 }

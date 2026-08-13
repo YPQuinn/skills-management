@@ -43,6 +43,8 @@ Deliver a runnable, local-first Skill Manager MVP for macOS and Linux, preferabl
 - [Define MVP packaging and acceptance](issues/09-define-mvp-acceptance.md) — Set four native single-binary releases, deterministic offline quality gates, CLI and browser journeys, crash/concurrency/state-loss recovery, and documentation plus public-GitHub final validation.
 - [Establish the runtime and bootstrap foundation](issues/10-establish-runtime-bootstrap-foundation.md) — Delivered the tested Go/bootstrap/SQLite/locking runtime, secure Cobra/chi setup boundary, and embedded Appica shell with restart and deep-link support.
 - [Implement Source registration and inventory](issues/11-implement-source-registration-inventory.md) — Delivered stable Local/Git observation, safe ambient GitHub authentication, canonical Inventory digests, transactional Source state, noun-first CLI and strict REST operations, and the Appica Source explorer.
+- [Implement Skill import and Store materialization](issues/12-implement-skill-import-store.md) — Delivered safe full-tree imports and replacements, durable identity-bound Store recovery receipts, Source Bindings and per-item outcomes, matching noun-first CLI and strict REST contracts, and Appica Skills plus Source Inventory import workflows.
+- [Add English and Simplified Chinese WebUI localization](issues/20-add-webui-localization.md) — Added a typed dependency-free locale layer, persisted Appica language switching, localized WebUI copy/accessibility/timestamps/client fallbacks, and no-refetch locale transitions while preserving server messages verbatim.
 
 ## Not yet specified
 

@@ -3,13 +3,15 @@ import { Link, useParams } from 'react-router-dom'
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
 import { Badge } from '@appica/ui-react/badge'
 import { Spinner } from '@appica/ui-react/spinner'
-import { fetchSkills, getErrorMessage } from './skill-api'
+import { fetchSkills } from './skill-api'
 import type { Skill } from './skill-api'
+import { useLocale } from './locale-context'
 
 export function SkillListPane({ refreshCounter = 0 }: { refreshCounter?: number }) {
   const { slug } = useParams()
+  const { t, getErrorMessage } = useLocale()
   const [skills, setSkills] = useState<Skill[] | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<unknown | null>(null)
   const [loading, setLoading] = useState(true)
 
   const inflight = useRef<AbortController | null>(null)
@@ -26,7 +28,7 @@ export function SkillListPane({ refreshCounter = 0 }: { refreshCounter?: number 
       })
       .catch((err: unknown) => {
         if (typeof err === 'object' && err !== null && (err as { name?: unknown }).name === 'AbortError') return
-        if (inflight.current === controller) setError(getErrorMessage(err))
+        if (inflight.current === controller) setError(err)
       })
       .finally(() => {
         if (inflight.current === controller) setLoading(false)
@@ -39,28 +41,28 @@ export function SkillListPane({ refreshCounter = 0 }: { refreshCounter?: number 
   }, [refreshCounter])
 
   return (
-    <nav aria-label="Skill list" className="rounded-xl border border-border bg-background p-4">
-      <h2 className="mb-3 text-sm font-semibold text-foreground-strong">Skills</h2>
+    <nav aria-label={t('ariaSkillList')} className="rounded-xl border border-border bg-background p-4">
+      <h2 className="mb-3 text-sm font-semibold text-foreground-strong">{t('skillsTitle')}</h2>
 
-      {error && (
+      {error !== null && (
         <Alert variant="error">
-          <AlertTitle>Could not load Skills</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertTitle>{t('alertCouldNotLoadSkills')}</AlertTitle>
+          <AlertDescription>{getErrorMessage(error)}</AlertDescription>
         </Alert>
       )}
 
       {loading && skills === null ? (
         <div className="flex justify-center py-8">
-          <Spinner className="text-2xl text-foreground-subtle" aria-label="Loading skills" />
+          <Spinner className="text-2xl text-foreground-subtle" aria-label={t('ariaLoadingSkills')} />
         </div>
       ) : skills === null ? null : skills.length === 0 ? (
         <div className="space-y-2">
-          <p className="text-sm text-foreground-subtle">No Skills in local Store.</p>
+          <p className="text-sm text-foreground-subtle">{t('emptySkillsListPane')}</p>
           <Link
             to="/sources"
             className="text-sm font-medium underline decoration-border underline-offset-2 hover:decoration-foreground"
           >
-            Import from a Source
+            {t('linkImportFromSource')}
           </Link>
         </div>
       ) : (
@@ -84,7 +86,7 @@ export function SkillListPane({ refreshCounter = 0 }: { refreshCounter?: number 
                       </Badge>
                     ) : (
                       <Badge variant="outline" className="shrink-0 text-xs">
-                        unbound
+                        {t('badgeUnbound')}
                       </Badge>
                     )}
                   </span>
