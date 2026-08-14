@@ -1,6 +1,7 @@
 // Skill REST/JSON boundary: resource shapes returned by /api/v1/skills
 // and /api/v1/skills/import. The REST adapter owns snake_case field names.
 import { ApiError, type DictionaryKey } from './locale-dictionary'
+import type { LastSync } from './sync-api'
 
 export interface SkillBinding {
   source_id: number
@@ -21,6 +22,11 @@ export interface Skill {
   created_at: string
   updated_at: string
   binding?: SkillBinding
+  sync_status: string
+  sync_stale: boolean
+  sync_checked_at?: string
+  last_sync?: LastSync
+  has_previous_snapshot: boolean
 }
 
 export interface SkillListResponse {
@@ -97,7 +103,7 @@ interface ErrorEnvelope {
   error?: { message?: string; code?: string }
 }
 
-async function responseError(
+export async function responseError(
   res: Response,
   fallbackKey: DictionaryKey,
   params?: Record<string, string | number>,

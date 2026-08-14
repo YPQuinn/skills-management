@@ -56,11 +56,18 @@ func (s *Server) Handler() http.Handler {
 			r.With(jsonMutationsOnly).Post("/", s.handleCreateSource)
 			r.Get("/{id}", s.handleShowSource)
 			r.With(jsonMutationsOnly).Post("/{id}/check", s.handleCheckSource)
+			r.With(jsonMutationsOnly).Post("/{id}/sync", s.handleSyncSource)
 		})
 		r.Route("/skills", func(r chi.Router) {
 			r.Get("/", s.handleListSkills)
 			r.Get("/{id}", s.handleShowSkill)
 			r.With(jsonMutationsOnly).Post("/import", s.handleImportSkills)
+			r.With(jsonMutationsOnly).Post("/{id}/check", s.handleCheckSkillSync)
+			r.Get("/{id}/diff", s.handleDiffSkill)
+			r.With(jsonMutationsOnly).Post("/{id}/sync", s.handleSyncSkill)
+			r.With(jsonMutationsOnly).Post("/{id}/keep-store", s.handleKeepStore)
+			r.With(jsonMutationsOnly).Post("/{id}/accept-source", s.handleAcceptSource)
+			r.With(jsonMutationsOnly).Post("/{id}/rollback", s.handleRollback)
 		})
 		r.Route("/groups", func(r chi.Router) {
 			r.Get("/", s.handleListGroups)

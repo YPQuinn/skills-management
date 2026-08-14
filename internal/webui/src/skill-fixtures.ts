@@ -9,6 +9,10 @@ export const skillAlpha: Skill = {
   baseline_digest: 'sha256:1111111111111111111111111111111111111111111111111111111111111111',
   created_at: '2026-08-11T10:00:00Z',
   updated_at: '2026-08-11T10:00:00Z',
+  sync_status: 'in_sync',
+  sync_stale: false,
+  sync_checked_at: '2026-08-11T10:05:00Z',
+  has_previous_snapshot: true,
   binding: {
     source_id: 1,
     source_name: 'local-one',
@@ -28,6 +32,9 @@ export const skillBeta: Skill = {
   baseline_digest: 'sha256:2222222222222222222222222222222222222222222222222222222222222222',
   created_at: '2026-08-11T11:00:00Z',
   updated_at: '2026-08-11T11:00:00Z',
+  sync_status: 'unbound',
+  sync_stale: false,
+  has_previous_snapshot: false,
 }
 
 export const mockImportSuccess: ImportResponse = {

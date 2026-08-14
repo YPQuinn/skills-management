@@ -9,6 +9,7 @@ import type { SourceDetail, SourceSummary } from './source-api'
 import { fetchSkills } from './skill-api'
 import type { Skill } from './skill-api'
 import { SourceInventory } from './source-inventory'
+import { SourceSyncSection } from './source-sync'
 import { SourceReplaceDialog } from './source-replace-dialog'
 import { SourceFacts } from './source-facts'
 import { SourceLocationIcon } from './source-location'
@@ -248,6 +249,8 @@ export function SourceDetailPage() {
         importResult={importResult}
         onImport={handleImport}
       />
+
+      {sourceId !== null && <SourceSyncSection sourceId={sourceId} onSynced={loadSkills} />}
 
       <SourceIssuesList issues={source.issues} />
 

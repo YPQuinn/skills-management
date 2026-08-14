@@ -115,7 +115,7 @@ func TestImportSkillsFreshAppResumesStalePreviousWitnessWithStableReceipt(t *tes
 	opDirID := statID(t, filepath.Join(a.StorePath, ".skillctl", "staging", itoa(op2.ID)))
 	proofID := statID(t, filepath.Join(a.StorePath, ".skillctl", "staging", itoa(op2.ID), "proof"))
 
-	fresh := reopenApp(t, a)
+	fresh := reopenAppUnrecovered(t, a)
 	fresh.deleteOperation = func(int64) error { return errors.New("delete failed") }
 	if _, err := fresh.ImportSkills(context.Background(), ImportSkillsInput{
 		SourceID: srcC.ID, Selectors: []ImportSelector{{RelativeDir: "skills/alpha"}},
@@ -212,7 +212,7 @@ func TestImportSkillsFreshAppBlocksCopiedWitness(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fresh := reopenApp(t, a)
+	fresh := reopenAppUnrecovered(t, a)
 	_, err = fresh.ImportSkills(context.Background(), ImportSkillsInput{
 		SourceID: srcB.ID, Selectors: []ImportSelector{{RelativeDir: "skills/alpha"}},
 	})

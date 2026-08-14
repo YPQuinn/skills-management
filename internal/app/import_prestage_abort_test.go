@@ -85,7 +85,7 @@ func TestImportSkillsFreshAppBlocksPendingImportWithForeignRecoveryEvidence(t *t
 		t.Fatal(err)
 	}
 
-	fresh := reopenApp(t, a)
+	fresh := reopenAppUnrecovered(t, a)
 	_, err = fresh.ImportSkills(context.Background(), ImportSkillsInput{
 		SourceID: src.ID, Selectors: []ImportSelector{{RelativeDir: "skills/alpha"}},
 	})
@@ -132,7 +132,7 @@ func TestImportSkillsFreshAppBlocksPendingEmptyRowWithTerminalTombstone(t *testi
 		t.Fatal(err)
 	}
 
-	fresh := reopenApp(t, a)
+	fresh := reopenAppUnrecovered(t, a)
 	_, err = fresh.ImportSkills(context.Background(), ImportSkillsInput{
 		SourceID: src.ID, Selectors: []ImportSelector{{RelativeDir: "skills/alpha"}},
 	})
@@ -176,7 +176,7 @@ func TestImportSkillsFreshAppBlocksAbortedRowWithTerminalTombstone(t *testing.T)
 		t.Fatal(err)
 	}
 
-	fresh := reopenApp(t, a)
+	fresh := reopenAppUnrecovered(t, a)
 	_, err = fresh.ImportSkills(context.Background(), ImportSkillsInput{
 		SourceID: src.ID, Selectors: []ImportSelector{{RelativeDir: "skills/alpha"}},
 	})
@@ -261,7 +261,7 @@ func TestImportFreshAppPreStageMarksAbortedBeforeAbortVerification(t *testing.T)
 		t.Fatal(err)
 	}
 
-	fresh := reopenApp(t, a)
+	fresh := reopenAppUnrecovered(t, a)
 	n := 0
 	fresh.store.SetHook(func(p skillstore.HookPoint) {
 		if p != skillstore.HookAfterLayoutOpen {

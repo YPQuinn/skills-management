@@ -9,6 +9,7 @@
 package skillstore
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -33,6 +34,18 @@ const (
 const (
 	KindImport  = "import"
 	KindReplace = "replace"
+	// KindBaseline is the Baseline-only refresh (Keep Store and
+	// independent convergence): the staged tree becomes the new Baseline
+	// during finalization and the live tree is never mutated.
+	KindBaseline = "baseline"
+
+	// BaselineAdvance marks an ordinary replace whose finalization
+	// installs the operation's Baseline candidate into .skillctl/baselines.
+	BaselineAdvance = "advance"
+	// BaselineKeep marks a rollback: finalization retains the existing
+	// Baseline untouched, so the rolled-back Skill recomputes as
+	// store_changed instead of silently re-accepting the Source.
+	BaselineKeep = "keep"
 
 	PhasePending   = "pending"
 	PhaseCommitted = "committed"
@@ -58,6 +71,11 @@ var (
 	ErrUnmanaged = errors.New("a directory exists in the Skill Store that Skill Manager does not manage")
 	ErrAmbiguous = errors.New("Skill Store state cannot be proven valid; all candidate content is preserved")
 	ErrMissing   = errors.New("managed Skill content is missing from the Skill Store")
+	// ErrLiveChanged reports that the live Skill tree no longer carries
+	// the digest a replace was prepared against: a local edit landed
+	// between the replace's preparation and its install, and the
+	// replacement is refused instead of overwriting it.
+	ErrLiveChanged = errors.New("managed Skill content changed since the replace was prepared")
 
 	// errDestinationExists reports a no-replace rename that found its
 	// destination already present.
@@ -124,10 +142,38 @@ type Operation struct {
 	SkillID   int64  // the committed Skill id (0 while a fresh import is pending)
 	Slug      string // the live Skill directory name
 	Kind      string // KindImport or KindReplace
-	OldDigest string // the live digest before a replace ("" for imports)
+	OldDigest string // the live digest before a replace ("" for imports, and "" for a replace that displaces non-tree content that has no digest)
 	NewDigest string // the digest of the content being installed
 	Phase     string // PhasePending, PhaseCommitted, PhaseAborted, PhaseFinalized, or PhaseRestored
 	Receipt   []byte // the opaque terminal receipt of a finalized/restored row
+	// BaselineMode is BaselineAdvance or BaselineKeep; Install skips the
+	// Baseline candidate and Finalize retains the existing Baseline for
+	// BaselineKeep operations (rollback).
+	BaselineMode string
+	// BaselineDigest is the expected pre-operation Baseline digest when it
+	// differs from the displaced live digest; empty means the
+	// import-replace invariant. Accept Source records it here instead of
+	// mutating the Baseline up front: only the committed replacement
+	// advances it.
+	BaselineDigest string
+}
+
+// displacedBaselineDigest is the expected pre-operation Baseline digest:
+// the intent-recorded BaselineDigest (an Accept Source repair, or a replace
+// over a locally diverged Baseline), or the displaced live digest itself.
+func (op Operation) displacedBaselineDigest() string {
+	if op.BaselineDigest != "" {
+		return op.BaselineDigest
+	}
+	return op.OldDigest
+}
+
+// oldUnreadable reports whether a replace displaced live content that is
+// not a digestable Skill tree: the journal moves it by identity only, the
+// finalize removes it instead of rotating a snapshot, and a pending restore
+// returns it by identity.
+func (op Operation) oldUnreadable() bool {
+	return op.Kind == KindReplace && op.OldDigest == ""
 }
 
 // Store is the Skill Store tree root. All methods assume the caller holds
@@ -310,6 +356,37 @@ func (s Store) DiscardStaging(opID int64, staged StagedProof) error {
 		return err
 	}
 	return layout.verify()
+}
+
+// VerifyBaselineDigest requires the Baseline tree of one Skill to carry
+// exactly the recorded digest (or to be absent when the recorded digest is
+// empty): it is the pre-commit authority check of a Baseline-only refresh,
+// so a foreign or tampered Baseline fails the refresh cleanly before the
+// journal commits. Anything else is ErrAmbiguous with the tree preserved.
+func (s Store) VerifyBaselineDigest(ctx context.Context, skillID int64, digest string) error {
+	layout, err := s.openLayout()
+	if err != nil {
+		return err
+	}
+	defer layout.close()
+	if err := layout.verify(); err != nil {
+		return err
+	}
+	base, _, baseDigest, err := openTreeDigest(ctx, layout.baselines, strconv.FormatInt(skillID, 10))
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			if digest == "" {
+				return nil
+			}
+			return errWrap(ErrAmbiguous, "the Baseline of Skill %d is missing; the refresh is refused", skillID)
+		}
+		return errWrap(ErrAmbiguous, "reading the Baseline of Skill %d: %v", skillID, err)
+	}
+	base.Close()
+	if baseDigest != digest {
+		return errWrap(ErrAmbiguous, "the Baseline of Skill %d carries digest %s, not the recorded %s; it is preserved", skillID, baseDigest, digest)
+	}
+	return nil
 }
 
 // errWrap attaches context to a sentinel error while preserving it for

@@ -1,0 +1,71 @@
+// Sync presentation policy: the ten-state relationship and the eight
+// result values mapped to Appica Badge variants and locale keys. Text
+// always accompanies color, per decision 07. Kept free of components so
+// the badge renderers stay the only exports of their file.
+import type { DictionaryKey } from './locale-dictionary'
+import type { SyncActionResult, SyncStatus } from './sync-api'
+
+export type SyncBadgeVariant = 'success' | 'error' | 'warning' | 'info' | 'soft' | 'outline'
+
+export const syncStatusKey: Record<SyncStatus, DictionaryKey> = {
+  unbound: 'statusSyncUnbound',
+  unchecked: 'statusSyncUnchecked',
+  in_sync: 'statusSyncInSync',
+  source_changed: 'statusSyncSourceChanged',
+  store_changed: 'statusSyncStoreChanged',
+  conflict: 'statusSyncConflict',
+  source_missing: 'statusSyncSourceMissing',
+  source_invalid: 'statusSyncSourceInvalid',
+  store_missing: 'statusSyncStoreMissing',
+  store_invalid: 'statusSyncStoreInvalid',
+}
+
+export const syncStatusVariant: Record<SyncStatus, SyncBadgeVariant> = {
+  unbound: 'outline',
+  unchecked: 'soft',
+  in_sync: 'success',
+  source_changed: 'info',
+  store_changed: 'info',
+  conflict: 'error',
+  source_missing: 'warning',
+  source_invalid: 'warning',
+  store_missing: 'error',
+  store_invalid: 'error',
+}
+
+export const syncResultKey: Record<SyncActionResult, DictionaryKey> = {
+  no_op: 'resultNoOp',
+  updated: 'resultUpdated',
+  kept_store: 'resultKeptStore',
+  accepted_source: 'resultAcceptedSource',
+  skipped: 'resultSkipped',
+  blocked: 'resultBlocked',
+  failed: 'resultFailed',
+  rolled_back: 'resultRolledBack',
+}
+
+export const syncResultVariant: Record<SyncActionResult, SyncBadgeVariant> = {
+  no_op: 'soft',
+  updated: 'success',
+  kept_store: 'info',
+  accepted_source: 'success',
+  skipped: 'warning',
+  blocked: 'warning',
+  failed: 'error',
+  rolled_back: 'info',
+}
+
+export const syncActionKey: Record<string, DictionaryKey> = {
+  sync: 'actionSync',
+  keep_store: 'actionKeepStore',
+  accept_source: 'actionAcceptSource',
+  rollback: 'actionRollback',
+}
+
+export function isSyncStatus(value: string): value is SyncStatus {
+  return Object.prototype.hasOwnProperty.call(syncStatusKey, value)
+}
+
+export function isSyncActionResult(value: string): value is SyncActionResult {
+  return Object.prototype.hasOwnProperty.call(syncResultKey, value)
+}

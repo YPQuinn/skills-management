@@ -23,6 +23,12 @@ func NewSkillCmd(bm *bootstrap.Manager) *cobra.Command {
 		NewSkillListCmd(bm),
 		NewSkillShowCmd(bm),
 		NewSkillImportCmd(bm),
+		NewSkillCheckSyncCmd(bm),
+		NewSkillDiffCmd(bm),
+		NewSkillSyncCmd(bm),
+		NewSkillKeepStoreCmd(bm),
+		NewSkillAcceptSourceCmd(bm),
+		NewSkillRollbackCmd(bm),
 	)
 	return cmd
 }
@@ -84,6 +90,21 @@ func NewSkillShowCmd(bm *bootstrap.Manager) *cobra.Command {
 			fmt.Fprintf(cmd.OutOrStdout(), "Name: %s\nDescription: %s\n", s.Name, s.Description)
 			fmt.Fprintf(cmd.OutOrStdout(), "Store digest: %s\nBaseline digest: %s\n", s.StoreDigest, s.BaselineDigest)
 			fmt.Fprintf(cmd.OutOrStdout(), "Created: %s\nUpdated: %s\n", formatHumanTime(&s.CreatedAt), formatHumanTime(&s.UpdatedAt))
+			fmt.Fprintf(cmd.OutOrStdout(), "Sync status: %s", s.SyncStatus)
+			if s.SyncStale {
+				fmt.Fprint(cmd.OutOrStdout(), " (stale)")
+			}
+			fmt.Fprintln(cmd.OutOrStdout())
+			if s.SyncCheckedAt != nil {
+				fmt.Fprintf(cmd.OutOrStdout(), "Sync checked: %s\n", formatHumanTime(s.SyncCheckedAt))
+			}
+			if s.LastSync != nil {
+				fmt.Fprintf(cmd.OutOrStdout(), "Last sync: %s -> %s", s.LastSync.Action, s.LastSync.Result)
+				if s.LastSync.Error != "" {
+					fmt.Fprintf(cmd.OutOrStdout(), " (%s)", s.LastSync.Error)
+				}
+				fmt.Fprintln(cmd.OutOrStdout())
+			}
 			if s.Binding == nil {
 				fmt.Fprintln(cmd.OutOrStdout(), "Binding: unbound")
 				return nil

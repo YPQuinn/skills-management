@@ -93,20 +93,18 @@ func (s Store) prepareRestoreReplaceLayout(ctx context.Context, layout *storeLay
 	default:
 		return CleanupReceipt{}, errWrap(ErrAmbiguous, "opening operation %d staging: %v", op.ID, err)
 	}
-	live, liveID, liveDigest, err := openTreeDigest(ctx, layout.store, op.Slug)
-	liveExists := err == nil
+	live, liveID, liveDigest, liveExists, err := openRestoreSlot(ctx, layout.store, op.Slug, op.oldUnreadable())
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return CleanupReceipt{}, errWrap(ErrAmbiguous, "reading live Skill %q: %v", op.Slug, err)
 	}
-	if liveExists {
+	if live != nil {
 		defer live.Close()
 	}
-	recRoot, recID, recDigest, err := openTreeDigest(ctx, layout.recovery, recName)
-	recExists := err == nil
+	recRoot, recID, recDigest, recExists, err := openRestoreSlot(ctx, layout.recovery, recName, op.oldUnreadable())
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return CleanupReceipt{}, errWrap(ErrAmbiguous, "reading the recovery slot of operation %d: %v", op.ID, err)
 	}
-	if recExists {
+	if recRoot != nil {
 		recRoot.Close()
 	}
 	if opDir == nil {
@@ -165,20 +163,28 @@ func (s Store) prepareRestoreReplaceLayout(ctx context.Context, layout *storeLay
 	// The Baseline candidate must carry the proof's identity and the new
 	// digest when present; an absent candidate is the resume state only
 	// when a previous preparation already drained it (the recovery slot is
-	// gone and the live tree is the restored object).
+	// gone and the live tree is the restored object). A keep-baseline
+	// operation (rollback) never creates a candidate, so any present
+	// candidate is foreign and preserved.
 	cand, candID, candDigest, err := openTreeDigest(ctx, opDir, "baseline")
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return CleanupReceipt{}, errWrap(ErrAmbiguous, "operation %d Baseline candidate cannot be read: %v", op.ID, err)
 	}
-	if err == nil {
+	candPresent := err == nil
+	if candPresent {
 		cand.Close()
+	}
+	switch {
+	case op.BaselineMode == BaselineKeep && candPresent:
+		return CleanupReceipt{}, errWrap(ErrAmbiguous, "keep-baseline operation %d carries an unexpected Baseline candidate; it is preserved", op.ID)
+	case op.BaselineMode != BaselineKeep && candPresent:
 		if candID != proof.candidateID {
 			return CleanupReceipt{}, errWrap(ErrAmbiguous, "operation %d Baseline candidate is not the object %d:%d the proof records", op.ID, proof.candidateID.dev, proof.candidateID.ino)
 		}
 		if candDigest != op.NewDigest {
 			return CleanupReceipt{}, errWrap(ErrAmbiguous, "operation %d consumed its staged tree but its Baseline candidate is mismatched", op.ID)
 		}
-	} else if !alreadyRestored {
+	case op.BaselineMode != BaselineKeep && !candPresent && !alreadyRestored:
 		return CleanupReceipt{}, errWrap(ErrAmbiguous, "operation %d consumed its staged tree but its Baseline candidate is missing or mismatched", op.ID)
 	}
 	qExists, err := childExists(opDir, quarantineName)
@@ -222,18 +228,50 @@ func (s Store) prepareRestoreReplaceLayout(ctx context.Context, layout *storeLay
 		if recID != proof.recoveryID || recDigest != op.OldDigest {
 			return CleanupReceipt{}, errWrap(ErrAmbiguous, "operation %d installed content but its recovery slot is missing or mismatched", op.ID)
 		}
-		// The installed content is gone (or was just removed); restore the
-		// old content from the proven recovery slot, carrying the identity
-		// retained from the opened recovery handle.
-		if _, err := movePinned(ctx, layout, layout.recovery, recName, layout.store, op.Slug, recID, op.OldDigest); err != nil {
-			if errors.Is(err, errDestinationExists) {
-				return CleanupReceipt{}, errWrap(ErrAmbiguous, "live Skill %q appeared while recovery was restoring it", op.Slug)
+		// Restore the old content from the proven recovery slot; a
+		// non-tree object moves by identity only (no digest exists).
+		if op.oldUnreadable() {
+			if err := moveNonTree(layout, layout.recovery, recName, layout.store, op.Slug, recID); err != nil {
+				if errors.Is(err, errDestinationExists) {
+					return CleanupReceipt{}, errWrap(ErrAmbiguous, "live Skill %q appeared while recovery was restoring it", op.Slug)
+				}
+				return CleanupReceipt{}, err
 			}
-			return CleanupReceipt{}, err
+		} else {
+			if _, err := movePinned(ctx, layout, layout.recovery, recName, layout.store, op.Slug, recID, op.OldDigest); err != nil {
+				if errors.Is(err, errDestinationExists) {
+					return CleanupReceipt{}, errWrap(ErrAmbiguous, "live Skill %q appeared while recovery was restoring it", op.Slug)
+				}
+				return CleanupReceipt{}, err
+			}
 		}
 	}
 	if err := drainCandidateIfPresent(ctx, opDir, proof); err != nil {
 		return CleanupReceipt{}, err
 	}
 	return newRestoreReceipt(op, opDirID, proofFileID, proof), nil
+}
+
+// openRestoreSlot opens one replace-restore participant: a digestable
+// tree, or — for an unreadable-old operation — any node, opened by
+// identity only when it is not a directory. A non-directory carries an
+// empty digest that only matches an empty operation old digest.
+func openRestoreSlot(ctx context.Context, parent *os.Root, name string, unreadable bool) (root *os.Root, id fileID, digest string, exists bool, err error) {
+	if !unreadable {
+		root, id, digest, err = openTreeDigest(ctx, parent, name)
+		return root, id, digest, err == nil, err
+	}
+	info, lerr := parent.Lstat(name)
+	switch {
+	case errors.Is(lerr, os.ErrNotExist):
+		return nil, fileID{}, "", false, nil
+	case lerr != nil:
+		return nil, fileID{}, "", false, lerr
+	case info.IsDir():
+		root, id, digest, err = openTreeDigest(ctx, parent, name)
+		return root, id, digest, err == nil, err
+	default:
+		id, err = fileIDOf(info)
+		return nil, id, "", err == nil, err
+	}
 }

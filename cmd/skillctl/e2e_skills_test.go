@@ -93,16 +93,20 @@ func TestCLISkillsLocalLifecycle(t *testing.T) {
 		t.Fatalf("show --json: exit %d\n%s", code, out)
 	}
 	var shown struct {
-		ID          int64  `json:"id"`
-		Slug        string `json:"slug"`
-		Baseline    string `json:"baseline_digest"`
-		Description string `json:"description"`
+		ID                  int64  `json:"id"`
+		Slug                string `json:"slug"`
+		Baseline            string `json:"baseline_digest"`
+		Description         string `json:"description"`
+		HasPreviousSnapshot bool   `json:"has_previous_snapshot"`
 	}
 	if err := json.Unmarshal([]byte(out), &shown); err != nil {
 		t.Fatalf("show --json: %v\n%s", err, out)
 	}
 	if shown.Slug != "alpha" || shown.Baseline == "" || shown.Description == "" {
 		t.Fatalf("show --json content: %+v", shown)
+	}
+	if shown.HasPreviousSnapshot {
+		t.Fatalf("a fresh import must expose has_previous_snapshot=false: %+v", shown)
 	}
 	out, code = run(t, home, "skill", "show", fmt.Sprint(shown.ID))
 	if code != 0 || !strings.Contains(out, "Skill "+fmt.Sprint(shown.ID)+": alpha") {

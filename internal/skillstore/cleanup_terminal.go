@@ -105,7 +105,10 @@ func (s Store) validateFinalizedResult(ctx context.Context, layout *storeLayout,
 	if liveID != receipt.liveID {
 		return errWrap(ErrAmbiguous, "live Skill %q is not the object %d:%d the receipt records", op.Slug, receipt.liveID.dev, receipt.liveID.ino)
 	}
-	if liveDigest != op.NewDigest {
+	// A Baseline-only refresh never mutated the live tree: its digest is
+	// deliberately not the operation's digest (Keep Store leaves live
+	// content untouched).
+	if op.Kind != KindBaseline && liveDigest != op.NewDigest {
 		return errWrap(ErrAmbiguous, "live Skill %q does not match the installed digest", op.Slug)
 	}
 	if err := nameRefersTo(layout.store, op.Slug, liveID); err != nil {
@@ -120,13 +123,21 @@ func (s Store) validateFinalizedResult(ctx context.Context, layout *storeLayout,
 	if baseID != receipt.baseID {
 		return errWrap(ErrAmbiguous, "the Baseline of Skill %d is not the object %d:%d the receipt records", op.SkillID, receipt.baseID.dev, receipt.baseID.ino)
 	}
-	if baseDigest != op.NewDigest {
-		return errWrap(ErrAmbiguous, "the Baseline of Skill %d does not match the installed digest", op.SkillID)
-	}
 	if err := nameRefersTo(layout.baselines, baseName, baseID); err != nil {
 		return errWrap(ErrAmbiguous, "the Baseline of Skill %d changed while it was being verified: %v", op.SkillID, err)
 	}
-	if op.Kind == KindReplace {
+	// A rollback never mutated the Baseline: only the retained object's
+	// presence and identity are validated, never its digest (which
+	// deliberately differs from the operation's NewDigest). In-place
+	// tampering with comparison-state bytes carries no live-content
+	// consequence: the Baseline only feeds diff presentation, and every
+	// acceptance replaces it wholesale.
+	if op.BaselineMode != BaselineKeep && baseDigest != op.NewDigest {
+		return errWrap(ErrAmbiguous, "the Baseline of Skill %d does not match the installed digest", op.SkillID)
+	}
+	// An unreadable-old replace removed its non-tree recovery object at
+	// finalization: there is no previous tree to validate.
+	if op.Kind == KindReplace && !op.oldUnreadable() {
 		prev, prevID, prevDigest, err := openTreeDigest(ctx, layout.previous, baseName)
 		if err != nil {
 			return errWrap(ErrAmbiguous, "reading the previous snapshot of Skill %d: %v", op.SkillID, err)
@@ -149,6 +160,11 @@ func (s Store) validateFinalizedResult(ctx context.Context, layout *storeLayout,
 // replace the live tree must be the exact receipt-bound recovered object
 // with the old digest; for an import any live tree is foreign and blocks.
 func (s Store) validateRestoredResult(ctx context.Context, layout *storeLayout, op Operation, receipt CleanupReceipt) error {
+	if op.oldUnreadable() {
+		// The restored object is deliberately not a Skill tree: it is
+		// validated by physical identity and non-directory type only.
+		return proveNonTree(layout.store, op.Slug, receipt.liveID)
+	}
 	live, liveID, liveDigest, err := openTreeDigest(ctx, layout.store, op.Slug)
 	switch {
 	case err == nil:

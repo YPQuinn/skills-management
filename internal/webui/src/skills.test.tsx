@@ -34,6 +34,16 @@ describe('Skills Components', () => {
       if (urlStr === '/api/v1/skills/102') {
         return mockResponse(skillBeta)
       }
+      if (urlStr === '/api/v1/skills/101/diff') {
+        return mockResponse({
+          skill_id: 101,
+          slug: 'alpha',
+          source_digest: 'src',
+          store_digest: 'store',
+          baseline_digest: 'base',
+          comparisons: [],
+        })
+      }
       return mockResponse({ error: { message: 'Not found' } }, false, 404)
     })
   })
@@ -56,7 +66,7 @@ describe('Skills Components', () => {
     expect(screen.getByText('local-one')).toBeTruthy()
   })
 
-  it('renders SkillDetailPage with Overview tab and disabled Sync/Distribution tabs', async () => {
+  it('renders SkillDetailPage with enabled Sync tab and disabled Distribution tab', async () => {
     render(
       <MemoryRouter initialEntries={['/skills/alpha']}>
         <Routes>
@@ -74,7 +84,7 @@ describe('Skills Components', () => {
     const distTab = screen.getByRole('tab', { name: /Distribution/ })
 
     expect(overviewTab.getAttribute('aria-selected')).toBe('true')
-    expect(syncTab.hasAttribute('data-disabled') || syncTab.hasAttribute('disabled') || syncTab.getAttribute('aria-disabled') === 'true').toBe(true)
+    expect(syncTab.hasAttribute('data-disabled') || syncTab.hasAttribute('disabled') || syncTab.getAttribute('aria-disabled') === 'true').toBe(false)
     expect(distTab.hasAttribute('data-disabled') || distTab.hasAttribute('disabled') || distTab.getAttribute('aria-disabled') === 'true').toBe(true)
 
     // Binding info
@@ -135,6 +145,9 @@ function makeSkills(count: number, nameFor?: (index: number) => string): Skill[]
     baseline_digest: 'sha256:0000000000000000000000000000000000000000000000000000000000000000',
     created_at: '2026-08-11T10:00:00Z',
     updated_at: '2026-08-11T10:00:00Z',
+    sync_status: 'in_sync',
+    sync_stale: false,
+    has_previous_snapshot: false,
   }))
 }
 

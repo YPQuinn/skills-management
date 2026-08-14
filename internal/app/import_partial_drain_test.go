@@ -58,7 +58,7 @@ func TestImportSkillsFreshAppBlocksPartialReplaceQuarantineDrain(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fresh := reopenApp(t, a)
+	fresh := reopenAppUnrecovered(t, a)
 	_, err = fresh.ImportSkills(context.Background(), ImportSkillsInput{
 		SourceID: src.ID, Selectors: []ImportSelector{{RelativeDir: "skills/alpha"}},
 	})
@@ -97,7 +97,7 @@ func TestImportSkillsFreshAppBlocksPartialImportCandidateDrain(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fresh := reopenApp(t, a)
+	fresh := reopenAppUnrecovered(t, a)
 	_, err := fresh.ImportSkills(context.Background(), ImportSkillsInput{
 		SourceID: src.ID, Selectors: []ImportSelector{{RelativeDir: "skills/alpha"}},
 	})
@@ -155,7 +155,7 @@ func TestImportSkillsFreshAppBlocksPartialReplaceCandidateDrain(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fresh := reopenApp(t, a)
+	fresh := reopenAppUnrecovered(t, a)
 	_, err = fresh.ImportSkills(context.Background(), ImportSkillsInput{
 		SourceID: src.ID, Selectors: []ImportSelector{{RelativeDir: "skills/alpha"}},
 	})

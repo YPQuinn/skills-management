@@ -72,9 +72,28 @@ type App struct {
 	receiptPersist func(op skillstore.Operation) error
 }
 
-// New opens the state database at stateDBPath and returns the App bound to
-// it. Application capabilities arrive in later tickets as App methods.
+// New opens the state database at stateDBPath, resolves every unfinished
+// Store operation under the Store exclusive lock, and only then returns
+// the App. A proven-unrecoverable operation or Store lock contention
+// refuses the open (recovery_failed / locked), so every capability —
+// including the read-only show and diff — always sees the recovered Store.
+// Application capabilities arrive in later tickets as App methods.
 func New(storePath, stateDBPath string) (*App, error) {
+	a, err := openApp(storePath, stateDBPath)
+	if err != nil {
+		return nil, err
+	}
+	if err := a.recoverOnOpen(); err != nil {
+		a.Close()
+		return nil, err
+	}
+	return a, nil
+}
+
+// openApp opens the state database without resolving open operations. Only
+// tests use it: they install seams before the recovery that a later Store
+// write resolves, or observe the failure of a recovery they cannot prove.
+func openApp(storePath, stateDBPath string) (*App, error) {
 	db, err := state.Open(stateDBPath)
 	if err != nil {
 		return nil, Errorf(CodeInternal, "opening state database: %v", err)

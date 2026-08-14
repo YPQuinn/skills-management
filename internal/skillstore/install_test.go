@@ -225,7 +225,11 @@ func TestInstallReplaceMissingLive(t *testing.T) {
 	}
 }
 
-func TestInstallReplaceRejectsNonDirectoryLive(t *testing.T) {
+// TestInstallReplaceDisplacesNonDirectoryLive locks the unreadable replace
+// path: a replace whose OldDigest is empty (an Accept Source over a plain
+// file) displaces the non-directory live node by physical identity only and
+// installs the staged tree.
+func TestInstallReplaceDisplacesNonDirectoryLive(t *testing.T) {
 	s := newStore(t)
 	m := buildMaterialized(t, map[string]string{"SKILL.md": "content"})
 	if err := os.MkdirAll(s.Root, 0o755); err != nil {
@@ -239,8 +243,14 @@ func TestInstallReplaceRejectsNonDirectoryLive(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := s.Install(context.Background(), op, &staged); err == nil {
-		t.Fatal("replacing a non-directory live path: want error")
+	if err := s.Install(context.Background(), op, &staged); err != nil {
+		t.Fatalf("unreadable replace: %v", err)
+	}
+	if data, err := os.ReadFile(filepath.Join(s.Root, "alpha", "SKILL.md")); err != nil || string(data) != "content" {
+		t.Fatalf("installed content: %q, %v", data, err)
+	}
+	if data, err := os.ReadFile(filepath.Join(s.Root, ".skillctl", "recovery", "1")); err != nil || string(data) != "file" {
+		t.Fatalf("recovery slot must hold the displaced node: %q, %v", data, err)
 	}
 }
 

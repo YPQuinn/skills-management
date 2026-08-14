@@ -43,6 +43,8 @@ func (s Store) PrepareRestore(ctx context.Context, op Operation) (CleanupReceipt
 		return s.prepareRestoreImport(ctx, op)
 	case KindReplace:
 		return s.prepareRestoreReplace(ctx, op)
+	case KindBaseline:
+		return s.prepareRestoreBaseline(ctx, op)
 	default:
 		return CleanupReceipt{}, errWrap(ErrAmbiguous, "unknown operation kind %q", op.Kind)
 	}

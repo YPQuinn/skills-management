@@ -1,3 +1,5 @@
+import { translationsSyncEn } from './locale-dictionary-sync-en'
+
 export const translationsEn = {
   // Navigation & Header
   navSkills: 'Skills',
@@ -174,8 +176,8 @@ export const translationsEn = {
   ariaLoadingSkill: 'Loading skill',
   alertCouldNotLoadSkill: 'Could not load Skill',
   tabOverview: 'Overview',
-  tabSynchronization: 'Synchronization (coming soon)',
-  tabDistribution: 'Distribution (coming soon)',
+  tabSynchronization: 'Synchronization',
+  tabDistribution: 'Distribution',
   labelSlug: 'Slug',
   labelCreated: 'Created',
   labelUpdated: 'Updated',
@@ -313,4 +315,5 @@ export const translationsEn = {
   errRegisteringTargetFailed: 'Registering Target failed',
   errAddingAssignmentFailed: 'Adding assignment failed',
   errDeletingAssignmentFailed: 'Deleting assignment failed',
+  ...translationsSyncEn,
 } as const

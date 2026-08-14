@@ -111,34 +111,56 @@ func (s Store) Install(ctx context.Context, op Operation, staged *StagedProof) e
 			return err
 		}
 	case KindReplace:
-		live, err := openLayoutDir(layout.store, op.Slug)
-		if errors.Is(err, os.ErrNotExist) {
-			return ErrMissing
-		}
-		if err != nil {
-			return err
-		}
-		oldLive = live
-		defer oldLive.Close()
-		oldLiveID, err = rootID(oldLive)
-		if err != nil {
-			return err
-		}
-		// Prove the live tree is exactly the content this operation was
-		// prepared against; a stale replacement must never overwrite Store
-		// edits made since.
-		liveDigest, err := source.TreeDigestRoot(ctx, oldLive)
-		if err != nil {
-			return err
-		}
-		if liveDigest != op.OldDigest {
-			return fmt.Errorf("managed Skill %q changed since the replace was prepared (expected digest %s, observed %s)", op.Slug, op.OldDigest, liveDigest)
-		}
-		// Test seam: an old live tree swapped in here must fail the
-		// source-name re-proof below and never move into recovery.
-		s.runHook(HookAfterOldLiveHash)
-		if err := nameRefersTo(layout.store, op.Slug, oldLiveID); err != nil {
-			return errWrap(ErrAmbiguous, "managed Skill %q changed after it was verified", op.Slug)
+		if op.oldUnreadable() {
+			// Not a digestable Skill tree: proven by identity only.
+			info, err := layout.store.Lstat(op.Slug)
+			if errors.Is(err, os.ErrNotExist) {
+				return ErrMissing
+			}
+			if err != nil {
+				return err
+			}
+			if info.IsDir() {
+				return fmt.Errorf("managed Skill %q is a directory; an unreadable replace only displaces non-directory content", op.Slug)
+			}
+			oldLiveID, err = fileIDOf(info)
+			if err != nil {
+				return err
+			}
+			s.runHook(HookAfterOldLiveHash)
+			if err := nameRefersTo(layout.store, op.Slug, oldLiveID); err != nil {
+				return errWrap(ErrAmbiguous, "managed Skill %q changed after it was verified", op.Slug)
+			}
+		} else {
+			live, err := openLayoutDir(layout.store, op.Slug)
+			if errors.Is(err, os.ErrNotExist) {
+				return ErrMissing
+			}
+			if err != nil {
+				return err
+			}
+			oldLive = live
+			defer oldLive.Close()
+			oldLiveID, err = rootID(oldLive)
+			if err != nil {
+				return err
+			}
+			// Prove the live tree is exactly the content this operation was
+			// prepared against; a stale replacement must never overwrite Store
+			// edits made since.
+			liveDigest, err := source.TreeDigestRoot(ctx, oldLive)
+			if err != nil {
+				return err
+			}
+			if liveDigest != op.OldDigest {
+				return errWrap(ErrLiveChanged, "managed Skill %q changed since the replace was prepared (expected digest %s, observed %s)", op.Slug, op.OldDigest, liveDigest)
+			}
+			// Test seam: an old live tree swapped in here must fail the
+			// source-name re-proof below and never move into recovery.
+			s.runHook(HookAfterOldLiveHash)
+			if err := nameRefersTo(layout.store, op.Slug, oldLiveID); err != nil {
+				return errWrap(ErrAmbiguous, "managed Skill %q changed after it was verified", op.Slug)
+			}
 		}
 	default:
 		return fmt.Errorf("unknown operation kind %q", op.Kind)
@@ -147,36 +169,42 @@ func (s Store) Install(ctx context.Context, op Operation, staged *StagedProof) e
 	// staged tree before any live mutation, and every created node is
 	// recorded in the invocation's manifest so a pre-mutation failure can
 	// be discarded exactly. It becomes .skillctl/baselines/<skillID> at
-	// finalization, after the SQLite commit fixes the Skill id.
-	if exists, err := childExists(opDir, "baseline"); err != nil {
-		return err
-	} else if exists {
-		return errWrap(ErrAmbiguous, "a Baseline candidate already exists for operation %d", op.ID)
-	}
-	cand, candID, err := createPinnedDirExclusive(opDir, "baseline", 0o755)
-	if err != nil {
-		return err
-	}
-	candRel := strconv.FormatInt(op.ID, 10) + "/baseline"
-	staged.ownership.record(candRel, candID)
-	if err := copyStagedTree(ctx, tree, ".", cand, candRel, &domain.Guard{AllowLarge: true}, staged.ownership); err != nil {
+	// finalization, after the SQLite commit fixes the Skill id. A
+	// keep-baseline operation (rollback) installs no candidate: its
+	// finalization retains the existing Baseline.
+	var candID fileID
+	if op.BaselineMode != BaselineKeep {
+		if exists, err := childExists(opDir, "baseline"); err != nil {
+			return err
+		} else if exists {
+			return errWrap(ErrAmbiguous, "a Baseline candidate already exists for operation %d", op.ID)
+		}
+		cand, id, err := createPinnedDirExclusive(opDir, "baseline", 0o755)
+		if err != nil {
+			return err
+		}
+		candID = id
+		candRel := strconv.FormatInt(op.ID, 10) + "/baseline"
+		staged.ownership.record(candRel, candID)
+		if err := copyStagedTree(ctx, tree, ".", cand, candRel, &domain.Guard{AllowLarge: true}, staged.ownership); err != nil {
+			cand.Close()
+			return err
+		}
+		candDigest, err := source.TreeDigestRoot(ctx, cand)
 		cand.Close()
-		return err
-	}
-	candDigest, err := source.TreeDigestRoot(ctx, cand)
-	cand.Close()
-	if err != nil {
-		return err
-	}
-	if candDigest != op.NewDigest {
-		return fmt.Errorf("Baseline candidate for operation %d does not match the staged digest", op.ID)
-	}
-	staged.candidateID = candID
-	if err := nameRefersTo(opDir, "baseline", candID); err != nil {
-		return errWrap(ErrAmbiguous, "Baseline candidate for operation %d changed after it was copied", op.ID)
-	}
-	if err := layout.verifyOpDir(opDir, op.ID); err != nil {
-		return err
+		if err != nil {
+			return err
+		}
+		if candDigest != op.NewDigest {
+			return fmt.Errorf("Baseline candidate for operation %d does not match the staged digest", op.ID)
+		}
+		staged.candidateID = candID
+		if err := nameRefersTo(opDir, "baseline", candID); err != nil {
+			return errWrap(ErrAmbiguous, "Baseline candidate for operation %d changed after it was copied", op.ID)
+		}
+		if err := layout.verifyOpDir(opDir, op.ID); err != nil {
+			return err
+		}
 	}
 	// First live mutation: the proven old live tree moves into the
 	// operation's recovery slot (replaces only).
@@ -188,12 +216,22 @@ func (s Store) Install(ctx context.Context, op Operation, staged *StagedProof) e
 		} else if exists {
 			return errWrap(ErrAmbiguous, "recovery slot for operation %d already exists", op.ID)
 		}
-		recID, err = movePinned(ctx, layout, layout.store, op.Slug, layout.recovery, recName, oldLiveID, op.OldDigest)
-		if err != nil {
-			if errors.Is(err, errDestinationExists) {
-				return errWrap(ErrAmbiguous, "recovery slot for operation %d appeared during replacement", op.ID)
+		if op.oldUnreadable() {
+			if err := moveNonTree(layout, layout.store, op.Slug, layout.recovery, recName, oldLiveID); err != nil {
+				if errors.Is(err, errDestinationExists) {
+					return errWrap(ErrAmbiguous, "recovery slot for operation %d appeared during replacement", op.ID)
+				}
+				return err
 			}
-			return err
+			recID = oldLiveID
+		} else {
+			recID, err = movePinned(ctx, layout, layout.store, op.Slug, layout.recovery, recName, oldLiveID, op.OldDigest)
+			if err != nil {
+				if errors.Is(err, errDestinationExists) {
+					return errWrap(ErrAmbiguous, "recovery slot for operation %d appeared during replacement", op.ID)
+				}
+				return err
+			}
 		}
 	}
 	// Second live mutation: the staged tree becomes the live tree with an
@@ -216,7 +254,11 @@ func (s Store) Install(ctx context.Context, op Operation, staged *StagedProof) e
 			// move re-proves the recovery object against the identity
 			// retained from the live→recovery move.
 			if _, statErr := layout.store.Lstat(op.Slug); os.IsNotExist(statErr) {
-				if _, mvErr := movePinned(ctx, layout, layout.recovery, recName, layout.store, op.Slug, recID, op.OldDigest); mvErr != nil {
+				if op.oldUnreadable() {
+					if err := moveNonTree(layout, layout.recovery, recName, layout.store, op.Slug, recID); err != nil {
+						return errWrap(ErrAmbiguous, "operation %d could not restore its old content: %v", op.ID, err)
+					}
+				} else if _, mvErr := movePinned(ctx, layout, layout.recovery, recName, layout.store, op.Slug, recID, op.OldDigest); mvErr != nil {
 					return errWrap(ErrAmbiguous, "operation %d could not restore its old content: %v", op.ID, mvErr)
 				}
 			}

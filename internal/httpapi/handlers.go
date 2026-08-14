@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"io"
@@ -76,6 +77,27 @@ func decodeJSON(r *http.Request, v any) error {
 	}
 	if _, err := dec.Token(); err != io.EOF {
 		return errors.New("unexpected data after JSON body")
+	}
+	return nil
+}
+
+// decodeEmptyObject strictly decodes the body of a parameter-less mutation
+// as exactly one empty JSON object: an invalid body, a non-object value
+// (an array, null, a string), unknown fields, or trailing data are all
+// rejected so the mutation never runs.
+func decodeEmptyObject(r *http.Request) error {
+	var raw json.RawMessage
+	if err := decodeJSON(r, &raw); err != nil {
+		return err
+	}
+	if len(bytes.TrimSpace(raw)) == 0 || bytes.TrimSpace(raw)[0] != '{' {
+		return errors.New("body must be a JSON object")
+	}
+	var body struct{}
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&body); err != nil {
+		return err
 	}
 	return nil
 }

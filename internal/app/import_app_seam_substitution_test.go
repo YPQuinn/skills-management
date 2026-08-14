@@ -26,7 +26,7 @@ func TestImportSkillsFreshAppBlocksForeignBaselineSwappedAtEvidenceRemoval(t *te
 	srcB := addReplacementSource(t, a)
 	op := replaceAndStopAfterReceiptPersisted(t, a, srcB, "skills/alpha", "alpha")
 
-	fresh := reopenApp(t, a)
+	fresh := reopenAppUnrecovered(t, a)
 	fresh.store.SetHook(func(p skillstore.HookPoint) {
 		if p != skillstore.HookAfterRemoveOp {
 			return

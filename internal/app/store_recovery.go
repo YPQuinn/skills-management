@@ -46,6 +46,20 @@ func (a *App) acquireStoreLock() (*lock.Lock, error) {
 	return held, nil
 }
 
+// recoverOnOpen resolves every unfinished Store operation under the Store
+// exclusive lock before the App is exposed, through the same recovery
+// sequence every later Store write shares. A proven-unrecoverable
+// operation or lock contention refuses the open with the stable
+// recovery_failed / locked codes; the caller closes the half-opened App.
+func (a *App) recoverOnOpen() error {
+	held, err := a.acquireStoreLock()
+	if err != nil {
+		return err
+	}
+	defer held.Unlock()
+	return a.recoverOpenOperations(context.Background())
+}
+
 // recoverOpenOperations resolves every unfinished Store operation intent in
 // journal order while the caller holds the Store exclusive lock: committed
 // intents run the terminal finalize protocol, pending intents the terminal
