@@ -1,4 +1,5 @@
 import type { translationsEn } from './locale-dictionary-en'
+import { translationsSyncZhCN } from './locale-dictionary-sync-zh'
 
 export const translationsZhCN: Record<keyof typeof translationsEn, string> = {
   // Navigation & Header
@@ -176,8 +177,8 @@ export const translationsZhCN: Record<keyof typeof translationsEn, string> = {
   ariaLoadingSkill: '正在加载技能',
   alertCouldNotLoadSkill: '无法加载技能',
   tabOverview: '概览',
-  tabSynchronization: '同步（即将推出）',
-  tabDistribution: '分发（即将推出）',
+  tabSynchronization: '同步',
+  tabDistribution: '分发',
   labelSlug: '标识 (Slug)',
   labelCreated: '创建时间',
   labelUpdated: '更新时间',
@@ -315,4 +316,5 @@ export const translationsZhCN: Record<keyof typeof translationsEn, string> = {
   errRegisteringTargetFailed: '注册目标失败',
   errAddingAssignmentFailed: '添加分配失败',
   errDeletingAssignmentFailed: '删除分配失败',
+  ...translationsSyncZhCN,
 }

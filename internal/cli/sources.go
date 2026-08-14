@@ -26,6 +26,7 @@ func NewSourceCmd(bm *bootstrap.Manager) *cobra.Command {
 		NewSourceListCmd(bm),
 		NewSourceShowCmd(bm),
 		NewSourceCheckCmd(bm),
+		NewSourceSyncCmd(bm),
 	)
 	return cmd
 }

@@ -2,11 +2,18 @@ package source
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
 	"skillctl/internal/domain"
 )
+
+// ErrContentChanged reports that the Source content moved between the
+// observation and a later materialization: the materialized digest does not
+// match the observed entry digest. Callers classify it as a conflict, never
+// as a transient failure.
+var ErrContentChanged = errors.New("Source content changed while it was being imported")
 
 // MaterializeEntry copies the complete tree of one Inventory entry from the
 // observed Source into dst, a caller-owned directory outside the Skill
@@ -85,7 +92,7 @@ func materializeLocal(ctx context.Context, loc Locator, entry Entry, dst string,
 		return "", err
 	}
 	if digest != entry.Digest {
-		return "", fmt.Errorf("Source content changed while it was being imported (expected digest %s, observed %s)", entry.Digest, digest)
+		return "", fmt.Errorf("%w (expected digest %s, observed %s)", ErrContentChanged, entry.Digest, digest)
 	}
 	return digest, nil
 }

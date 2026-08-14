@@ -114,7 +114,7 @@ func TestPrepareFinalizeResumeReceiptMatchesExpected(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expected := newFinalizeReceipt(op, opDirID, proofFileID, proof)
+	expected := newFinalizeReceipt(op, opDirID, proofFileID, proof, proof.candidateID)
 	if !bytes.Equal(resumed.Bytes(), expected.Bytes()) {
 		t.Fatalf("resumed receipt differs from the expected receipt:\n%q\n%q", resumed.Bytes(), expected.Bytes())
 	}

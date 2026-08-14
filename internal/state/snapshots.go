@@ -7,8 +7,8 @@ import (
 )
 
 // SnapshotReasonReplace is the reason recorded for a previous snapshot
-// rotated by an explicit Replace. Later synchronization actions add their
-// own reasons (accept_source, repair).
+// rotated by an explicit Replace. Synchronization actions record their own
+// reasons (accept_source, sync, rollback).
 const SnapshotReasonReplace = "replace"
 
 // Snapshot is the durable metadata of one Skill's single previous snapshot
@@ -47,7 +47,7 @@ func GetSnapshot(db *sql.DB, skillID int64) (*Snapshot, error) {
 // replaced operation's old digest and the Source evidence is the replaced
 // Binding's source commit (read before the Binding was updated). At most
 // one row exists per Skill; a later Replace supersedes it.
-func upsertSnapshotTx(tx *sql.Tx, skillID, opID int64, sourceCommit string) error {
+func upsertSnapshotTx(tx *sql.Tx, skillID, opID int64, sourceCommit, reason string) error {
 	var oldDigest string
 	if err := tx.QueryRow(`SELECT old_digest FROM store_operations WHERE id = ?`, opID).Scan(&oldDigest); err != nil {
 		return fmt.Errorf("reading replace operation %d: %v", opID, err)
@@ -60,6 +60,6 @@ func upsertSnapshotTx(tx *sql.Tx, skillID, opID int64, sourceCommit string) erro
 			source_commit = excluded.source_commit,
 			reason = excluded.reason,
 			created_at = excluded.created_at`,
-		skillID, oldDigest, sourceCommit, SnapshotReasonReplace, timeToSQL(&now))
+		skillID, oldDigest, sourceCommit, reason, timeToSQL(&now))
 	return err
 }

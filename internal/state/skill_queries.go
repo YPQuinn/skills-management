@@ -23,13 +23,14 @@ type SkillDetail struct {
 // row LEFT JOINed with its Binding and the Binding's Source name. One join
 // keeps every returned detail a coherent row.
 const skillDetailSelect = `s.id, s.slug, s.name, s.description, s.store_digest,
-	s.baseline_digest, s.created_at, s.updated_at,
+	s.baseline_digest, s.created_at, s.updated_at, ` + skillSyncColumns + `,
 	b.skill_id, b.source_id, b.relative_dir, b.digest, b.source_commit, b.imported_at,
-	src.name`
+	src.name, snap.skill_id`
 
 const skillDetailFrom = `FROM skills s
 	LEFT JOIN source_bindings b ON b.skill_id = s.id
-	LEFT JOIN sources src ON src.id = b.source_id`
+	LEFT JOIN sources src ON src.id = b.source_id
+	LEFT JOIN skill_snapshots snap ON snap.skill_id = s.id`
 
 // scanner matches both *sql.Row and *sql.Rows.
 type scanner interface {
@@ -43,12 +44,19 @@ func scanSkillDetail(row scanner) (*SkillDetail, error) {
 	var importedAt sql.NullString
 	var bSkillID, bSourceID sql.NullInt64
 	var bRelDir, bDigest, bCommit, srcName sql.NullString
-	err := row.Scan(&d.Skill.ID, &d.Skill.Slug, &d.Skill.Name, &d.Skill.Description,
-		&d.Skill.StoreDigest, &d.Skill.BaselineDigest, &createdAt, &updatedAt,
-		&bSkillID, &bSourceID, &bRelDir, &bDigest, &bCommit, &importedAt, &srcName)
+	var snapSkillID sql.NullInt64
+	syncDests, parseSync := skillSyncDests(&d.Skill)
+	dests := append([]any{&d.Skill.ID, &d.Skill.Slug, &d.Skill.Name, &d.Skill.Description,
+		&d.Skill.StoreDigest, &d.Skill.BaselineDigest, &createdAt, &updatedAt}, syncDests...)
+	dests = append(dests, &bSkillID, &bSourceID, &bRelDir, &bDigest, &bCommit, &importedAt, &srcName, &snapSkillID)
+	err := row.Scan(dests...)
 	if err != nil {
 		return nil, err
 	}
+	if err := parseSync(); err != nil {
+		return nil, err
+	}
+	d.Skill.HasPreviousSnapshot = snapSkillID.Valid
 	if d.Skill.CreatedAt, err = time.Parse(time.RFC3339Nano, createdAt); err != nil {
 		return nil, err
 	}

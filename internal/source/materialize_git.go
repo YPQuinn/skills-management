@@ -86,7 +86,7 @@ func materializeGit(ctx context.Context, loc Locator, commit string, entry Entry
 		return "", err
 	}
 	if digest != entry.Digest {
-		return "", fmt.Errorf("Source content changed while it was being imported (expected digest %s, observed %s)", entry.Digest, digest)
+		return "", fmt.Errorf("%w (expected digest %s, observed %s)", ErrContentChanged, entry.Digest, digest)
 	}
 	dstRoot, err := openDestinationRoot(dst)
 	if err != nil {

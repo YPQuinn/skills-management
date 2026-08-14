@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"skillctl/internal/state"
+	"skillctl/internal/sync"
 )
 
 // Skill is one app-facing Skill with its optional Source Binding. It never
@@ -22,6 +23,17 @@ type Skill struct {
 	CreatedAt      time.Time      `json:"created_at"`
 	UpdatedAt      time.Time      `json:"updated_at"`
 	Binding        *SourceBinding `json:"binding,omitempty"`
+
+	// SyncStatus is the persisted Sync Status relationship; a Skill without
+	// a Binding is always reported unbound regardless of the column.
+	SyncStatus    string     `json:"sync_status"`
+	SyncStale     bool       `json:"sync_stale"`
+	SyncCheckedAt *time.Time `json:"sync_checked_at,omitempty"`
+	LastSync      *LastSync  `json:"last_sync,omitempty"`
+
+	// HasPreviousSnapshot reports whether a previous snapshot exists, so
+	// Rollback is offered only when it can succeed.
+	HasPreviousSnapshot bool `json:"has_previous_snapshot"`
 }
 
 // SourceBinding is the app-facing view of one Skill's Source Binding.
@@ -81,16 +93,24 @@ func (a *App) ResolveSkillArg(arg string) (int64, error) {
 // appSkill converts one state detail into the app-facing Skill view.
 func appSkill(d state.SkillDetail) Skill {
 	s := Skill{
-		ID:             d.Skill.ID,
-		Slug:           d.Skill.Slug,
-		Name:           d.Skill.Name,
-		Description:    d.Skill.Description,
-		StoreDigest:    d.Skill.StoreDigest,
-		BaselineDigest: d.Skill.BaselineDigest,
-		CreatedAt:      d.Skill.CreatedAt,
-		UpdatedAt:      d.Skill.UpdatedAt,
+		ID:                  d.Skill.ID,
+		Slug:                d.Skill.Slug,
+		Name:                d.Skill.Name,
+		Description:         d.Skill.Description,
+		StoreDigest:         d.Skill.StoreDigest,
+		BaselineDigest:      d.Skill.BaselineDigest,
+		CreatedAt:           d.Skill.CreatedAt,
+		UpdatedAt:           d.Skill.UpdatedAt,
+		SyncStatus:          d.Skill.SyncStatus,
+		SyncStale:           d.Skill.SyncStale,
+		SyncCheckedAt:       d.Skill.SyncCheckedAt,
+		HasPreviousSnapshot: d.Skill.HasPreviousSnapshot,
 	}
-	if d.Binding != nil {
+	if d.Binding == nil {
+		// An unbound Skill's relationship is derived, never a stale column.
+		s.SyncStatus = string(sync.StatusUnbound)
+		s.SyncStale = false
+	} else {
 		s.Binding = &SourceBinding{
 			SourceID:     d.Binding.SourceID,
 			SourceName:   d.Binding.SourceName,
@@ -98,6 +118,14 @@ func appSkill(d state.SkillDetail) Skill {
 			Digest:       d.Binding.Digest,
 			SourceCommit: d.Binding.SourceCommit,
 			ImportedAt:   d.Binding.ImportedAt,
+		}
+	}
+	if d.Skill.LastSyncAction != "" || d.Skill.LastSyncResult != "" {
+		s.LastSync = &LastSync{
+			Action: d.Skill.LastSyncAction, Result: d.Skill.LastSyncResult,
+			StartedAt: d.Skill.LastSyncStartedAt, CompletedAt: d.Skill.LastSyncCompletedAt,
+			BeforeDigest: d.Skill.LastSyncBeforeDigest, AfterDigest: d.Skill.LastSyncAfterDigest,
+			Revision: d.Skill.LastSyncRevision, Error: d.Skill.LastSyncError,
 		}
 	}
 	return s

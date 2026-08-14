@@ -3,6 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/spf13/cobra"
@@ -14,6 +15,22 @@ import (
 // output. It is bound by every command that supports the flag and reset at
 // the start of each Execute, so stale state never leaks between runs.
 var jsonRequested bool
+
+// partialFailure marks a command that already printed its complete result
+// on stdout (human or --json) and only needs the exit code 1: a
+// synchronization batch with skipped, blocked, or failed items, or a
+// single-skill action whose use case was blocked. It is never printed,
+// because a second report would corrupt the single-JSON-value stdout
+// contract (decision 09).
+type partialFailure struct{ msg string }
+
+func (p partialFailure) Error() string { return p.msg }
+
+// exitPartial returns a partial-failure sentinel for one use case that was
+// blocked, partial, or failed but already reported its complete result.
+func exitPartial(format string, args ...any) partialFailure {
+	return partialFailure{msg: fmt.Sprintf(format, args...)}
+}
 
 // jsonErrorResult is the CLI --json failure shape: the same error envelope
 // the REST boundary uses, without the HTTP layer.

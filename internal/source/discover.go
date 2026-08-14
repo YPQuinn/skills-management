@@ -137,6 +137,16 @@ func readSkill(dir string) (string, string, error) {
 	return skillFrontmatter(data)
 }
 
+// ValidateSkillDir reports whether the directory at dir carries a legal
+// Skill: a regular SKILL.md marker whose frontmatter names a Skill. It is
+// the shared Skill validator for Source observation and Store evaluation,
+// so a Store with a missing, non-regular, or invalid marker classifies as
+// store_invalid exactly like an invalid Source entry.
+func ValidateSkillDir(dir string) error {
+	_, _, err := readSkill(dir)
+	return err
+}
+
 func sortObservation(obs *Observation) {
 	sort.Slice(obs.Entries, func(i, j int) bool { return obs.Entries[i].RelativeDir < obs.Entries[j].RelativeDir })
 	sort.Slice(obs.Issues, func(i, j int) bool { return obs.Issues[i].RelativeDir < obs.Issues[j].RelativeDir })

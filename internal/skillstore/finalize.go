@@ -47,11 +47,14 @@ func (s Store) PrepareFinalize(ctx context.Context, op Operation) (CleanupReceip
 	if op.SkillID == 0 {
 		return CleanupReceipt{}, errWrap(ErrAmbiguous, "operation %d has no committed Skill id", op.ID)
 	}
-	if op.Kind != KindImport && op.Kind != KindReplace {
+	if op.Kind != KindImport && op.Kind != KindReplace && op.Kind != KindBaseline {
 		return CleanupReceipt{}, errWrap(ErrAmbiguous, "unknown operation kind %q", op.Kind)
 	}
 	if err := domain.ValidateSlug(op.Slug); err != nil {
 		return CleanupReceipt{}, err
+	}
+	if op.Kind == KindBaseline {
+		return s.prepareFinalizeBaseline(ctx, op)
 	}
 	layout, err := s.openLayout()
 	if err != nil {
@@ -95,16 +98,42 @@ func (s Store) PrepareFinalize(ctx context.Context, op Operation) (CleanupReceip
 	if err := verifyLiveBound(ctx, layout, op, proof); err != nil {
 		return CleanupReceipt{}, err
 	}
-	backupID, err := s.installBaseline(ctx, layout, op, opDir, proof)
-	if err != nil {
-		return CleanupReceipt{}, err
+	var backupID fileID
+	var receiptBaseID fileID
+	if op.BaselineMode == BaselineKeep {
+		// A rollback retains the pre-operation Baseline: the receipt binds
+		// the identity sampled from the current Baseline so the terminal
+		// validation can refuse a swapped slot, while the content is never
+		// required to match the operation's digest (the Baseline was never
+		// mutated, and its bytes are comparison state rather than live
+		// content).
+		base, id, _, err := openTreeDigest(ctx, layout.baselines, strconv.FormatInt(op.SkillID, 10))
+		if err != nil {
+			return CleanupReceipt{}, errWrap(ErrAmbiguous, "reading the retained Baseline of Skill %d: %v", op.SkillID, err)
+		}
+		base.Close()
+		receiptBaseID = id
+	} else {
+		backupID, err = s.installBaseline(ctx, layout, op, opDir, proof)
+		if err != nil {
+			return CleanupReceipt{}, err
+		}
+		receiptBaseID = proof.candidateID
 	}
 	var staleID fileID
 	var staleWitness *transientWitness
 	if op.Kind == KindReplace {
-		staleID, staleWitness, err = s.rotatePrevious(ctx, layout, op, proof, opDir)
-		if err != nil {
-			return CleanupReceipt{}, err
+		if op.oldUnreadable() {
+			// The displaced non-tree content can never be a previous
+			// snapshot: the finalize removes it by identity.
+			if err := s.removeRecoveryNonTree(layout, op, proof); err != nil {
+				return CleanupReceipt{}, err
+			}
+		} else {
+			staleID, staleWitness, err = s.rotatePrevious(ctx, layout, op, proof, opDir)
+			if err != nil {
+				return CleanupReceipt{}, err
+			}
 		}
 	}
 	// Every phase succeeded; the transients moved by this invocation are
@@ -115,7 +144,7 @@ func (s Store) PrepareFinalize(ctx context.Context, op Operation) (CleanupReceip
 		layout.runHook(HookBeforeTransientDrain)
 		// Final destructive boundary: the moved-aside Baseline must still
 		// carry the old digest the Baseline slot and its witness bind.
-		if err := drainVerifiedTree(ctx, opDir, "baseline-old", backupID, op.OldDigest); err != nil {
+		if err := drainVerifiedTree(ctx, opDir, "baseline-old", backupID, op.displacedBaselineDigest()); err != nil {
 			return CleanupReceipt{}, err
 		}
 		layout.runHook(HookAfterTransientDrain)
@@ -161,7 +190,32 @@ func (s Store) PrepareFinalize(ctx context.Context, op Operation) (CleanupReceip
 	if err := verifyLiveBound(ctx, layout, op, proof); err != nil {
 		return CleanupReceipt{}, err
 	}
-	return newFinalizeReceipt(op, opDirID, proofFileID, proof), nil
+	return newFinalizeReceipt(op, opDirID, proofFileID, proof, receiptBaseID), nil
+}
+
+// removeRecoveryNonTree removes the recovery object of an unreadable-old
+// replace by identity (not a Skill tree, so no snapshot rotation); an
+// absent slot resumes.
+func (s Store) removeRecoveryNonTree(layout *storeLayout, op Operation, proof *installProof) error {
+	recName := strconv.FormatInt(op.ID, 10)
+	if _, err := layout.recovery.Lstat(recName); errors.Is(err, os.ErrNotExist) {
+		return nil
+	} else if err != nil {
+		return errWrap(ErrAmbiguous, "reading the recovery slot of operation %d: %v", op.ID, err)
+	}
+	s.runHook(HookBeforeTransientDrain)
+	if err := proveNonTree(layout.recovery, recName, proof.recoveryID); err != nil {
+		return err
+	}
+	if err := layout.recovery.Remove(recName); err != nil {
+		return errWrap(ErrAmbiguous, "recovery slot of operation %d could not be removed: %v", op.ID, err)
+	}
+	if exists, err := childExists(layout.recovery, recName); err != nil {
+		return err
+	} else if exists {
+		return errWrap(ErrAmbiguous, "recovery slot of operation %d reappeared after its removal", op.ID)
+	}
+	return nil
 }
 
 // verifyLiveBound opens the live Skill and requires it to carry the

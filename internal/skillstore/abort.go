@@ -30,7 +30,7 @@ func (s Store) Abort(ctx context.Context, op Operation) error {
 	if err := domain.ValidateSlug(op.Slug); err != nil {
 		return err
 	}
-	if op.Kind != KindImport && op.Kind != KindReplace {
+	if op.Kind != KindImport && op.Kind != KindReplace && op.Kind != KindBaseline {
 		return errWrap(ErrAmbiguous, "unknown operation kind %q", op.Kind)
 	}
 	layout, err := s.openLayout()

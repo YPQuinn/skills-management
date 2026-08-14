@@ -13,12 +13,32 @@ import (
 
 // reopenApp closes a and returns a fresh App bound to the same Store and
 // state database, simulating a process restart at the exact crash window.
+// The fresh App runs open-time recovery, exactly like production New.
 func reopenApp(t *testing.T, a *App) *App {
 	t.Helper()
 	if err := a.Close(); err != nil {
 		t.Fatal(err)
 	}
 	fresh, err := New(a.StorePath, a.StateDBPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { fresh.Close() })
+	return fresh
+}
+
+// reopenAppUnrecovered closes a and returns a fresh App bound to the same
+// Store and state database WITHOUT open-time recovery. Tests use it when
+// the recovery itself is the subject: to install a seam before the lazy
+// recovery inside the next Store write runs, or to observe the failure of
+// a recovery that cannot be proven (the production App refuses such an
+// open with recovery_failed).
+func reopenAppUnrecovered(t *testing.T, a *App) *App {
+	t.Helper()
+	if err := a.Close(); err != nil {
+		t.Fatal(err)
+	}
+	fresh, err := openApp(a.StorePath, a.StateDBPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,8 +75,9 @@ func TestImportSkillsFreshAppBlocksForeignLiveSwappedAtEvidenceRemoval(t *testin
 	op := importAndStopAfterReceiptPersisted(t, a, src, "skills/alpha", "alpha")
 
 	// the recovery runs in a genuinely fresh App, with the substitution
-	// hook installed on the fresh Store
-	fresh := reopenApp(t, a)
+	// hook installed on the fresh Store (open without open-time recovery
+	// so the hook is in place when the next Store write recovers)
+	fresh := reopenAppUnrecovered(t, a)
 	fresh.store.SetHook(func(p skillstore.HookPoint) {
 		if p != skillstore.HookAfterRemoveOp {
 			return
@@ -117,7 +138,13 @@ func TestImportSkillsFreshAppBlocksPartialQuarantineDrain(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fresh := reopenApp(t, a)
+	// The production open refuses the unprovable recovery before exposing
+	// any capability.
+	if _, err := New(a.StorePath, a.StateDBPath); !isCode(err, CodeRecovery) {
+		t.Fatalf("open must refuse an unprovable recovery: %v", err)
+	}
+
+	fresh := reopenAppUnrecovered(t, a)
 	_, err := fresh.ImportSkills(context.Background(), ImportSkillsInput{
 		SourceID: src.ID, Selectors: []ImportSelector{{RelativeDir: "skills/alpha"}},
 	})
@@ -213,7 +240,7 @@ func TestImportSkillsFreshAppBlocksForeignLiveOnTerminalRow(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fresh := reopenApp(t, a)
+	fresh := reopenAppUnrecovered(t, a)
 	_, err := fresh.ImportSkills(context.Background(), ImportSkillsInput{
 		SourceID: src.ID, Selectors: []ImportSelector{{RelativeDir: "skills/alpha"}},
 	})
@@ -254,7 +281,7 @@ func TestImportSkillsFreshAppBlocksByteIdenticalForeignProof(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fresh := reopenApp(t, a)
+	fresh := reopenAppUnrecovered(t, a)
 	_, err = fresh.ImportSkills(context.Background(), ImportSkillsInput{
 		SourceID: src.ID, Selectors: []ImportSelector{{RelativeDir: "skills/alpha"}},
 	})

@@ -14,11 +14,15 @@ import (
 // change.
 func InsertOperation(db *sql.DB, op skillstore.Operation) (skillstore.Operation, error) {
 	now := time.Now().UTC()
+	baseline := op.BaselineMode
+	if baseline == "" {
+		baseline = skillstore.BaselineAdvance
+	}
 	res, err := db.Exec(`INSERT INTO store_operations
-		(skill_id, slug, kind, old_digest, new_digest, phase, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		(skill_id, slug, kind, old_digest, new_digest, phase, baseline, baseline_digest, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		nullableID(op.SkillID), op.Slug, op.Kind, op.OldDigest, op.NewDigest,
-		skillstore.PhasePending, timeToSQL(&now), timeToSQL(&now))
+		skillstore.PhasePending, baseline, op.BaselineDigest, timeToSQL(&now), timeToSQL(&now))
 	if err != nil {
 		return op, err
 	}
@@ -28,6 +32,7 @@ func InsertOperation(db *sql.DB, op skillstore.Operation) (skillstore.Operation,
 	}
 	op.ID = id
 	op.Phase = skillstore.PhasePending
+	op.BaselineMode = baseline
 	return op, nil
 }
 
@@ -37,7 +42,7 @@ func InsertOperation(db *sql.DB, op skillstore.Operation) (skillstore.Operation,
 // the application resolves each one under the Store exclusive lock before
 // any Store write.
 func ListOpenOperations(db *sql.DB) ([]skillstore.Operation, error) {
-	rows, err := db.Query(`SELECT id, skill_id, slug, kind, old_digest, new_digest, phase, terminal_receipt
+	rows, err := db.Query(`SELECT id, skill_id, slug, kind, old_digest, new_digest, phase, baseline, baseline_digest, terminal_receipt
 		FROM store_operations ORDER BY id`)
 	if err != nil {
 		return nil, err
@@ -47,7 +52,7 @@ func ListOpenOperations(db *sql.DB) ([]skillstore.Operation, error) {
 	for rows.Next() {
 		var op skillstore.Operation
 		var skillID sql.NullInt64
-		if err := rows.Scan(&op.ID, &skillID, &op.Slug, &op.Kind, &op.OldDigest, &op.NewDigest, &op.Phase, &op.Receipt); err != nil {
+		if err := rows.Scan(&op.ID, &skillID, &op.Slug, &op.Kind, &op.OldDigest, &op.NewDigest, &op.Phase, &op.BaselineMode, &op.BaselineDigest, &op.Receipt); err != nil {
 			return nil, err
 		}
 		op.SkillID = skillID.Int64

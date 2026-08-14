@@ -102,7 +102,7 @@ func ParseCleanupReceipt(data []byte) (CleanupReceipt, error) {
 	if r.op.ID <= 0 || r.op.Slug == "" || r.op.NewDigest == "" {
 		return CleanupReceipt{}, fmt.Errorf("terminal receipt identity is incomplete")
 	}
-	if r.op.Kind != KindImport && r.op.Kind != KindReplace {
+	if r.op.Kind != KindImport && r.op.Kind != KindReplace && r.op.Kind != KindBaseline {
 		return CleanupReceipt{}, fmt.Errorf("terminal receipt kind %q is unknown", r.op.Kind)
 	}
 	var ids [5]fileID
@@ -181,13 +181,15 @@ func validateReceiptBinding(r CleanupReceipt, op Operation) error {
 
 // newFinalizeReceipt builds the terminal finalize receipt from the
 // validated install proof: the terminal expectations are the installed
-// live tree, the installed Baseline, and (for a replace) the rotated
-// previous snapshot, all by their physical identities.
-func newFinalizeReceipt(op Operation, opDirID, proofID fileID, proof *installProof) CleanupReceipt {
+// live tree, the Baseline (the installed candidate for an advancing
+// operation, or the retained pre-operation Baseline sampled by the caller
+// for a keep-baseline rollback), and (for a replace) the rotated previous
+// snapshot, all by their physical identities.
+func newFinalizeReceipt(op Operation, opDirID, proofID fileID, proof *installProof, baseID fileID) CleanupReceipt {
 	return CleanupReceipt{
 		action: actionFinalize, op: op,
 		opDirID: opDirID, proofID: proofID,
-		liveID: proof.liveID, baseID: proof.candidateID, prevID: proof.recoveryID,
+		liveID: proof.liveID, baseID: baseID, prevID: proof.recoveryID,
 	}
 }
 

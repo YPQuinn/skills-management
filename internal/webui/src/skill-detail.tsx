@@ -1,5 +1,8 @@
+// The Skill detail page: header plus the Overview / Synchronization /
+// Distribution tabs. The active tab lives in the ?tab= query parameter so
+// views are deep-linkable and follow browser back/forward.
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
 import { Badge } from '@appica/ui-react/badge'
 import { Spinner } from '@appica/ui-react/spinner'
@@ -7,6 +10,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@appica/ui-react/tabs'
 import { ArrowLeft } from '@appica/icons-react'
 import { fetchSkill } from './skill-api'
 import type { Skill } from './skill-api'
+import { SkillOverview } from './skill-overview'
+import { SkillSyncTab } from './skill-sync-tab'
 import { useLocale } from './locale-context'
 
 function isAbortError(err: unknown): boolean {
@@ -15,10 +20,13 @@ function isAbortError(err: unknown): boolean {
 
 export function SkillDetailPage() {
   const { slug } = useParams()
-  const { t, formatTime, getErrorMessage } = useLocale()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const { t, getErrorMessage } = useLocale()
   const [skill, setSkill] = useState<Skill | null>(null)
   const [error, setError] = useState<unknown | null>(null)
   const inflight = useRef<AbortController | null>(null)
+
+  const tab = searchParams.get('tab') === 'synchronization' ? 'synchronization' : 'overview'
 
   const load = useCallback(() => {
     if (!slug) return
@@ -49,6 +57,10 @@ export function SkillDetailPage() {
       active?.abort()
     }
   }, [load])
+
+  const handleTabChange = (value: string) => {
+    setSearchParams(value === 'overview' ? {} : { tab: value }, { replace: false })
+  }
 
   if (error && !skill) {
     return (
@@ -87,79 +99,21 @@ export function SkillDetailPage() {
         <p className="mt-2 text-foreground-subtle">{skill.description}</p>
       </div>
 
-      <Tabs defaultValue="overview" variant="line">
+      <Tabs value={tab} onValueChange={handleTabChange} variant="line">
         <TabsList>
           <TabsTrigger value="overview">{t('tabOverview')}</TabsTrigger>
-          <TabsTrigger value="synchronization" disabled>
-            {t('tabSynchronization')}
-          </TabsTrigger>
+          <TabsTrigger value="synchronization">{t('tabSynchronization')}</TabsTrigger>
           <TabsTrigger value="distribution" disabled>
             {t('tabDistribution')}
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="pt-4 space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 text-sm">
-            <div className="border border-border rounded-xl p-4 bg-background">
-              <div className="text-foreground-subtle">{t('labelSlug')}</div>
-              <div className="font-mono font-medium mt-0.5">{skill.slug}</div>
-            </div>
-            <div className="border border-border rounded-xl p-4 bg-background">
-              <div className="text-foreground-subtle">{t('labelCreated')}</div>
-              <div className="font-medium mt-0.5">{formatTime(skill.created_at)}</div>
-            </div>
-            <div className="border border-border rounded-xl p-4 bg-background">
-              <div className="text-foreground-subtle">{t('labelUpdated')}</div>
-              <div className="font-medium mt-0.5">{formatTime(skill.updated_at)}</div>
-            </div>
-            <div className="border border-border rounded-xl p-4 bg-background">
-              <div className="text-foreground-subtle">{t('labelStoreDigest')}</div>
-              <div className="font-mono text-xs break-all mt-0.5">{skill.store_digest || '—'}</div>
-            </div>
-            <div className="border border-border rounded-xl p-4 bg-background">
-              <div className="text-foreground-subtle">{t('labelBaselineDigest')}</div>
-              <div className="font-mono text-xs break-all mt-0.5">{skill.baseline_digest || '—'}</div>
-            </div>
-          </div>
+        <TabsContent value="overview" className="pt-4">
+          <SkillOverview skill={skill} />
+        </TabsContent>
 
-          <div className="border border-border rounded-xl p-6 bg-background space-y-4">
-            <h2 className="text-lg font-semibold">{t('titleSourceBinding')}</h2>
-            {skill.binding ? (
-              <div className="grid gap-4 sm:grid-cols-2 text-sm">
-                <div>
-                  <div className="text-foreground-subtle">{t('labelSourceName')}</div>
-                  <div className="font-medium mt-0.5">
-                    <Link
-                      to={`/sources/${encodeURIComponent(skill.binding.source_name)}`}
-                      className="underline decoration-border underline-offset-2 hover:decoration-foreground"
-                    >
-                      {skill.binding.source_name}
-                    </Link>
-                  </div>
-                </div>
-                <div>
-                  <div className="text-foreground-subtle">{t('labelRelativeDir')}</div>
-                  <div className="font-mono font-medium mt-0.5">{skill.binding.relative_dir}</div>
-                </div>
-                <div>
-                  <div className="text-foreground-subtle">{t('labelSourceCommit')}</div>
-                  <div className="font-mono text-xs mt-0.5">{skill.binding.source_commit || '—'}</div>
-                </div>
-                <div>
-                  <div className="text-foreground-subtle">{t('labelImportedAt')}</div>
-                  <div className="font-medium mt-0.5">{formatTime(skill.binding.imported_at)}</div>
-                </div>
-                <div className="sm:col-span-2">
-                  <div className="text-foreground-subtle">{t('labelBindingDigest')}</div>
-                  <div className="font-mono text-xs break-all mt-0.5">{skill.binding.digest}</div>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-foreground-subtle">
-                {t('unboundSkillText')}
-              </p>
-            )}
-          </div>
+        <TabsContent value="synchronization" className="pt-4">
+          <SkillSyncTab skill={skill} onSkillUpdated={setSkill} />
         </TabsContent>
       </Tabs>
     </div>

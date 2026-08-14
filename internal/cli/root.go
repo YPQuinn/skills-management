@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -36,12 +37,17 @@ func Execute(ctx context.Context) error {
 
 // executeWith runs one command tree and reports failures: the human message
 // always goes to stderr, and --json requests also receive exactly one JSON
-// error value on stdout.
+// error value on stdout. A partial-failure sentinel is never printed: the
+// command already emitted its complete result and only needs the exit code.
 func executeWith(ctx context.Context, root *cobra.Command) error {
 	jsonRequested = false
 	err := root.ExecuteContext(ctx)
 	if err == nil {
 		return nil
+	}
+	var pf partialFailure
+	if errors.As(err, &pf) {
+		return err
 	}
 	if jsonRequested {
 		if jerr := printJSONError(root.OutOrStdout(), err); jerr != nil {

@@ -181,3 +181,50 @@ func syncRoot(root *os.Root) error {
 	defer f.Close()
 	return f.Sync()
 }
+
+// moveNonTree moves the single-component non-directory node oldName below
+// oldParent onto newName below newParent with a no-replace rename, proven
+// by physical identity only (the node is deliberately not a digestable
+// Skill tree); a failure after the rename preserves it with ErrAmbiguous.
+func moveNonTree(layout *storeLayout, oldParent *os.Root, oldName string, newParent *os.Root, newName string, wantID fileID) error {
+	if err := layout.verify(); err != nil {
+		return err
+	}
+	if err := proveNonTree(oldParent, oldName, wantID); err != nil {
+		return err
+	}
+	if err := renameNoReplaceAt(oldParent, oldName, newParent, newName); err != nil {
+		// The last step that can fail without mutating anything.
+		return err
+	}
+	if err := syncRoot(oldParent); err != nil {
+		return errWrap(ErrAmbiguous, "source parent could not be synced after the move: %v", err)
+	}
+	if err := syncRoot(newParent); err != nil {
+		return errWrap(ErrAmbiguous, "destination parent could not be synced after the move: %v", err)
+	}
+	if err := proveNonTree(newParent, newName, wantID); err != nil {
+		return err
+	}
+	return layout.verify()
+}
+
+// proveNonTree requires name below parent to still identify the given
+// object and that object to still not be a directory.
+func proveNonTree(parent *os.Root, name string, wantID fileID) error {
+	info, err := parent.Lstat(name)
+	if err != nil {
+		return errWrap(ErrAmbiguous, "%q cannot be re-opened for the move proof: %v", name, err)
+	}
+	id, err := fileIDOf(info)
+	if err != nil {
+		return errWrap(ErrAmbiguous, "%q cannot be identified: %v", name, err)
+	}
+	if id != wantID {
+		return errWrap(ErrAmbiguous, "%q is not the object %d:%d that was verified before the move", name, wantID.dev, wantID.ino)
+	}
+	if info.IsDir() {
+		return errWrap(ErrAmbiguous, "%q is a directory; a non-tree move never displaces directories", name)
+	}
+	return nil
+}

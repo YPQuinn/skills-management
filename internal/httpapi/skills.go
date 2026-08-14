@@ -33,6 +33,13 @@ type skillJSON struct {
 	CreatedAt      string            `json:"created_at"`
 	UpdatedAt      string            `json:"updated_at"`
 	Binding        *skillBindingJSON `json:"binding,omitempty"`
+
+	SyncStatus    string        `json:"sync_status"`
+	SyncStale     bool          `json:"sync_stale"`
+	SyncCheckedAt string        `json:"sync_checked_at,omitempty"`
+	LastSync      *lastSyncJSON `json:"last_sync,omitempty"`
+
+	HasPreviousSnapshot bool `json:"has_previous_snapshot"`
 }
 
 // importSkillSelectorJSON selects one Source Inventory entry by exact
@@ -128,8 +135,13 @@ func newSkillJSON(s app.Skill) skillJSON {
 	out := skillJSON{
 		ID: s.ID, Slug: s.Slug, Name: s.Name, Description: s.Description,
 		StoreDigest: s.StoreDigest, BaselineDigest: s.BaselineDigest,
-		CreatedAt: s.CreatedAt.UTC().Format(time.RFC3339Nano),
-		UpdatedAt: s.UpdatedAt.UTC().Format(time.RFC3339Nano),
+		CreatedAt:  s.CreatedAt.UTC().Format(time.RFC3339Nano),
+		UpdatedAt:  s.UpdatedAt.UTC().Format(time.RFC3339Nano),
+		SyncStatus: s.SyncStatus, SyncStale: s.SyncStale, LastSync: newLastSyncJSON(s.LastSync),
+		HasPreviousSnapshot: s.HasPreviousSnapshot,
+	}
+	if s.SyncCheckedAt != nil {
+		out.SyncCheckedAt = s.SyncCheckedAt.UTC().Format(time.RFC3339Nano)
 	}
 	if s.Binding != nil {
 		out.Binding = &skillBindingJSON{
