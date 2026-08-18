@@ -3,11 +3,13 @@ package source
 import (
 	"context"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"syscall"
 )
 
 // skippedDirs are never searched for Skills: VCS metadata, dependency
@@ -125,12 +127,38 @@ func (obs *Observation) addSkillDir(path, rel string) {
 	obs.Entries = append(obs.Entries, Entry{RelativeDir: filepath.ToSlash(rel), Name: name, Description: description})
 }
 
+// ReadSkill returns the frontmatter name and description of the Skill at
+// dir, or an error when the directory is not a valid Skill.
+func ReadSkill(dir string) (string, string, error) {
+	return readSkill(dir)
+}
+
 func readSkill(dir string) (string, string, error) {
 	marker := filepath.Join(dir, "SKILL.md")
 	if !markerIsRegular(marker) {
 		return "", "", fmt.Errorf("SKILL.md is not a regular file")
 	}
 	data, err := os.ReadFile(marker)
+	if err != nil {
+		return "", "", fmt.Errorf("reading SKILL.md: %v", err)
+	}
+	return skillFrontmatter(data)
+}
+
+// ReadSkillRoot returns the frontmatter of SKILL.md through an already-open
+// Skill directory handle. The marker is opened with O_NOFOLLOW so a symlink
+// swapped into the name after Lstat cannot be read as Skill content.
+func ReadSkillRoot(root *os.Root) (string, string, error) {
+	info, err := root.Lstat("SKILL.md")
+	if err != nil || !info.Mode().IsRegular() {
+		return "", "", fmt.Errorf("SKILL.md is not a regular file")
+	}
+	f, err := root.OpenFile("SKILL.md", os.O_RDONLY|syscall.O_NOFOLLOW, 0)
+	if err != nil {
+		return "", "", fmt.Errorf("reading SKILL.md: %v", err)
+	}
+	defer f.Close()
+	data, err := io.ReadAll(f)
 	if err != nil {
 		return "", "", fmt.Errorf("reading SKILL.md: %v", err)
 	}

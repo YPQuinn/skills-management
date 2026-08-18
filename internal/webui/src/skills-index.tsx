@@ -91,7 +91,7 @@ export function SkillsIndex() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">{t('skillsTitle')}</h1>
-          <p className="text-foreground-subtle text-sm">{t('skillsSubtitle')}</p>
+          <p className="text-foreground-muted text-sm">{t('skillsSubtitle')}</p>
         </div>
       </div>
 
@@ -104,12 +104,12 @@ export function SkillsIndex() {
 
       {loading && skills === null ? (
         <div className="flex justify-center py-12">
-          <Spinner className="text-3xl text-foreground-subtle" aria-label={t('ariaLoadingSkills')} />
+          <Spinner className="text-3xl text-foreground-muted" aria-label={t('ariaLoadingSkills')} />
         </div>
       ) : skills === null ? null : skills.length === 0 ? (
         <div className="rounded-xl border border-border bg-background p-8 text-center space-y-3">
-          <p className="text-foreground-subtle">{t('emptySkillsIndexTitle')}</p>
-          <p className="text-sm text-foreground-subtle">{t('emptySkillsIndexSubtitle')}</p>
+          <p className="text-foreground-muted">{t('emptySkillsIndexTitle')}</p>
+          <p className="text-sm text-foreground-muted">{t('emptySkillsIndexSubtitle')}</p>
           <Link
             to="/sources"
             className="inline-flex items-center gap-1 text-sm font-medium underline decoration-border underline-offset-2 hover:decoration-foreground"
@@ -132,7 +132,7 @@ export function SkillsIndex() {
           />
           {filteredSkills.length === 0 ? (
             <div role="status" className="rounded-xl border border-border bg-background p-8 text-center">
-              <p className="text-foreground-subtle">{t('emptySkillsSearch')}</p>
+              <p className="text-foreground-muted">{t('emptySkillsSearch')}</p>
             </div>
           ) : (
             <>
@@ -160,8 +160,8 @@ export function SkillsIndex() {
                               {s.name}
                             </Link>
                           </TableCell>
-                          <TableCell className="font-mono text-foreground-subtle">{s.slug}</TableCell>
-                          <TableCell className="text-foreground-subtle">{s.description}</TableCell>
+                          <TableCell className="font-mono text-foreground-muted">{s.slug}</TableCell>
+                          <TableCell className="text-foreground-muted">{s.description}</TableCell>
                           <TableCell>
                             {s.binding ? (
                               <div className="flex flex-col text-xs">
@@ -171,7 +171,7 @@ export function SkillsIndex() {
                                 >
                                   {s.binding.source_name}
                                 </Link>
-                                <span className="font-mono text-foreground-subtle">{s.binding.relative_dir}</span>
+                                <span className="font-mono text-foreground-muted">{s.binding.relative_dir}</span>
                               </div>
                             ) : (
                               <Badge variant="outline" className="text-xs">
@@ -179,7 +179,7 @@ export function SkillsIndex() {
                               </Badge>
                             )}
                           </TableCell>
-                          <TableCell className="text-foreground-subtle text-xs">{formatTime(s.updated_at)}</TableCell>
+                          <TableCell className="text-foreground-muted text-xs">{formatTime(s.updated_at)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

@@ -57,13 +57,13 @@ export function ResourceDeleteDialog({
         </AlertDialogHeader>
         <AlertDialogBody className="space-y-3">
           {loading && (
-            <div className="flex items-center gap-2 text-sm text-foreground-subtle">
+            <div className="flex items-center gap-2 text-sm text-foreground-muted">
               <Spinner className="text-xl" aria-label={t('previewLoading')} />
               {t('previewLoading')}
             </div>
           )}
           {details.length > 0 && (
-            <ul className="space-y-1 text-sm text-foreground-subtle">
+            <ul className="space-y-1 text-sm text-foreground-muted">
               {details.map((line) => (
                 <li key={line}>{line}</li>
               ))}

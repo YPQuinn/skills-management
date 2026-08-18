@@ -55,7 +55,7 @@ export function SourceSyncSection({ sourceId, onSynced }: SourceSyncSectionProps
           <h2 id="source-sync-heading" className="text-lg font-semibold">
             {t('sourceSyncHeading')}
           </h2>
-          <p className="text-sm text-foreground-subtle">{t('sourceSyncDesc')}</p>
+          <p className="text-sm text-foreground-muted">{t('sourceSyncDesc')}</p>
         </div>
         <Button onClick={() => void run()} disabled={syncing} focusableWhenDisabled>
           {syncing ? (
@@ -81,7 +81,7 @@ export function SourceSyncSection({ sourceId, onSynced }: SourceSyncSectionProps
             <AlertDescription>{t('batchSyncSummary', { ...result.summary })}</AlertDescription>
           </Alert>
           {result.items.length === 0 ? (
-            <p className="text-sm text-foreground-subtle">{t('batchNoBoundSkills')}</p>
+            <p className="text-sm text-foreground-muted">{t('batchNoBoundSkills')}</p>
           ) : (
             <div className="border border-border rounded-xl overflow-x-auto">
               <Table>
@@ -110,7 +110,7 @@ export function SourceSyncSection({ sourceId, onSynced }: SourceSyncSectionProps
                       <TableCell>
                         <SyncResultBadge result={item.result} />
                       </TableCell>
-                      <TableCell className="text-foreground-subtle text-xs max-w-72 break-words">
+                      <TableCell className="text-foreground-muted text-xs max-w-72 break-words">
                         {item.message || '—'}
                       </TableCell>
                     </TableRow>

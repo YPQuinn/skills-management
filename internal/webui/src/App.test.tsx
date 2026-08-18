@@ -65,15 +65,15 @@ describe('App routing and state', () => {
     expect(screen.getByRole('link', { name: 'Targets' })).toBeTruthy()
   })
   
-  it('renders clear error on state_missing state', async () => {
+  it('renders recover action on state_missing state', async () => {
     vi.mocked(window.fetch).mockImplementation(async () => mockResponse({ state: 'state_missing', message: 'Missing state file' }))
-    
+
     renderApp()
-    
+
     expect(await screen.findByText('Error: state_missing')).toBeTruthy()
     expect(screen.getByText('Missing state file')).toBeTruthy()
-    // Should NOT show the setup form
-    expect(screen.queryByText('Initialize')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Initialize' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Recover Store' })).toBeTruthy()
   })
 
   it('renders clear error on invalid state', async () => {
@@ -192,6 +192,26 @@ describe('Setup validation', () => {
     })
     
     // Verify redirection to /skills
+    expect(await screen.findByRole('heading', { name: 'Skills' })).toBeTruthy()
+  })
+
+  it('recovers a missing state database through setup', async () => {
+    vi.mocked(window.fetch).mockImplementation(async (url: RequestInfo | URL) => {
+      if (url === '/api/v1/setup') {
+        return mockResponse({ state: 'ready', recovered: [{ slug: 'alpha' }] })
+      }
+      return mockResponse({ state: 'state_missing', message: 'Missing state file' })
+    })
+
+    renderApp()
+    const button = await screen.findByRole('button', { name: 'Recover Store' })
+    await userEvent.setup().click(button)
+
+    expect(window.fetch).toHaveBeenCalledWith('/api/v1/setup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recover_store: true }),
+    })
     expect(await screen.findByRole('heading', { name: 'Skills' })).toBeTruthy()
   })
 })

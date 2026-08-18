@@ -96,7 +96,7 @@ export function GroupDetailPage() {
   if (loading && group === null) {
     return (
       <div className="flex justify-center py-12">
-        <Spinner className="text-3xl text-foreground-subtle" aria-label={t('ariaLoadingGroup')} />
+        <Spinner className="text-3xl text-foreground-muted" aria-label={t('ariaLoadingGroup')} />
       </div>
     )
   }
@@ -106,7 +106,7 @@ export function GroupDetailPage() {
       <div className="space-y-4">
         <Link
           to="/groups"
-          className="inline-flex items-center gap-1 text-sm font-medium text-foreground-subtle hover:text-foreground"
+          className="inline-flex items-center gap-1 text-sm font-medium text-foreground-muted hover:text-foreground"
         >
           <ChevronLeft className="size-4" />
           {t('linkAllGroups')}
@@ -128,19 +128,19 @@ export function GroupDetailPage() {
       <div>
         <Link
           to="/groups"
-          className="inline-flex items-center gap-1 text-sm font-medium text-foreground-subtle hover:text-foreground mb-2"
+          className="inline-flex items-center gap-1 text-sm font-medium text-foreground-muted hover:text-foreground mb-2"
         >
           <ChevronLeft className="size-4" />
           {t('linkAllGroups')}
         </Link>
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Folder className="size-7 text-foreground-subtle" />
+            <Folder className="size-7 text-foreground-muted" />
             <h1 className="text-2xl font-bold">{group.name || t('groupsTitle')}</h1>
           </div>
           <GroupDeleteAction groupId={group.id} name={group.name} />
         </div>
-        <div className="flex flex-wrap gap-4 text-xs text-foreground-subtle mt-2">
+        <div className="flex flex-wrap gap-4 text-xs text-foreground-muted mt-2">
           <span>{t('labelCreated')}: {formatTime(group.created_at)}</span>
           <span>{t('labelUpdated')}: {formatTime(group.updated_at)}</span>
         </div>
@@ -167,7 +167,7 @@ export function GroupDetailPage() {
           {t('groupAssignedTargetsHeading', { count: group.targets.length })}
         </h2>
         {group.targets.length === 0 ? (
-          <p className="text-foreground-subtle text-sm py-2">{t('emptyGroupAssignedTargets')}</p>
+          <p className="text-foreground-muted text-sm py-2">{t('emptyGroupAssignedTargets')}</p>
         ) : (
           <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
             {group.targets.map((target) => (
@@ -181,7 +181,7 @@ export function GroupDetailPage() {
                 >
                   {target.name}
                 </Link>
-                <span className="text-xs text-foreground-subtle">ID #{target.id}</span>
+                <span className="text-xs text-foreground-muted">ID #{target.id}</span>
               </div>
             ))}
           </div>

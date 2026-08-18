@@ -97,7 +97,7 @@ export function TargetDistributionSection({ targetId, initial, onChanged }: Targ
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">{t('distributionHeading')}</h2>
-          <p className="text-sm text-foreground-subtle">{t('distributionSubtitle')}</p>
+          <p className="text-sm text-foreground-muted">{t('distributionSubtitle')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {state !== '' && (
@@ -133,7 +133,7 @@ export function TargetDistributionSection({ targetId, initial, onChanged }: Targ
       </div>
 
       {status?.inspected_at && (
-        <p className="text-xs text-foreground-subtle">
+        <p className="text-xs text-foreground-muted">
           {t('inspectedAtLabel', { time: formatTime(status.inspected_at) })}
           {status.last_completed_at && ` · ${t('distributionLastOutcome', { outcome: status.last_result })}`}
         </p>

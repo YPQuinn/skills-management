@@ -233,6 +233,7 @@ func (s Store) Install(ctx context.Context, op Operation, staged *StagedProof) e
 				return err
 			}
 		}
+		s.runHook(HookAfterOldLiveMoved)
 	}
 	// Second live mutation: the staged tree becomes the live tree with an
 	// atomic no-replace rename; movePinned re-proves the installed tree

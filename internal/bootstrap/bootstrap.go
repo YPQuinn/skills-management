@@ -104,6 +104,9 @@ func (m *Manager) App() (*app.App, error) {
 	}
 	if _, err := os.Stat(cfg.StateDBPath); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
+			m.mu.Lock()
+			m.detachAppLocked()
+			m.mu.Unlock()
 			return nil, app.Errorf(app.CodeStateMissing, "state database is missing")
 		}
 		return nil, app.Errorf(app.CodeInvalidConfig, "state database at %s is not readable: %v", cfg.StateDBPath, err)
@@ -120,6 +123,16 @@ func (m *Manager) App() (*app.App, error) {
 	}
 	m.app = a
 	return a, nil
+}
+
+// detachAppLocked closes and forgets a cached App so later requests cannot
+// keep using a handle whose state.db was deleted. The caller holds m.mu.
+func (m *Manager) detachAppLocked() {
+	if m.app == nil {
+		return
+	}
+	_ = m.app.Close()
+	m.app = nil
 }
 
 // Initialize is the shared init use case used by `skillctl init` and the

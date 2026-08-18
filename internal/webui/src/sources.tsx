@@ -60,7 +60,7 @@ export function SourcesIndex() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">{t('sourcesTitle')}</h1>
-          <p className="text-foreground-subtle text-sm">{t('sourcesSubtitle')}</p>
+          <p className="text-foreground-muted text-sm">{t('sourcesSubtitle')}</p>
         </div>
       </div>
 
@@ -75,10 +75,10 @@ export function SourcesIndex() {
 
       {loading && sources === null ? (
         <div className="flex justify-center py-12">
-          <Spinner className="text-3xl text-foreground-subtle" aria-label={t('ariaLoadingSources')} />
+          <Spinner className="text-3xl text-foreground-muted" aria-label={t('ariaLoadingSources')} />
         </div>
       ) : sources === null ? null : sources.length === 0 ? (
-        <p className="text-foreground-subtle">{t('emptySourcesIndex')}</p>
+        <p className="text-foreground-muted">{t('emptySourcesIndex')}</p>
       ) : (
         <ScrollArea className="w-full" orientation="horizontal">
           <div className="min-w-[800px]">
@@ -105,12 +105,12 @@ export function SourcesIndex() {
                     <TableCell>
                       <Badge variant="soft">{s.kind}</Badge>
                     </TableCell>
-                    <TableCell className="text-foreground-subtle" title={s.location}>{truncate(s.location)}</TableCell>
+                    <TableCell className="text-foreground-muted" title={s.location}>{truncate(s.location)}</TableCell>
                     <TableCell>
                       <SourceStatusBadge available={s.available} stale={s.stale} />
                     </TableCell>
                     <TableCell className="text-end tabular-nums">{s.entry_count}</TableCell>
-                    <TableCell className="text-foreground-subtle">{formatTime(s.last_checked_at)}</TableCell>
+                    <TableCell className="text-foreground-muted">{formatTime(s.last_checked_at)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

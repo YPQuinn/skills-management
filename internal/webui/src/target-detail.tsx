@@ -115,7 +115,7 @@ export function TargetDetailPage() {
   if (loading && target === null) {
     return (
       <div className="flex justify-center py-12">
-        <Spinner className="text-3xl text-foreground-subtle" aria-label={t('ariaLoadingTarget')} />
+        <Spinner className="text-3xl text-foreground-muted" aria-label={t('ariaLoadingTarget')} />
       </div>
     )
   }
@@ -125,7 +125,7 @@ export function TargetDetailPage() {
       <div className="space-y-4">
         <Link
           to="/targets"
-          className="inline-flex items-center gap-1 text-sm font-medium text-foreground-subtle hover:text-foreground"
+          className="inline-flex items-center gap-1 text-sm font-medium text-foreground-muted hover:text-foreground"
         >
           <ChevronLeft className="size-4" />
           {t('linkAllTargets')}
@@ -154,14 +154,14 @@ export function TargetDetailPage() {
       <div>
         <Link
           to="/targets"
-          className="inline-flex items-center gap-1 text-sm font-medium text-foreground-subtle hover:text-foreground mb-2"
+          className="inline-flex items-center gap-1 text-sm font-medium text-foreground-muted hover:text-foreground mb-2"
         >
           <ChevronLeft className="size-4" />
           {t('linkAllTargets')}
         </Link>
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Target className="size-7 text-foreground-subtle" />
+            <Target className="size-7 text-foreground-muted" />
             <h1 className="text-2xl font-bold">{target.name || t('targetsTitle')}</h1>
             <Badge variant="soft" className="uppercase font-mono">
               {target.adapter}
@@ -169,7 +169,7 @@ export function TargetDetailPage() {
           </div>
           <TargetDeleteAction targetId={target.id} name={target.name} />
         </div>
-        <div className="flex flex-wrap gap-4 text-xs text-foreground-subtle mt-2">
+        <div className="flex flex-wrap gap-4 text-xs text-foreground-muted mt-2">
           <span>{t('colScope')}: <strong className="text-foreground font-mono">{target.scope}</strong></span>
           <span>{t('colPath')}: <strong className="text-foreground font-mono">{target.path}</strong></span>
           {target.project_root && (

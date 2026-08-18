@@ -63,7 +63,7 @@ export function AddSourceForm() {
     <form onSubmit={handleSubmit} className="space-y-4 border border-border rounded-xl p-6 bg-background shadow-sm">
       <div>
         <h2 className="text-lg font-semibold">{t('addSourceTitle')}</h2>
-        <p className="text-sm text-foreground-subtle">{t('addSourceSubtitle')}</p>
+        <p className="text-sm text-foreground-muted">{t('addSourceSubtitle')}</p>
       </div>
 
       {error !== null && (

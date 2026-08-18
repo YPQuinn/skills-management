@@ -84,6 +84,25 @@ type App struct {
 	// Tests fail the Binding/digest commit after the Baseline is isolated.
 	// A nil Binding is Detach; a non-nil Binding is conflicting Rebind.
 	commitBaselineClear func(op skillstore.Operation, skillID int64, oldBaseline string, b *state.Binding, status string) error
+
+	// afterIntentHook runs after a Store journal intent is persisted and
+	// before any filesystem mutation. Nil in production; process crash
+	// tests terminate here for the intent-before-filesystem window.
+	afterIntentHook func()
+
+	// linkMutateHook runs after a Distribution create/remove mutated the
+	// Target filesystem and before the Managed Link ledger is finalized.
+	// Nil in production.
+	linkMutateHook func(action string)
+
+	// afterInspectHook runs after a Target inspection/plan and before
+	// mutation. Nil in production; tests replace a Target entry in this
+	// window.
+	afterInspectHook func()
+
+	// recoverNameHook runs after a recover-store name is listed and before
+	// it is pinned. Nil in production; tests swap the name to a symlink.
+	recoverNameHook func(name string)
 }
 
 // New opens the state database at stateDBPath, resolves every unfinished

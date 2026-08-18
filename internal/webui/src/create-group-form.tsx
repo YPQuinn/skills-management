@@ -63,7 +63,7 @@ export function CreateGroupForm({ onCreated }: CreateGroupFormProps) {
     <form onSubmit={handleSubmit} className="space-y-4 border border-border rounded-xl p-6 bg-background shadow-sm">
       <div>
         <h2 className="text-lg font-semibold">{t('createGroupTitle')}</h2>
-        <p className="text-sm text-foreground-subtle">{t('createGroupSubtitle')}</p>
+        <p className="text-sm text-foreground-muted">{t('createGroupSubtitle')}</p>
       </div>
 
       {error !== null && (

@@ -126,6 +126,9 @@ func (a *App) replaceSkillContent(ctx context.Context, d *state.SkillDetail, src
 	if err != nil {
 		return syncFailure{code: CodeInternal, message: "persisting the operation intent: " + err.Error()}
 	}
+	if a.afterIntentHook != nil {
+		a.afterIntentHook()
+	}
 	staged, err := a.store.Stage(ctx, op.ID, contentDir, digest, allowLarge)
 	if err != nil {
 		if errors.Is(err, skillstore.ErrAmbiguous) {

@@ -159,7 +159,7 @@ export function SourceDetailPage() {
     )
   }
   if (!source) {
-    return <Spinner className="text-3xl text-foreground-subtle" aria-label={t('ariaLoadingSource')} />
+    return <Spinner className="text-3xl text-foreground-muted" aria-label={t('ariaLoadingSource')} />
   }
 
   const boundSkillMap = new Map<string, Skill>()
@@ -177,13 +177,13 @@ export function SourceDetailPage() {
         <div>
           <Link
             to="/sources"
-            className="inline-flex items-center gap-1 text-sm text-foreground-subtle underline decoration-border underline-offset-2 hover:decoration-foreground"
+            className="inline-flex items-center gap-1 text-sm text-foreground-muted underline decoration-border underline-offset-2 hover:decoration-foreground"
           >
             <ArrowLeft className="size-4" />
             {t('linkAllSources')}
           </Link>
           <h1 className="text-2xl font-bold mt-1">{source.name}</h1>
-          <p className="mt-0.5 flex items-start gap-1.5 text-sm text-foreground-subtle break-all">
+          <p className="mt-0.5 flex items-start gap-1.5 text-sm text-foreground-muted break-all">
             <SourceLocationIcon source={source} />
             {/^https?:\/\//i.test(source.location) ? (
               <a

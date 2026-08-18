@@ -4,5 +4,9 @@
 /scaffold_react.py
 internal/webui/dist
 internal/webui/node_modules
+/e2e/webui/node_modules
+/e2e/webui/test-results
+/e2e/webui/playwright-report
+/e2e/webui/blob-report
 /.pi-subagents
 .DS_Store

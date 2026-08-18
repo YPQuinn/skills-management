@@ -55,7 +55,7 @@ export function SourceReplaceDialog({
             <p className="font-semibold text-foreground-strong">{t('replaceImpactTitle')}</p>
             {pendingConflict.impact.groups && pendingConflict.impact.groups.length > 0 && (
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-foreground-subtle">{t('navGroups')}:</span>
+                <span className="text-foreground-muted">{t('navGroups')}:</span>
                 {pendingConflict.impact.groups.map((g) => (
                   <Badge key={g.id} variant="soft">
                     {g.name}
@@ -65,7 +65,7 @@ export function SourceReplaceDialog({
             )}
             {pendingConflict.impact.targets && pendingConflict.impact.targets.length > 0 && (
               <div className="space-y-1">
-                <span className="text-foreground-subtle block">{t('navTargets')}:</span>
+                <span className="text-foreground-muted block">{t('navTargets')}:</span>
                 <div className="flex flex-wrap items-center gap-1.5">
                   {pendingConflict.impact.targets.map((tgt) => {
                     const hasGroups = tgt.groups && tgt.groups.length > 0

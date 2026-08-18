@@ -100,6 +100,9 @@ func (a *App) distributeTargetLocked(ctx context.Context, t *state.Target, dryRu
 	if dryRun {
 		return result, nil
 	}
+	if a.afterInspectHook != nil {
+		a.afterInspectHook()
+	}
 
 	// Creates first, then removals, each independently (decision 06). A
 	// cancelled request stops before each next item without rolling back

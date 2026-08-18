@@ -73,7 +73,7 @@ export function SkillDetailPage() {
   }
 
   if (!skill) {
-    return <Spinner className="text-3xl text-foreground-subtle" aria-label={t('ariaLoadingSkill')} />
+    return <Spinner className="text-3xl text-foreground-muted" aria-label={t('ariaLoadingSkill')} />
   }
 
   return (
@@ -81,7 +81,7 @@ export function SkillDetailPage() {
       <div>
         <Link
           to="/skills"
-          className="inline-flex items-center gap-1 text-sm text-foreground-subtle underline decoration-border underline-offset-2 hover:decoration-foreground"
+          className="inline-flex items-center gap-1 text-sm text-foreground-muted underline decoration-border underline-offset-2 hover:decoration-foreground"
         >
           <ArrowLeft className="size-4" />
           {t('linkAllSkills')}
@@ -89,7 +89,7 @@ export function SkillDetailPage() {
         <div className="flex items-start justify-between gap-4 mt-2">
           <div>
             <h1 className="text-2xl font-bold">{skill.name}</h1>
-            <p className="font-mono text-sm text-foreground-subtle">{skill.slug}</p>
+            <p className="font-mono text-sm text-foreground-muted">{skill.slug}</p>
           </div>
           <div className="flex flex-col items-end gap-2">
             {skill.binding ? (
@@ -100,14 +100,18 @@ export function SkillDetailPage() {
             <SkillCleanupActions skill={skill} onSkillUpdated={setSkill} />
           </div>
         </div>
-        <p className="mt-2 text-foreground-subtle">{skill.description}</p>
+        <p className="mt-2 text-foreground-muted">{skill.description}</p>
       </div>
 
       <Tabs value={tab} onValueChange={handleTabChange} variant="line">
         <TabsList>
-          <TabsTrigger value="overview">{t('tabOverview')}</TabsTrigger>
-          <TabsTrigger value="synchronization">{t('tabSynchronization')}</TabsTrigger>
-          <TabsTrigger value="distribution" disabled>
+          <TabsTrigger value="overview" className="!text-black">
+            {t('tabOverview')}
+          </TabsTrigger>
+          <TabsTrigger value="synchronization" className="!text-black">
+            {t('tabSynchronization')}
+          </TabsTrigger>
+          <TabsTrigger value="distribution" disabled className="!text-black">
             {t('tabDistribution')}
           </TabsTrigger>
         </TabsList>

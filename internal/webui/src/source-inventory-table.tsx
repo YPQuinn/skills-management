@@ -101,7 +101,7 @@ export function SourceInventoryTable({
                       ) : (
                         e.name
                       )}
-                      <div className="mt-0.5 font-mono text-xs font-normal text-foreground-subtle">{e.relative_dir}</div>
+                      <div className="mt-0.5 font-mono text-xs font-normal text-foreground-muted">{e.relative_dir}</div>
                     </TableCell>
                     <TableCell>
                       <SlugOverrideDialog
@@ -154,19 +154,19 @@ export function SourceInventoryTable({
                             {itemResult.slug && (
                               <Link
                                 to={`/skills/${encodeURIComponent(itemResult.slug)}`}
-                                className="block text-xs underline text-foreground-subtle hover:text-foreground"
+                                className="block text-xs underline text-foreground-muted hover:text-foreground"
                               >
                                 {t('linkViewSlug', { slug: itemResult.slug })}
                               </Link>
                             )}
                             {itemResult.message && (
-                              <span className="block text-xs text-foreground-subtle">{itemResult.message}</span>
+                              <span className="block text-xs text-foreground-muted">{itemResult.message}</span>
                             )}
                           </div>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-foreground-subtle">{truncate(e.description)}</TableCell>
+                    <TableCell className="text-foreground-muted">{truncate(e.description)}</TableCell>
                   </TableRow>
                 )
               })}

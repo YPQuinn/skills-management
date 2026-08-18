@@ -40,20 +40,20 @@ export function SyncStatePanel({ skill, outcome, actionError }: SyncStatePanelPr
       <div className="grid gap-4 sm:grid-cols-2 text-sm">
         <div className="border border-border rounded-xl p-4 bg-background space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-foreground-subtle">{t('labelSyncStatus')}</span>
+            <span className="text-foreground-muted">{t('labelSyncStatus')}</span>
             <SyncStatusBadge status={skill.sync_status} />
             {skill.sync_stale && <Badge variant="warning">{t('statusSyncStale')}</Badge>}
           </div>
           <div>
-            <div className="text-foreground-subtle">{t('labelSyncCheckedAt')}</div>
+            <div className="text-foreground-muted">{t('labelSyncCheckedAt')}</div>
             <div className="font-medium mt-0.5">{formatTime(skill.sync_checked_at)}</div>
           </div>
           <div>
-            <div className="text-foreground-subtle">{t('labelStoreDigest')}</div>
+            <div className="text-foreground-muted">{t('labelStoreDigest')}</div>
             <div className="font-mono text-xs break-all mt-0.5">{skill.store_digest || '—'}</div>
           </div>
           <div>
-            <div className="text-foreground-subtle">{t('labelBaselineDigest')}</div>
+            <div className="text-foreground-muted">{t('labelBaselineDigest')}</div>
             <div className="font-mono text-xs break-all mt-0.5">{skill.baseline_digest || '—'}</div>
           </div>
         </div>
@@ -68,23 +68,23 @@ export function SyncStatePanel({ skill, outcome, actionError }: SyncStatePanelPr
               </div>
               <div className="grid gap-2">
                 <div>
-                  <div className="text-foreground-subtle">{t('labelSyncStarted')}</div>
+                  <div className="text-foreground-muted">{t('labelSyncStarted')}</div>
                   <div className="font-medium mt-0.5">{formatTime(last.started_at)}</div>
                 </div>
                 <div>
-                  <div className="text-foreground-subtle">{t('labelSyncCompleted')}</div>
+                  <div className="text-foreground-muted">{t('labelSyncCompleted')}</div>
                   <div className="font-medium mt-0.5">{formatTime(last.completed_at)}</div>
                 </div>
                 <div>
-                  <div className="text-foreground-subtle">{t('labelSyncBeforeDigest')}</div>
+                  <div className="text-foreground-muted">{t('labelSyncBeforeDigest')}</div>
                   <div className="font-mono text-xs break-all mt-0.5">{last.before_digest || '—'}</div>
                 </div>
                 <div>
-                  <div className="text-foreground-subtle">{t('labelSyncAfterDigest')}</div>
+                  <div className="text-foreground-muted">{t('labelSyncAfterDigest')}</div>
                   <div className="font-mono text-xs break-all mt-0.5">{last.after_digest || '—'}</div>
                 </div>
                 <div>
-                  <div className="text-foreground-subtle">{t('labelSyncRevision')}</div>
+                  <div className="text-foreground-muted">{t('labelSyncRevision')}</div>
                   <div className="font-mono text-xs break-all mt-0.5">{last.revision || '—'}</div>
                 </div>
               </div>
@@ -96,7 +96,7 @@ export function SyncStatePanel({ skill, outcome, actionError }: SyncStatePanelPr
               )}
             </>
           ) : (
-            <p className="text-sm text-foreground-subtle">{t('noSyncYet')}</p>
+            <p className="text-sm text-foreground-muted">{t('noSyncYet')}</p>
           )}
         </div>
       </div>

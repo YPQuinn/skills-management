@@ -110,7 +110,7 @@ export function RebindDialog({
             </Select>
           </Field>
           {selected && (
-            <p className="text-sm text-foreground-subtle">{identical ? t('rebindIdentical') : t('rebindConflict')}</p>
+            <p className="text-sm text-foreground-muted">{identical ? t('rebindIdentical') : t('rebindConflict')}</p>
           )}
           {error !== null && (
             <Alert variant="error">

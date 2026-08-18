@@ -50,6 +50,7 @@ Deliver a runnable, local-first Skill Manager MVP for macOS and Linux, preferabl
 - [Implement cross-resource cleanup lifecycles](issues/16-implement-cross-resource-cleanup.md) — Delivered safe Source/Skill/Target/Group deletion, explicit Skill detach and rebind, preview/confirmation, Managed Link cleanup, and ownership-loss handling across core, CLI, REST, and Appica WebUI.
 - [Implement the build and release pipeline](issues/17-implement-build-release-pipeline.md) — Delivered locked fresh frontend builds, ordered quality gates, strict clean-tag four-platform packaging with checksums, and a self-contained native archive smoke entry point.
 - [Add English and Simplified Chinese WebUI localization](issues/20-add-webui-localization.md) — Added a typed dependency-free locale layer, persisted Appica language switching, localized WebUI copy/accessibility/timestamps/client fallbacks, and no-refetch locale transitions while preserving server messages verbatim.
+- [Implement the end-to-end acceptance suites](issues/18-implement-acceptance-suites.md) — Delivered state-loss Store recovery, process crash and concurrency acceptance, embedded Chromium/Firefox/WebKit journeys, accessibility and responsive gates, and four-platform native CI/release wiring.
 
 ## Not yet specified
 

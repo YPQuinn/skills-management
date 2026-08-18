@@ -1,9 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
-import { Button } from '@appica/ui-react/button'
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
-import { Input } from '@appica/ui-react/input'
-import { Field, FieldLabel } from '@appica/ui-react/field'
 import { Spinner } from '@appica/ui-react/spinner'
 import { SourcesIndex, SourceExplorer } from './sources'
 import { SkillsIndex, SkillExplorer } from './skills'
@@ -13,104 +10,7 @@ import { Layout } from './layout'
 import { useLocale } from './locale-context'
 import { LocaleProvider } from './locale-provider'
 import { ApiError } from './locale-dictionary'
-
-type BootstrapState = 'uninitialized' | 'state_missing' | 'invalid' | 'ready'
-
-interface StatusResponse {
-  state: BootstrapState
-  message?: string
-}
-
-interface ErrorEnvelope {
-  error?: { message?: string }
-}
-
-function Setup({ status }: { status: StatusResponse }) {
-  const navigate = useNavigate()
-  const { t, getErrorMessage } = useLocale()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<unknown | null>(null)
-  const [storePath, setStorePath] = useState('')
-
-  if (status.state === 'state_missing' || status.state === 'invalid') {
-    return (
-      <div className="min-h-dvh flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-md p-6 border border-border rounded-xl shadow-sm bg-background">
-          <Alert variant="error" className="mb-4">
-            <AlertTitle>{t('alertStateError', { state: status.state })}</AlertTitle>
-            <AlertDescription>{status.message || t('defaultStateErrorMsg')}</AlertDescription>
-          </Alert>
-          <p className="text-sm text-foreground-subtle">
-            {t('stateErrorHelpText')}
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  const handleSetup = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    const trimmedPath = storePath.trim()
-    if (trimmedPath !== '' && !trimmedPath.startsWith('/')) {
-      setError(new ApiError(undefined, 'errAbsoluteMatch'))
-      return
-    }
-
-    setLoading(true)
-    setError(null)
-    try {
-      const res = await fetch('/api/v1/setup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ store_path: trimmedPath }),
-      })
-      const data = (await res.json().catch(() => ({}))) as ErrorEnvelope
-      if (!res.ok) {
-        throw new ApiError(data?.error?.message, 'errSetupFailed')
-      }
-      navigate('/skills', { replace: true })
-    } catch (err: unknown) {
-      setError(err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div className="min-h-dvh flex items-center justify-center p-4">
-      <div className="w-full max-w-md p-6 border border-border rounded-xl shadow-sm bg-background">
-        <h1 className="text-xl font-semibold mb-2">{t('welcomeTitle')}</h1>
-        <p className="text-foreground-subtle mb-6 text-sm">{t('welcomeSubtitle')}</p>
-        
-        {error !== null && (
-          <Alert variant="error" className="mb-6">
-            <AlertTitle>{t('alertSetupError')}</AlertTitle>
-            <AlertDescription>{getErrorMessage(error, 'errSetupFailed')}</AlertDescription>
-          </Alert>
-        )}
-
-        <form onSubmit={handleSetup} className="space-y-4">
-          <Field name="storePath">
-            <FieldLabel>{t('storePathLabel')}</FieldLabel>
-            <Input 
-              value={storePath} 
-              onChange={e => {
-                setStorePath(e.target.value)
-                setError(null)
-              }} 
-              placeholder={t('storePathPlaceholder')}
-            />
-          </Field>
-          <Button type="submit" disabled={loading} focusableWhenDisabled className="w-full">
-            {loading && <Spinner data-icon="start" currentColor className="text-[1.2em]" />}
-            {loading ? t('btnInitializing') : t('btnInitialize')}
-          </Button>
-        </form>
-      </div>
-    </div>
-  )
-}
+import { Setup, type StatusResponse } from './setup'
 
 function Skills() {
   return (
@@ -196,7 +96,7 @@ function AppRoutes() {
   if (checking) {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center p-4 bg-background text-foreground">
-        <Spinner className="text-3xl text-foreground-subtle" aria-label={t('ariaCheckingStatus')} />
+        <Spinner className="text-3xl text-foreground-muted" aria-label={t('ariaCheckingStatus')} />
       </div>
     )
   }

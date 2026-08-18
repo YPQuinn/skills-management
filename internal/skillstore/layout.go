@@ -142,6 +142,15 @@ func openLayoutDir(parent *os.Root, name string) (*os.Root, error) {
 	return child, err
 }
 
+// OpenPinnedChild opens the single-component directory name below the
+// pinned parent without following a symlink. Recover-store uses the same
+// identity-pinning as Store writes so a DirEntry-to-path swap cannot
+// redirect a later digest onto a foreign tree.
+func OpenPinnedChild(parent *os.Root, name string) (*os.Root, error) {
+	child, _, err := openPinnedChild(parent, name)
+	return child, err
+}
+
 // openPinnedChild opens the single-component directory name below the
 // pinned parent and derives its identity from the already-open child
 // handle: a symlink or non-directory is refused before opening, and the

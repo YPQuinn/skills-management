@@ -73,9 +73,9 @@ function DiffNodeMeta({ side, node, t }: { side: 'from' | 'to'; node: DiffNode; 
   if (node.size !== undefined) parts.push(t('diffSizeBytes', { size: node.size }))
   return (
     <div>
-      <div className="text-foreground-subtle">{t(side === 'from' ? 'labelFrom' : 'labelTo')}</div>
+      <div className="text-foreground-muted">{t(side === 'from' ? 'labelFrom' : 'labelTo')}</div>
       <div className="font-mono break-all mt-0.5">{parts.join(' · ')}</div>
-      {node.digest && <div className="font-mono text-[10px] break-all text-foreground-subtle">{node.digest}</div>}
+      {node.digest && <div className="font-mono text-[10px] break-all text-foreground-muted">{node.digest}</div>}
     </div>
   )
 }
@@ -110,12 +110,12 @@ function DiffEntryView({ entry, t }: { entry: DiffEntry; t: (key: DictionaryKey,
             {entry.from ? (
               <DiffNodeMeta side="from" node={entry.from} t={t} />
             ) : (
-              <div className="text-foreground-subtle text-xs">{t('labelFrom')}: —</div>
+              <div className="text-foreground-muted text-xs">{t('labelFrom')}: —</div>
             )}
             {entry.to ? (
               <DiffNodeMeta side="to" node={entry.to} t={t} />
             ) : (
-              <div className="text-foreground-subtle text-xs">{t('labelTo')}: —</div>
+              <div className="text-foreground-muted text-xs">{t('labelTo')}: —</div>
             )}
           </div>
         )
@@ -163,7 +163,7 @@ export function SyncDiff({ diff, loading, error, pathFilter, onPathFilterChange 
 
       {diff === null ? (
         loading ? (
-          <Spinner className="text-3xl text-foreground-subtle" aria-label={t('ariaLoadingDiff')} />
+          <Spinner className="text-3xl text-foreground-muted" aria-label={t('ariaLoadingDiff')} />
         ) : null
       ) : (
         diff.comparisons.map((comparison) => (
@@ -173,11 +173,11 @@ export function SyncDiff({ diff, loading, error, pathFilter, onPathFilterChange 
           >
             <h3 className="font-medium text-sm">
               {sideLabel(comparison.from, t)}
-              <ArrowRight className="size-3.5 inline mx-1 text-foreground-subtle" />
+              <ArrowRight className="size-3.5 inline mx-1 text-foreground-muted" />
               {sideLabel(comparison.to, t)}
             </h3>
             {comparison.entries.length === 0 ? (
-              <p className="text-sm text-foreground-subtle">{t('diffEmpty')}</p>
+              <p className="text-sm text-foreground-muted">{t('diffEmpty')}</p>
             ) : (
               comparison.entries.map((entry) => <DiffEntryView key={entry.path} entry={entry} t={t} />)
             )}
