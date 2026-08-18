@@ -18,7 +18,8 @@ type statusResponse struct {
 }
 
 type setupRequest struct {
-	StorePath string `json:"store_path"`
+	StorePath    string `json:"store_path"`
+	RecoverStore bool   `json:"recover_store"`
 }
 
 func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
@@ -43,6 +44,26 @@ func (s *Server) handleSetup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.RecoverStore {
+		if req.StorePath != "" {
+			emitError(w, app.CodeInvalidArgument, "store_path cannot be combined with recover_store", http.StatusBadRequest)
+			return
+		}
+		result, err := s.bm.RecoverStore()
+		if err != nil {
+			writeAppError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, setupRecoveryResponse{
+			State:             string(bootstrap.StateReady),
+			Recovered:         result.Recovered,
+			Skipped:           result.Skipped,
+			PreservedInternal: result.PreservedInternal,
+			Unrecoverable:     result.Unrecoverable,
+		})
+		return
+	}
+
 	st, err := s.bm.Detect()
 	if err != nil {
 		writeAppError(w, err)
@@ -62,6 +83,14 @@ func (s *Server) handleSetup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, statusResponse{State: string(bootstrap.StateReady)})
+}
+
+type setupRecoveryResponse struct {
+	State             string                  `json:"state"`
+	Recovered         []app.RecoveredSkill    `json:"recovered"`
+	Skipped           []app.SkippedStoreEntry `json:"skipped"`
+	PreservedInternal []string                `json:"preserved_internal"`
+	Unrecoverable     []string                `json:"unrecoverable"`
 }
 
 func handleAPINotFound(w http.ResponseWriter, r *http.Request) {

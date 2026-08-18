@@ -20,7 +20,7 @@ interface TargetDistributionTableProps {
 export function TargetDistributionTable({ items, busy, disabled, onAdopt }: TargetDistributionTableProps) {
   const { t } = useLocale()
   if (items.length === 0) {
-    return <p className="text-foreground-subtle text-sm py-4">{t('emptyDistributionItems')}</p>
+    return <p className="text-foreground-muted text-sm py-4">{t('emptyDistributionItems')}</p>
   }
   return (
     <ScrollArea className="w-full" orientation="horizontal">
@@ -42,14 +42,14 @@ export function TargetDistributionTable({ items, busy, disabled, onAdopt }: Targ
               const observed = observedBadge(item)
               return (
                 <TableRow key={item.skill_id}>
-                  <TableCell className="font-mono text-foreground-subtle">{item.slug}</TableCell>
+                  <TableCell className="font-mono text-foreground-muted">{item.slug}</TableCell>
                   <TableCell>
                     <Badge variant={desired.variant}>{t(desired.key)}</Badge>
                   </TableCell>
                   <TableCell>
                     <Badge variant={observed.variant}>{t(observed.key)}</Badge>
                     {item.adoptable && (
-                      <span className="ml-2 text-xs text-foreground-subtle">(adoptable)</span>
+                      <span className="ml-2 text-xs text-foreground-muted">(adoptable)</span>
                     )}
                   </TableCell>
                   <TableCell>

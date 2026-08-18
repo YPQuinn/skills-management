@@ -49,7 +49,7 @@ export function GroupsIndex() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">{t('groupsTitle')}</h1>
-          <p className="text-foreground-subtle text-sm">{t('groupsSubtitle')}</p>
+          <p className="text-foreground-muted text-sm">{t('groupsSubtitle')}</p>
         </div>
       </div>
 
@@ -64,10 +64,10 @@ export function GroupsIndex() {
 
       {loading && groups === null ? (
         <div className="flex justify-center py-12">
-          <Spinner className="text-3xl text-foreground-subtle" aria-label={t('ariaLoadingGroups')} />
+          <Spinner className="text-3xl text-foreground-muted" aria-label={t('ariaLoadingGroups')} />
         </div>
       ) : groups === null ? null : groups.length === 0 ? (
-        <p className="text-foreground-subtle text-center py-8">{t('emptyGroupsIndex')}</p>
+        <p className="text-foreground-muted text-center py-8">{t('emptyGroupsIndex')}</p>
       ) : (
         <ScrollArea className="w-full" orientation="horizontal">
           <div className="min-w-[600px]">
@@ -93,8 +93,8 @@ export function GroupsIndex() {
                       </Link>
                     </TableCell>
                     <TableCell className="text-end tabular-nums">{g.member_count}</TableCell>
-                    <TableCell className="text-foreground-subtle">{formatTime(g.created_at)}</TableCell>
-                    <TableCell className="text-foreground-subtle">{formatTime(g.updated_at)}</TableCell>
+                    <TableCell className="text-foreground-muted">{formatTime(g.created_at)}</TableCell>
+                    <TableCell className="text-foreground-muted">{formatTime(g.updated_at)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

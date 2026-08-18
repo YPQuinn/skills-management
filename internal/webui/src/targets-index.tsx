@@ -66,7 +66,7 @@ export function TargetsIndex() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">{t('targetsTitle')}</h1>
-          <p className="text-foreground-subtle text-sm">{t('targetsSubtitle')}</p>
+          <p className="text-foreground-muted text-sm">{t('targetsSubtitle')}</p>
         </div>
       </div>
 
@@ -74,7 +74,7 @@ export function TargetsIndex() {
       <div className="space-y-4 border border-border rounded-xl p-6 bg-background shadow-sm">
         <div>
           <h2 className="text-lg font-semibold">{t('adaptersTitle')}</h2>
-          <p className="text-sm text-foreground-subtle">{t('adaptersSubtitle')}</p>
+          <p className="text-sm text-foreground-muted">{t('adaptersSubtitle')}</p>
         </div>
 
         {adapters.length > 0 && (
@@ -107,20 +107,20 @@ export function TargetsIndex() {
                     return (
                       <TableRow key={ad.key}>
                         <TableCell className="font-medium text-foreground-strong">{ad.name}</TableCell>
-                        <TableCell className="font-mono text-foreground-subtle">{ad.key}</TableCell>
+                        <TableCell className="font-mono text-foreground-muted">{ad.key}</TableCell>
                         <TableCell>
                           <Badge variant={isDetected ? 'soft' : 'outline'} className="gap-1">
                             {isDetected ? (
                               <Check className="size-3 text-success inline" />
                             ) : isNotDetected ? (
-                              <X className="size-3 text-foreground-subtle inline" />
+                              <X className="size-3 text-foreground-muted inline" />
                             ) : (
                               <InfoCircle className="size-3 inline" />
                             )}
                             {statusLabel}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-foreground-subtle text-xs">
+                        <TableCell className="text-foreground-muted text-xs">
                           {ad.detection.evidence && ad.detection.evidence.length > 0
                             ? ad.detection.evidence.join('; ')
                             : '—'}
@@ -162,10 +162,10 @@ export function TargetsIndex() {
       {/* Registered Targets List */}
       {loading && targets === null ? (
         <div className="flex justify-center py-12">
-          <Spinner className="text-3xl text-foreground-subtle" aria-label={t('ariaLoadingTargets')} />
+          <Spinner className="text-3xl text-foreground-muted" aria-label={t('ariaLoadingTargets')} />
         </div>
       ) : targets === null ? null : targets.length === 0 ? (
-        <p className="text-foreground-subtle text-center py-8">{t('emptyTargetsIndex')}</p>
+        <p className="text-foreground-muted text-center py-8">{t('emptyTargetsIndex')}</p>
       ) : (
         <ScrollArea className="w-full" orientation="horizontal">
           <div className="min-w-[700px]">
@@ -196,14 +196,14 @@ export function TargetsIndex() {
                         {tgt.adapter}
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-mono text-foreground-subtle text-xs">
+                    <TableCell className="font-mono text-foreground-muted text-xs">
                       {tgt.scope}
                       {tgt.project_root ? ` (${tgt.project_root})` : ''}
                     </TableCell>
-                    <TableCell className="font-mono text-foreground-subtle text-xs" title={tgt.path}>
+                    <TableCell className="font-mono text-foreground-muted text-xs" title={tgt.path}>
                       {tgt.path}
                     </TableCell>
-                    <TableCell className="text-foreground-subtle text-xs">
+                    <TableCell className="text-foreground-muted text-xs">
                       {formatTime(tgt.created_at)}
                     </TableCell>
                   </TableRow>

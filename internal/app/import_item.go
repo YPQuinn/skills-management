@@ -113,6 +113,9 @@ func (a *App) importItem(ctx context.Context, src *source.Source, entry source.E
 	if err != nil {
 		return importOutcome{result: failedImportMeta(entry, requested, skillID, replaces, CodeInternal, "persisting the operation intent: %v", err)}
 	}
+	if a.afterIntentHook != nil {
+		a.afterIntentHook()
+	}
 
 	staged, err := a.store.Stage(ctx, op.ID, tmp, digest, allowLarge)
 	if err != nil {

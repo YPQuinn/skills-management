@@ -98,7 +98,7 @@ export function RegisterTargetForm({ adapters, initialAdapter, onRegistered }: R
     <form onSubmit={handleSubmit} className="space-y-4 border border-border rounded-xl p-6 bg-background shadow-sm">
       <div>
         <h2 className="text-lg font-semibold">{t('registerTargetTitle')}</h2>
-        <p className="text-sm text-foreground-subtle">{t('registerTargetSubtitle')}</p>
+        <p className="text-sm text-foreground-muted">{t('registerTargetSubtitle')}</p>
       </div>
 
       {error !== null && (

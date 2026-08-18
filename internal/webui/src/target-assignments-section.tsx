@@ -50,7 +50,7 @@ export function TargetAssignmentsSection({
     <div className="space-y-4 border border-border rounded-xl p-6 bg-background shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
-          <Plus className="size-5 text-foreground-subtle" />
+          <Plus className="size-5 text-foreground-muted" />
           {t('directAssignmentsHeading', { count: allAssignments.length })}
         </h2>
 
@@ -99,7 +99,7 @@ export function TargetAssignmentsSection({
             </Select>
           )}
 
-          <Button type="submit" disabled={submitting || !selectedSubjectId} size="sm">
+          <Button type="submit" disabled={submitting || !selectedSubjectId} size="sm" focusableWhenDisabled>
             {submitting && <Spinner data-icon="start" currentColor className="text-[1.2em]" />}
             {submitting ? t('btnAssigning') : t('btnAssign')}
           </Button>
@@ -107,7 +107,7 @@ export function TargetAssignmentsSection({
       </div>
 
       {allAssignments.length === 0 ? (
-        <p className="text-foreground-subtle text-sm py-4">{t('emptyDirectAssignments')}</p>
+        <p className="text-foreground-muted text-sm py-4">{t('emptyDirectAssignments')}</p>
       ) : (
         <ScrollArea className="w-full" orientation="horizontal">
           <div className="min-w-[600px]">
@@ -154,7 +154,7 @@ export function TargetAssignmentsSection({
                           {name}
                         </Link>
                       </TableCell>
-                      <TableCell className="text-foreground-subtle text-xs">{formatTime(as.created_at)}</TableCell>
+                      <TableCell className="text-foreground-muted text-xs">{formatTime(as.created_at)}</TableCell>
                       <TableCell className="text-end">
                         <Button
                           variant="ghost"

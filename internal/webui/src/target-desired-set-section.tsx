@@ -18,11 +18,11 @@ export function TargetDesiredSetSection({ desiredSkills }: TargetDesiredSetSecti
         <h2 className="text-lg font-semibold">
           {t('desiredSetHeading', { count: desiredSkills.length })}
         </h2>
-        <p className="text-sm text-foreground-subtle">{t('desiredSetSubtitle')}</p>
+        <p className="text-sm text-foreground-muted">{t('desiredSetSubtitle')}</p>
       </div>
 
       {desiredSkills.length === 0 ? (
-        <p className="text-foreground-subtle text-sm py-4">{t('emptyDesiredSet')}</p>
+        <p className="text-foreground-muted text-sm py-4">{t('emptyDesiredSet')}</p>
       ) : (
         <ScrollArea className="w-full" orientation="horizontal">
           <div className="min-w-[650px]">
@@ -46,11 +46,11 @@ export function TargetDesiredSetSection({ desiredSkills }: TargetDesiredSetSecti
                         {ds.name}
                       </Link>
                     </TableCell>
-                    <TableCell className="font-mono text-foreground-subtle">{ds.slug}</TableCell>
+                    <TableCell className="font-mono text-foreground-muted">{ds.slug}</TableCell>
                     <TableCell>
                       <div className="space-y-1">
                         {ds.reasons.map((r, idx) => (
-                          <div key={idx} className="text-xs flex items-center gap-1 text-foreground-subtle">
+                          <div key={idx} className="text-xs flex items-center gap-1 text-foreground-muted">
                             <Badge variant="outline" className="text-[10px] px-1 py-0 font-normal">
                               {r.kind}
                             </Badge>

@@ -41,7 +41,7 @@ export function GroupMembersSection({
     <div className="space-y-4 border border-border rounded-xl p-6 bg-background shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
-          <UserPlus className="size-5 text-foreground-subtle" />
+          <UserPlus className="size-5 text-foreground-muted" />
           {t('groupMembersHeading', { count: members.length })}
         </h2>
 
@@ -68,7 +68,7 @@ export function GroupMembersSection({
       </div>
 
       {members.length === 0 ? (
-        <p className="text-foreground-subtle text-sm py-4">{t('emptyGroupMembers')}</p>
+        <p className="text-foreground-muted text-sm py-4">{t('emptyGroupMembers')}</p>
       ) : (
         <ScrollArea className="w-full" orientation="horizontal">
           <div className="min-w-[600px]">
@@ -94,7 +94,7 @@ export function GroupMembersSection({
                         {member.name}
                       </Link>
                     </TableCell>
-                    <TableCell className="font-mono text-foreground-subtle">{member.slug}</TableCell>
+                    <TableCell className="font-mono text-foreground-muted">{member.slug}</TableCell>
                     <TableCell className="text-end">
                       <Button
                         variant="ghost"

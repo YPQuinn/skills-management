@@ -91,7 +91,7 @@ export function SourceInventory({
                 onCheckedChange={(checked) => setAllowLarge(!!checked)}
                 disabled={importing}
               />
-              <span className="text-foreground-subtle">{t('labelAllowLarge')}</span>
+              <span className="text-foreground-muted">{t('labelAllowLarge')}</span>
             </label>
 
             <Button
@@ -118,7 +118,7 @@ export function SourceInventory({
           </div>
         </div>
 
-        <p className="text-xs text-foreground-subtle">
+        <p className="text-xs text-foreground-muted">
           {t('inventoryNote')}
         </p>
       </div>
@@ -126,7 +126,7 @@ export function SourceInventory({
       {summary && (
         <Alert variant={alertVariant}>
           <AlertTitle>{t('alertImportCompleted')}</AlertTitle>
-          <AlertDescription>
+          <AlertDescription className="text-foreground-strong">
             {t('summaryText', {
               total: summary.total ?? 0,
               imported: summary.imported ?? 0,
@@ -140,7 +140,7 @@ export function SourceInventory({
       )}
 
       {inventory.length === 0 ? (
-        <p className="text-foreground-subtle">{t('emptyInventory')}</p>
+        <p className="text-foreground-muted">{t('emptyInventory')}</p>
       ) : (
         <div className="space-y-4">
           <Input
@@ -155,7 +155,7 @@ export function SourceInventory({
           />
           {filtered.length === 0 ? (
             <div role="status" className="rounded-xl border border-border bg-background p-8 text-center">
-              <p className="text-foreground-subtle">{t('emptyInventorySearch')}</p>
+              <p className="text-foreground-muted">{t('emptyInventorySearch')}</p>
             </div>
           ) : (
             <>

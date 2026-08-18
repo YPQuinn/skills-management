@@ -33,6 +33,9 @@ func (a *App) executeCreate(t *state.Target, p planItem) (result, errMsg string)
 		}
 		return a.failItem(t, p, "creating the link: "+err.Error(), now)
 	}
+	if a.linkMutateHook != nil {
+		a.linkMutateHook("create")
+	}
 	if err := state.FinalizeCreateLedger(a.db, state.ManagedLink{
 		TargetID: t.ID, SkillID: p.skillID, LinkPath: linkPath,
 		RawTarget: p.rawTarget, EstablishedAt: now,
@@ -86,6 +89,9 @@ func (a *App) executeRemove(t *state.Target, p planItem) (result, errMsg string)
 			return a.recordItemOutcome(t, p, distribution.OutcomeRemoved, distribution.ObservedMissing, "", now)
 		}
 		return a.failItem(t, p, "isolating the link: "+err.Error(), now)
+	}
+	if a.linkMutateHook != nil {
+		a.linkMutateHook("remove")
 	}
 	if err := state.SetLinkIntentPhase(a.db, intentID, state.LinkPhasePrepared); err != nil {
 		return a.failItem(t, p, "recording the isolated entry: "+err.Error(), now)

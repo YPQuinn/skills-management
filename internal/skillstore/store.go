@@ -141,6 +141,10 @@ const (
 	// HookAfterTransientDrain runs after a transient slot was drained,
 	// before its final absence is re-checked.
 	HookAfterTransientDrain
+	// HookAfterOldLiveMoved runs after a replace parked the old live tree
+	// in the recovery slot, before the staged tree is renamed into the
+	// live name.
+	HookAfterOldLiveMoved
 )
 
 // Operation is one durable Store mutation intent: the journal record that

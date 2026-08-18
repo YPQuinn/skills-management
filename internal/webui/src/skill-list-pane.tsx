@@ -53,11 +53,11 @@ export function SkillListPane({ refreshCounter = 0 }: { refreshCounter?: number 
 
       {loading && skills === null ? (
         <div className="flex justify-center py-8">
-          <Spinner className="text-2xl text-foreground-subtle" aria-label={t('ariaLoadingSkills')} />
+          <Spinner className="text-2xl text-foreground-muted" aria-label={t('ariaLoadingSkills')} />
         </div>
       ) : skills === null ? null : skills.length === 0 ? (
         <div className="space-y-2">
-          <p className="text-sm text-foreground-subtle">{t('emptySkillsListPane')}</p>
+          <p className="text-sm text-foreground-muted">{t('emptySkillsListPane')}</p>
           <Link
             to="/sources"
             className="text-sm font-medium underline decoration-border underline-offset-2 hover:decoration-foreground"
@@ -91,7 +91,7 @@ export function SkillListPane({ refreshCounter = 0 }: { refreshCounter?: number 
                     )}
                   </span>
                   <span className="mt-0.5 flex items-center justify-between gap-2">
-                    <span className="truncate text-xs font-mono text-foreground-subtle">{s.slug}</span>
+                    <span className="truncate text-xs font-mono text-foreground-muted">{s.slug}</span>
                   </span>
                 </Link>
               </li>
