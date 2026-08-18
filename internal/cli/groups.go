@@ -26,6 +26,7 @@ func NewGroupCmd(bm *bootstrap.Manager) *cobra.Command {
 		NewGroupShowCmd(bm),
 		NewGroupAddSkillCmd(bm),
 		NewGroupRemoveSkillCmd(bm),
+		NewGroupDeleteCmd(bm),
 	)
 	return cmd
 }

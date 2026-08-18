@@ -191,6 +191,56 @@ func CommitBaselineAdvance(db *sql.DB, op skillstore.Operation, skillID int64, o
 	return tx.Commit()
 }
 
+// CommitBaselineClear persists a Baseline-clear journal commit: the
+// Baseline digest is cleared by compare-and-set, the Sync Status is
+// written, and the operation is marked committed. When b is non-nil the
+// Binding is upserted (conflicting Rebind); when b is nil the Binding is
+// deleted (Detach). The Baseline tree must already be isolated.
+func CommitBaselineClear(db *sql.DB, op skillstore.Operation, skillID int64, oldBaseline string, b *Binding, status string) error {
+	if op.Kind != skillstore.KindBaseline || op.BaselineMode != skillstore.BaselineClear {
+		return fmt.Errorf("CommitBaselineClear %q: invalid Baseline clear", op.Slug)
+	}
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	now := nowUTC()
+	if b != nil {
+		if _, err := tx.Exec(`INSERT INTO source_bindings
+			(skill_id, source_id, relative_dir, digest, source_commit, imported_at)
+			VALUES (?, ?, ?, ?, ?, ?)
+			ON CONFLICT (skill_id) DO UPDATE SET
+				source_id = excluded.source_id,
+				relative_dir = excluded.relative_dir,
+				digest = excluded.digest,
+				source_commit = excluded.source_commit,
+				imported_at = excluded.imported_at`,
+			b.SkillID, b.SourceID, b.RelativeDir, b.Digest, b.SourceCommit, timeToSQL(&b.ImportedAt)); err != nil {
+			return err
+		}
+	} else if _, err := tx.Exec(`DELETE FROM source_bindings WHERE skill_id = ?`, skillID); err != nil {
+		return err
+	}
+	res, err := tx.Exec(`UPDATE skills SET baseline_digest = '', sync_status = ?, sync_stale = 0,
+		sync_checked_at = ?, updated_at = ? WHERE id = ? AND baseline_digest = ?`,
+		status, timeToSQL(now), timeToSQL(now), skillID, oldBaseline)
+	if err != nil {
+		return err
+	}
+	if n, _ := res.RowsAffected(); n != 1 {
+		return fmt.Errorf("clearing the Baseline of Skill %d: no matching row or the Baseline changed", skillID)
+	}
+	expected := skillstore.Operation{
+		ID: op.ID, SkillID: skillID, Slug: op.Slug, Kind: skillstore.KindBaseline,
+		OldDigest: op.OldDigest, NewDigest: op.NewDigest,
+	}
+	if err := markOperationCommittedTx(tx, expected, skillID); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
 // CommitRepairImport persists an explicit Accept Source repair of a missing
 // Store tree: the existing Skill row and Binding are updated to the
 // imported identity (Store, Baseline, and Binding carry the new digest) and

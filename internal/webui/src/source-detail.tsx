@@ -17,6 +17,7 @@ import { SourceIssuesList } from './source-issues-list'
 import { useSourceImport } from './use-source-import'
 import { useLocale } from './locale-context'
 import { ApiError } from './locale-dictionary'
+import { SourceDeleteAction } from './source-delete-action'
 
 interface ErrorEnvelope {
   error?: { message?: string }
@@ -200,10 +201,13 @@ export function SourceDetailPage() {
         </div>
         <div className="flex flex-col items-end gap-2">
           <SourceStatusBadge available={source.available} stale={source.stale} />
-          <Button onClick={check} disabled={checking} focusableWhenDisabled>
-            {checking && <Spinner data-icon="start" currentColor className="text-[1.2em]" />}
-            {checking ? t('btnChecking') : t('btnCheckAgain')}
-          </Button>
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button onClick={check} disabled={checking} focusableWhenDisabled>
+              {checking && <Spinner data-icon="start" currentColor className="text-[1.2em]" />}
+              {checking ? t('btnChecking') : t('btnCheckAgain')}
+            </Button>
+            {sourceId !== null && <SourceDeleteAction sourceId={sourceId} name={source.name} />}
+          </div>
         </div>
       </div>
 

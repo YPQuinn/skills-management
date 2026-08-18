@@ -70,6 +70,20 @@ type App struct {
 	// preparation completed, simulating a crash between the semantic
 	// terminal mutation and the receipt persistence.
 	receiptPersist func(op skillstore.Operation) error
+
+	// afterSkillStoreRemoved runs after DeleteSkill isolated the Store
+	// trees and before the Skill row is deleted. Tests use it to prove a
+	// concurrent direct Assignment cannot insert in that window.
+	afterSkillStoreRemoved func()
+
+	// commitSkillDelete, when set, replaces state.CommitSkillDelete.
+	// Tests fail the Skill-row transaction after isolation.
+	commitSkillDelete func(op skillstore.Operation, skillID int64) error
+
+	// commitBaselineClear, when set, replaces state.CommitBaselineClear.
+	// Tests fail the Binding/digest commit after the Baseline is isolated.
+	// A nil Binding is Detach; a non-nil Binding is conflicting Rebind.
+	commitBaselineClear func(op skillstore.Operation, skillID int64, oldBaseline string, b *state.Binding, status string) error
 }
 
 // New opens the state database at stateDBPath, resolves every unfinished

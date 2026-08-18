@@ -64,8 +64,8 @@ func TestMigration009Distribution(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer db.Close()
-	if got := appliedVersion(t, db); got != 10 {
-		t.Fatalf("migrated schema: got %d, want 10", got)
+	if got := appliedVersion(t, db); got != 11 {
+		t.Fatalf("migrated schema: got %d, want 11", got)
 	}
 	// The upgraded schema accepts the new entities and keeps the old rows.
 	target, err := GetTargetByID(db, targetID)

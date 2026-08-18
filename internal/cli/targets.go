@@ -29,6 +29,7 @@ func NewTargetCmd(bm *bootstrap.Manager) *cobra.Command {
 		NewTargetAdoptCmd(bm),
 		NewTargetAssignCmd(bm),
 		NewTargetUnassignCmd(bm),
+		NewTargetDeleteCmd(bm),
 	)
 	return cmd
 }

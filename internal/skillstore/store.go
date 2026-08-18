@@ -38,6 +38,10 @@ const (
 	// independent convergence): the staged tree becomes the new Baseline
 	// during finalization and the live tree is never mutated.
 	KindBaseline = "baseline"
+	// KindRemove is the durable Skill delete: live, Baseline, and previous
+	// are isolated first; the Skill row is deleted only when the journal
+	// commits; parked trees are drained only after that commit.
+	KindRemove = "remove"
 
 	// BaselineAdvance marks an ordinary replace whose finalization
 	// installs the operation's Baseline candidate into .skillctl/baselines.
@@ -46,6 +50,10 @@ const (
 	// Baseline untouched, so the rolled-back Skill recomputes as
 	// store_changed instead of silently re-accepting the Source.
 	BaselineKeep = "keep"
+	// BaselineClear marks a Baseline-only removal (conflicting Rebind):
+	// the existing Baseline is isolated before the Binding/digest commit
+	// and drained only after that commit.
+	BaselineClear = "clear"
 
 	PhasePending   = "pending"
 	PhaseCommitted = "committed"
@@ -122,6 +130,10 @@ const (
 	// HookAfterMoveRename runs after the forward rename completed and both
 	// parents were synced, before the destination is opened for its proof.
 	HookAfterMoveRename
+	// HookAfterRemoveSkillLiveMoved runs after IsolateRemove parked the
+	// live tree into the operation container, before Baseline/previous
+	// isolation. Tests fail a later step and assert the live tree is restored.
+	HookAfterRemoveSkillLiveMoved
 	// HookBeforeTransientDrain runs before a transient slot (a moved-aside
 	// Baseline or stale previous snapshot) is drained with its retained
 	// identity.

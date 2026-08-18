@@ -70,8 +70,8 @@ func TestMigration010LegacyOpenIntents(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer db.Close()
-	if got := appliedVersion(t, db); got != 10 {
-		t.Fatalf("migrated schema: got %d, want 10", got)
+	if got := appliedVersion(t, db); got != 11 {
+		t.Fatalf("migrated schema: got %d, want 11", got)
 	}
 	intents, err := ListOpenLinkIntents(db)
 	if err != nil || len(intents) != 2 {

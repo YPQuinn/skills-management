@@ -8,6 +8,7 @@ export interface SourceEntry {
   relative_dir: string
   name: string
   description: string
+  digest?: string
 }
 
 export interface SourceIssue {
