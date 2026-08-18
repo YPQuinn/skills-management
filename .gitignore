@@ -1,4 +1,5 @@
 /skillctl
+/dist
 /scaffold_go.py
 /scaffold_react.py
 internal/webui/dist
