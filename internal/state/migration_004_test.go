@@ -58,8 +58,8 @@ func TestMigration004UniqueNames(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer db.Close()
-	if got := appliedVersion(t, db); got != 8 {
-		t.Fatalf("schema after upgrade: got %d, want 8", got)
+	if got := appliedVersion(t, db); got != 10 {
+		t.Fatalf("schema after upgrade: got %d, want 10", got)
 	}
 	rows, err := db.Query(`SELECT id, name FROM sources ORDER BY id`)
 	if err != nil {

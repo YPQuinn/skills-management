@@ -18,6 +18,15 @@ type Target struct {
 	ProjectRoot string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+
+	// Distribution observation and outcome metadata (decision 06).
+	LastInspectedAt    *time.Time
+	LastInspectedStale bool
+	LastInspectError   string
+	LastDistResult     string
+	LastDistStartedAt  *time.Time
+	LastDistCompleted  *time.Time
+	LastDistError      string
 }
 
 // TargetRef is the minimal identity of one Target for relationship views.
@@ -26,13 +35,18 @@ type TargetRef struct {
 	Name string
 }
 
-const targetSelect = `id, name, path, adapter, scope, project_root, created_at, updated_at`
+const targetSelect = `id, name, path, adapter, scope, project_root, created_at, updated_at,
+	last_inspected_at, last_inspected_stale, last_inspected_error,
+	last_distribute_result, last_distribute_started_at, last_distribute_completed_at, last_distribute_error`
 
 func scanTarget(row scanner) (*Target, error) {
 	var t Target
 	var createdAt, updatedAt string
+	var lastInspected, lastDistStarted, lastDistCompleted any
 	if err := row.Scan(&t.ID, &t.Name, &t.Path, &t.Adapter, &t.Scope, &t.ProjectRoot,
-		&createdAt, &updatedAt); err != nil {
+		&createdAt, &updatedAt,
+		&lastInspected, &t.LastInspectedStale, &t.LastInspectError,
+		&t.LastDistResult, &lastDistStarted, &lastDistCompleted, &t.LastDistError); err != nil {
 		return nil, err
 	}
 	var err error
@@ -40,6 +54,15 @@ func scanTarget(row scanner) (*Target, error) {
 		return nil, err
 	}
 	if t.UpdatedAt, err = time.Parse(time.RFC3339Nano, updatedAt); err != nil {
+		return nil, err
+	}
+	if t.LastInspectedAt, err = timeFromSQL(lastInspected); err != nil {
+		return nil, err
+	}
+	if t.LastDistStartedAt, err = timeFromSQL(lastDistStarted); err != nil {
+		return nil, err
+	}
+	if t.LastDistCompleted, err = timeFromSQL(lastDistCompleted); err != nil {
 		return nil, err
 	}
 	return &t, nil

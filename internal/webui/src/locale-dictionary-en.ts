@@ -1,4 +1,5 @@
 import { translationsSyncEn } from './locale-dictionary-sync-en'
+import { translationsDistributionEn } from './locale-dictionary-distribution-en'
 
 export const translationsEn = {
   // Navigation & Header
@@ -316,4 +317,5 @@ export const translationsEn = {
   errAddingAssignmentFailed: 'Adding assignment failed',
   errDeletingAssignmentFailed: 'Deleting assignment failed',
   ...translationsSyncEn,
+  ...translationsDistributionEn,
 } as const

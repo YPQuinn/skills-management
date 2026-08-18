@@ -1,5 +1,6 @@
 import { ApiError, type DictionaryKey } from './locale-dictionary'
 import type { SkillRef } from './group-api'
+import type { DistributionStatus } from './distribution-api'
 
 export interface AdapterDetection {
   status: 'detected' | 'not_detected' | 'unknown' | 'not_applicable' | string
@@ -66,6 +67,7 @@ export interface TargetView extends TargetSummary {
   direct_skills: Assignment[]
   groups: Assignment[]
   desired_skills: DesiredSkill[]
+  distribution?: DistributionStatus
 }
 
 export interface CreateTargetInput {

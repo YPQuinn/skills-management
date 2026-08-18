@@ -87,6 +87,10 @@ func New(storePath, stateDBPath string) (*App, error) {
 		a.Close()
 		return nil, err
 	}
+	if err := a.recoverLinkIntents(); err != nil {
+		a.Close()
+		return nil, err
+	}
 	return a, nil
 }
 
