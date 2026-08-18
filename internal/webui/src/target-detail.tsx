@@ -17,6 +17,7 @@ import { TargetAssignmentsSection } from './target-assignments-section'
 import { TargetDesiredSetSection } from './target-desired-set-section'
 import { TargetDistributionSection } from './target-distribution-section'
 import type { DistributionStatus } from './distribution-api'
+import { TargetDeleteAction } from './target-delete-action'
 import { useLocale } from './locale-context'
 
 export function TargetDetailPage() {
@@ -158,12 +159,15 @@ export function TargetDetailPage() {
           <ChevronLeft className="size-4" />
           {t('linkAllTargets')}
         </Link>
-        <div className="flex items-center gap-3">
-          <Target className="size-7 text-foreground-subtle" />
-          <h1 className="text-2xl font-bold">{target.name || t('targetsTitle')}</h1>
-          <Badge variant="soft" className="uppercase font-mono">
-            {target.adapter}
-          </Badge>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Target className="size-7 text-foreground-subtle" />
+            <h1 className="text-2xl font-bold">{target.name || t('targetsTitle')}</h1>
+            <Badge variant="soft" className="uppercase font-mono">
+              {target.adapter}
+            </Badge>
+          </div>
+          <TargetDeleteAction targetId={target.id} name={target.name} />
         </div>
         <div className="flex flex-wrap gap-4 text-xs text-foreground-subtle mt-2">
           <span>{t('colScope')}: <strong className="text-foreground font-mono">{target.scope}</strong></span>

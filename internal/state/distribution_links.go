@@ -232,6 +232,12 @@ func ListOpenLinkIntentsByTarget(db *sql.DB, targetID int64) ([]LinkIntent, erro
 	return listLinkIntents(db, ` WHERE target_id = ?`, targetID)
 }
 
+// ListOpenLinkIntentsBySkill returns unfinished intents for one Skill in
+// id order, so Skill cleanup can lock those Targets and recover them.
+func ListOpenLinkIntentsBySkill(db *sql.DB, skillID int64) ([]LinkIntent, error) {
+	return listLinkIntents(db, ` WHERE skill_id = ?`, skillID)
+}
+
 func listLinkIntents(db *sql.DB, where string, args ...any) ([]LinkIntent, error) {
 	rows, err := db.Query(`SELECT id, target_id, skill_id, action, link_path, raw_target, slot_name, phase, created_at
 		FROM link_intents`+where+` ORDER BY id`, args...)

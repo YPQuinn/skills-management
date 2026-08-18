@@ -29,6 +29,9 @@ func NewSkillCmd(bm *bootstrap.Manager) *cobra.Command {
 		NewSkillKeepStoreCmd(bm),
 		NewSkillAcceptSourceCmd(bm),
 		NewSkillRollbackCmd(bm),
+		NewSkillDetachCmd(bm),
+		NewSkillRebindCmd(bm),
+		NewSkillDeleteCmd(bm),
 	)
 	return cmd
 }

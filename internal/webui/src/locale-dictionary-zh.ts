@@ -1,6 +1,7 @@
 import type { translationsEn } from './locale-dictionary-en'
 import { translationsSyncZhCN } from './locale-dictionary-sync-zh'
 import { translationsDistributionZhCN } from './locale-dictionary-distribution-zh'
+import { translationsCleanupZhCN } from './locale-dictionary-cleanup-zh'
 
 export const translationsZhCN: Record<keyof typeof translationsEn, string> = {
   // Navigation & Header
@@ -319,4 +320,5 @@ export const translationsZhCN: Record<keyof typeof translationsEn, string> = {
   errDeletingAssignmentFailed: '删除分配失败',
   ...translationsSyncZhCN,
   ...translationsDistributionZhCN,
+  ...translationsCleanupZhCN,
 } satisfies Record<keyof typeof translationsEn, string>

@@ -211,6 +211,29 @@ func DeleteOperationTerminal(db *sql.DB, op skillstore.Operation) error {
 	return nil
 }
 
+// DeleteCommittedParked removes a committed remove or Baseline-clear
+// journal after the parked trees were drained. The row must still be
+// committed with no receipt, so a terminal receipt row can never be
+// cleared by this path.
+func DeleteCommittedParked(db *sql.DB, op skillstore.Operation) error {
+	if op.Phase != skillstore.PhaseCommitted {
+		return fmt.Errorf("operation %d is not a committed parked intent", op.ID)
+	}
+	res, err := db.Exec(`DELETE FROM store_operations
+		WHERE id = ? AND phase = ? AND kind = ? AND slug = ?
+			AND old_digest = ? AND new_digest = ? AND skill_id IS ?
+			AND terminal_receipt IS NULL`,
+		op.ID, skillstore.PhaseCommitted, op.Kind, op.Slug,
+		op.OldDigest, op.NewDigest, nullableID(op.SkillID))
+	if err != nil {
+		return err
+	}
+	if n, _ := res.RowsAffected(); n != 1 {
+		return fmt.Errorf("operation %d does not match the committed parked intent", op.ID)
+	}
+	return nil
+}
+
 // nullableID maps a zero id to SQL NULL.
 func nullableID(id int64) any {
 	if id == 0 {

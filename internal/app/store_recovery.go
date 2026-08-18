@@ -77,23 +77,24 @@ func (a *App) recoverOpenOperations(ctx context.Context) error {
 	rc := context.WithoutCancel(ctx)
 	for _, op := range ops {
 		var err error
-		switch op.Phase {
-		case skillstore.PhaseCommitted:
-			err = a.finalizeTerminal(rc, op)
-		case skillstore.PhasePending:
-			err = a.restoreTerminal(rc, op)
-		case skillstore.PhaseFinalized, skillstore.PhaseRestored:
-			err = a.cleanupTerminalRow(rc, op)
-		case skillstore.PhaseAborted:
-			// The aborted row is certified only by Store Abort proving the
-			// operation evidence absent; only then is the row cleared by
-			// the full-identity/phase CAS.
-			err = a.store.Abort(rc, op)
-			if err == nil {
-				err = a.deleteOpIntent(op)
+		if parkedJournal(op) {
+			err = a.recoverParkedJournal(rc, op)
+		} else {
+			switch op.Phase {
+			case skillstore.PhaseCommitted:
+				err = a.finalizeTerminal(rc, op)
+			case skillstore.PhasePending:
+				err = a.restoreTerminal(rc, op)
+			case skillstore.PhaseFinalized, skillstore.PhaseRestored:
+				err = a.cleanupTerminalRow(rc, op)
+			case skillstore.PhaseAborted:
+				err = a.store.Abort(rc, op)
+				if err == nil {
+					err = a.deleteOpIntent(op)
+				}
+			default:
+				err = Errorf(CodeRecovery, "operation %d has unknown phase %q", op.ID, op.Phase)
 			}
-		default:
-			err = Errorf(CodeRecovery, "operation %d has unknown phase %q", op.ID, op.Phase)
 		}
 		if err != nil {
 			return Errorf(CodeRecovery, "recovering operation %d: %v", op.ID, err)

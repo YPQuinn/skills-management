@@ -57,6 +57,8 @@ func (s *Server) Handler() http.Handler {
 			r.Get("/{id}", s.handleShowSource)
 			r.With(jsonMutationsOnly).Post("/{id}/check", s.handleCheckSource)
 			r.With(jsonMutationsOnly).Post("/{id}/sync", s.handleSyncSource)
+			r.Get("/{id}/deletion", s.handlePreviewDeleteSource)
+			r.With(jsonMutationsOnly).Delete("/{id}", s.handleDeleteSource)
 		})
 		r.Route("/skills", func(r chi.Router) {
 			r.Get("/", s.handleListSkills)
@@ -68,6 +70,10 @@ func (s *Server) Handler() http.Handler {
 			r.With(jsonMutationsOnly).Post("/{id}/keep-store", s.handleKeepStore)
 			r.With(jsonMutationsOnly).Post("/{id}/accept-source", s.handleAcceptSource)
 			r.With(jsonMutationsOnly).Post("/{id}/rollback", s.handleRollback)
+			r.With(jsonMutationsOnly).Post("/{id}/detach", s.handleDetachSkill)
+			r.With(jsonMutationsOnly).Post("/{id}/rebind", s.handleRebindSkill)
+			r.Get("/{id}/deletion", s.handlePreviewDeleteSkill)
+			r.With(jsonMutationsOnly).Delete("/{id}", s.handleDeleteSkill)
 		})
 		r.Route("/groups", func(r chi.Router) {
 			r.Get("/", s.handleListGroups)
@@ -75,6 +81,8 @@ func (s *Server) Handler() http.Handler {
 			r.Get("/{id}", s.handleShowGroup)
 			r.With(jsonMutationsOnly).Post("/{id}/members", s.handleAddGroupMembers)
 			r.With(jsonMutationsOnly).Delete("/{id}/members/{skillID}", s.handleRemoveGroupMember)
+			r.Get("/{id}/deletion", s.handlePreviewDeleteGroup)
+			r.With(jsonMutationsOnly).Delete("/{id}", s.handleDeleteGroup)
 		})
 		r.Route("/targets", func(r chi.Router) {
 			r.Get("/adapters", s.handleListAdapters)
@@ -86,6 +94,8 @@ func (s *Server) Handler() http.Handler {
 			r.With(jsonMutationsOnly).Post("/{id}/inspect", s.handleInspectTarget)
 			r.With(jsonMutationsOnly).Post("/{id}/distribute", s.handleDistributeTarget)
 			r.With(jsonMutationsOnly).Post("/{id}/adopt", s.handleAdoptTargetLink)
+			r.Get("/{id}/deletion", s.handlePreviewDeleteTarget)
+			r.With(jsonMutationsOnly).Delete("/{id}", s.handleDeleteTarget)
 		})
 		r.NotFound(handleAPINotFound)
 		r.MethodNotAllowed(handleAPINotFound)

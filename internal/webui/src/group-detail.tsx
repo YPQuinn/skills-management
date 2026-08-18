@@ -6,6 +6,7 @@ import { ChevronLeft, Folder } from '@appica/icons-react'
 import { fetchGroups, fetchGroup, addGroupMembers, removeGroupMember, type GroupView } from './group-api'
 import { fetchSkills, type Skill } from './skill-api'
 import { GroupMembersSection } from './group-members-section'
+import { GroupDeleteAction } from './group-delete-action'
 import { useLocale } from './locale-context'
 
 export function GroupDetailPage() {
@@ -132,9 +133,12 @@ export function GroupDetailPage() {
           <ChevronLeft className="size-4" />
           {t('linkAllGroups')}
         </Link>
-        <div className="flex items-center gap-3">
-          <Folder className="size-7 text-foreground-subtle" />
-          <h1 className="text-2xl font-bold">{group.name || t('groupsTitle')}</h1>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Folder className="size-7 text-foreground-subtle" />
+            <h1 className="text-2xl font-bold">{group.name || t('groupsTitle')}</h1>
+          </div>
+          <GroupDeleteAction groupId={group.id} name={group.name} />
         </div>
         <div className="flex flex-wrap gap-4 text-xs text-foreground-subtle mt-2">
           <span>{t('labelCreated')}: {formatTime(group.created_at)}</span>

@@ -76,6 +76,14 @@ func (a *App) AssignTarget(targetID int64, in AssignInput) (*AssignmentView, err
 		if in.SkillID == 0 {
 			return nil, Errorf(CodeInvalidArgument, "a Skill Assignment requires a skill_id")
 		}
+		// Direct Skill Assignments share the Store lock with Skill
+		// deletion (Store first) so a concurrent assign cannot insert
+		// after the Store tree is gone and before the Skill row is.
+		held, err := a.acquireStoreSharedLock()
+		if err != nil {
+			return nil, err
+		}
+		defer held.Unlock()
 		if _, err := state.GetSkillDetailByID(a.db, in.SkillID); errors.Is(err, sql.ErrNoRows) {
 			return nil, Errorf(CodeNotFound, "Skill %d not found", in.SkillID)
 		} else if err != nil {

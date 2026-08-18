@@ -12,6 +12,7 @@ import { fetchSkill } from './skill-api'
 import type { Skill } from './skill-api'
 import { SkillOverview } from './skill-overview'
 import { SkillSyncTab } from './skill-sync-tab'
+import { SkillCleanupActions } from './skill-cleanup-actions'
 import { useLocale } from './locale-context'
 
 function isAbortError(err: unknown): boolean {
@@ -90,11 +91,14 @@ export function SkillDetailPage() {
             <h1 className="text-2xl font-bold">{skill.name}</h1>
             <p className="font-mono text-sm text-foreground-subtle">{skill.slug}</p>
           </div>
-          {skill.binding ? (
-            <Badge variant="success">{t('badgeBound')}</Badge>
-          ) : (
-            <Badge variant="outline">{t('badgeUnbound')}</Badge>
-          )}
+          <div className="flex flex-col items-end gap-2">
+            {skill.binding ? (
+              <Badge variant="success">{t('badgeBound')}</Badge>
+            ) : (
+              <Badge variant="outline">{t('badgeUnbound')}</Badge>
+            )}
+            <SkillCleanupActions skill={skill} onSkillUpdated={setSkill} />
+          </div>
         </div>
         <p className="mt-2 text-foreground-subtle">{skill.description}</p>
       </div>
