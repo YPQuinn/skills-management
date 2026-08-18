@@ -32,10 +32,11 @@ type Target struct {
 // expanded desired Skill set with explanations.
 type TargetView struct {
 	Target
-	CompatibleAdapters []string         `json:"compatible_adapters,omitempty"`
-	DirectSkills       []AssignmentView `json:"direct_skills"`
-	Groups             []AssignmentView `json:"groups"`
-	DesiredSkills      []DesiredSkill   `json:"desired_skills"`
+	CompatibleAdapters []string            `json:"compatible_adapters,omitempty"`
+	DirectSkills       []AssignmentView    `json:"direct_skills"`
+	Groups             []AssignmentView    `json:"groups"`
+	DesiredSkills      []DesiredSkill      `json:"desired_skills"`
+	Distribution       *DistributionStatus `json:"distribution,omitempty"`
 }
 
 // TargetInput is one Target registration request: either a built-in
@@ -221,6 +222,10 @@ func (a *App) ShowTarget(id int64) (*TargetView, error) {
 		}
 	}
 	view.DesiredSkills, err = a.desiredSkills(id)
+	if err != nil {
+		return nil, err
+	}
+	view.Distribution, err = a.storedDistribution(t)
 	if err != nil {
 		return nil, err
 	}

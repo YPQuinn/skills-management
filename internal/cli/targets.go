@@ -24,6 +24,9 @@ func NewTargetCmd(bm *bootstrap.Manager) *cobra.Command {
 		NewTargetAddCmd(bm),
 		NewTargetListCmd(bm),
 		NewTargetShowCmd(bm),
+		NewTargetStatusCmd(bm),
+		NewTargetDistributeCmd(bm),
+		NewTargetAdoptCmd(bm),
 		NewTargetAssignCmd(bm),
 		NewTargetUnassignCmd(bm),
 	)

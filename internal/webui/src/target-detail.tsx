@@ -15,6 +15,8 @@ import { fetchSkills, type Skill } from './skill-api'
 import { fetchGroups, type GroupSummary } from './group-api'
 import { TargetAssignmentsSection } from './target-assignments-section'
 import { TargetDesiredSetSection } from './target-desired-set-section'
+import { TargetDistributionSection } from './target-distribution-section'
+import type { DistributionStatus } from './distribution-api'
 import { useLocale } from './locale-context'
 
 export function TargetDetailPage() {
@@ -191,6 +193,13 @@ export function TargetDetailPage() {
       />
 
       <TargetDesiredSetSection desiredSkills={desiredSkills} />
+
+      <TargetDistributionSection
+        key={target.id}
+        targetId={target.id}
+        initial={(target.distribution ?? null) as DistributionStatus | null}
+        onChanged={(status) => setTarget((prev) => (prev ? { ...prev, distribution: status } : prev))}
+      />
     </div>
   )
 }

@@ -45,7 +45,7 @@ func writeAppError(w http.ResponseWriter, err error) {
 		emitError(w, ae.Code, ae.Message, http.StatusBadRequest)
 	case app.CodeNotFound:
 		emitError(w, ae.Code, ae.Message, http.StatusNotFound)
-	case app.CodeLocked, app.CodeNotInitialized, app.CodeAlreadyInitialized, app.CodeStateMissing, app.CodeInvalidConfig, app.CodeConflict, app.CodeSourceUnavailable:
+	case app.CodeLocked, app.CodeNotInitialized, app.CodeAlreadyInitialized, app.CodeStateMissing, app.CodeInvalidConfig, app.CodeConflict, app.CodeSourceUnavailable, app.CodeTargetConflict:
 		emitError(w, ae.Code, ae.Message, http.StatusConflict)
 	default:
 		emitError(w, ae.Code, ae.Message, http.StatusInternalServerError)

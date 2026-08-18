@@ -55,8 +55,8 @@ func TestMigration007GroupsTargets(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer db.Close()
-	if got := appliedVersion(t, db); got != 8 {
-		t.Fatalf("migrated schema: got %d, want 8", got)
+	if got := appliedVersion(t, db); got != 10 {
+		t.Fatalf("migrated schema: got %d, want 10", got)
 	}
 	// The upgraded schema accepts the new entities and keeps the old rows.
 	now := time.Now().UTC()

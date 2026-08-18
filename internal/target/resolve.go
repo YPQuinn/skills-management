@@ -183,6 +183,19 @@ func resolveExistingPrefix(path string, eval func(string) (string, error)) (stri
 	}
 }
 
+// ResolvePhysicalPath resolves a path's existing prefixes through symbolic
+// links without following the final component. The Distribution safety gate
+// re-resolves the registered Target path with it, and link targets use it
+// to name the normalized physical Store path (decision 06).
+func ResolvePhysicalPath(path string, o ResolveOptions) (string, error) {
+	o = o.withDefaults()
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return "", err
+	}
+	return resolveExistingPrefix(filepath.Clean(abs), o.EvalSymlinks)
+}
+
 func isFilesystemRoot(p string) bool {
 	return p == string(filepath.Separator)
 }

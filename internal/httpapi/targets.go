@@ -59,10 +59,11 @@ type desiredSkillJSON struct {
 // direct Skill and Group Assignments, and the expanded desired set.
 type targetViewJSON struct {
 	targetJSON
-	CompatibleAdapters []string           `json:"compatible_adapters,omitempty"`
-	DirectSkills       []assignmentJSON   `json:"direct_skills"`
-	Groups             []assignmentJSON   `json:"groups"`
-	DesiredSkills      []desiredSkillJSON `json:"desired_skills"`
+	CompatibleAdapters []string                `json:"compatible_adapters,omitempty"`
+	DirectSkills       []assignmentJSON        `json:"direct_skills"`
+	Groups             []assignmentJSON        `json:"groups"`
+	DesiredSkills      []desiredSkillJSON      `json:"desired_skills"`
+	Distribution       *distributionStatusJSON `json:"distribution,omitempty"`
 }
 
 // createTargetRequest is one Target registration: either a built-in
@@ -144,6 +145,10 @@ func newTargetViewJSON(t *app.TargetView) targetViewJSON {
 			})
 		}
 		out.DesiredSkills = append(out.DesiredSkills, item)
+	}
+	if t.Distribution != nil {
+		d := newDistributionStatusJSON(t.Distribution)
+		out.Distribution = &d
 	}
 	return out
 }
