@@ -65,7 +65,7 @@ func newRootCmd(bm *bootstrap.Manager) *cobra.Command {
 	var showVersion bool
 	root := &cobra.Command{
 		Use:           "skillctl",
-		Short:         "Skill Manager CLI",
+		Short:         "Manage a local Skill Store and distribute Skills to Agent Targets",
 		Args:          noArgs,
 		SilenceErrors: true,
 		SilenceUsage:  true,

@@ -16,6 +16,8 @@ func NewSourceDeleteCmd(bm *bootstrap.Manager) *cobra.Command {
 		Short: "Delete a Source, optionally detaching bound Skills",
 		Long: `Delete one Source. Bound Skills block deletion unless --detach-skills
 is set; those Skills are detached and never deleted.`,
+		Example: `  skillctl source delete local
+  skillctl source delete local --detach-skills --yes`,
 		Args: exactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			a, err := bm.App()
@@ -178,6 +180,8 @@ func NewSkillDeleteCmd(bm *bootstrap.Manager) *cobra.Command {
 		Long: `Delete one Skill. A referenced Skill is blocked unless --cleanup
 is set, which first removes related Assignments and verifiable Managed
 Links. Ownership-lost Target paths are left untouched.`,
+		Example: `  skillctl skill delete demo-skill
+  skillctl skill delete demo-skill --cleanup --yes`,
 		Args: exactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			a, err := bm.App()

@@ -14,7 +14,10 @@ func NewTargetDeleteCmd(bm *bootstrap.Manager) *cobra.Command {
 		Use:   "delete <name-or-id>",
 		Short: "Delete a Target registration after cleaning Managed Links",
 		Long: `Remove every verifiable Managed Link and then the Target
-registration. The Target container is never deleted.`,
+registration. The Target container is never deleted. Paths whose ownership
+can no longer be proven are left untouched.`,
+		Example: `  skillctl target delete demo-target
+  skillctl target delete demo-target --yes`,
 		Args: exactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			a, err := bm.App()
@@ -57,7 +60,13 @@ func NewGroupDeleteCmd(bm *bootstrap.Manager) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "delete <name-or-id>",
 		Short: "Delete a Group, optionally unassigning it from Targets",
-		Args:  exactArgs(1),
+		Long: `Delete one Group. Assigned Targets block deletion unless
+--unassign is set, which removes those Group Assignments. Managed Links
+are not removed; run Distribution afterwards if Target entries should
+change.`,
+		Example: `  skillctl group delete demo
+  skillctl group delete demo --unassign --yes`,
+		Args: exactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			a, err := bm.App()
 			if err != nil {

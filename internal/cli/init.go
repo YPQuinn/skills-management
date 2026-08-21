@@ -17,7 +17,20 @@ func NewInitCmd(bm *bootstrap.Manager) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Initialize the Skill Store",
-		Args:  noArgs,
+		Long: `Initialize Skill Manager. Writes ~/.skillctl/config.toml, creates
+state.db, and creates the Skill Store at ~/.skillctl/store unless --store
+names another absolute directory.
+
+If config.toml exists but state.db is missing, ordinary commands report
+state_missing and refuse to invent empty state. --recover-store rebuilds
+state from valid top-level Store directories as unbound Skills. It does
+not rewrite Store content and cannot restore Sources, Groups, Assignments,
+Targets, or Managed Link ownership. --store cannot be combined with
+--recover-store.`,
+		Example: `  skillctl init
+  skillctl init --store /abs/path/to/store
+  skillctl init --recover-store`,
+		Args: noArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if recoverStore {
 				if storePath != "" {
@@ -56,7 +69,7 @@ func NewInitCmd(bm *bootstrap.Manager) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&storePath, "store", "", "custom absolute Skill Store path")
-	cmd.Flags().BoolVar(&recoverStore, "recover-store", false, "rebuild missing state from the configured Skill Store")
+	cmd.Flags().BoolVar(&recoverStore, "recover-store", false, "rebuild missing state.db from the configured Skill Store")
 	cmd.Flags().BoolVar(&jsonRequested, "json", false, "print one JSON value on stdout")
 	return cmd
 }

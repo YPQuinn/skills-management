@@ -9,6 +9,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,15 +17,17 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 	"testing"
 	"time"
 )
 
 type uiProcess struct {
-	cmd  *exec.Cmd
-	url  string
-	done chan error
+	cmd      *exec.Cmd
+	url      string
+	done     chan error
+	stopOnce sync.Once
 }
 
 func startUI(t *testing.T, home string) *uiProcess {
@@ -43,30 +46,41 @@ func startUI(t *testing.T, home string) *uiProcess {
 	done := make(chan error, 1)
 	go func() { done <- cmd.Wait() }()
 	up := &uiProcess{cmd: cmd, done: done}
-	t.Cleanup(func() {
-		if up.cmd.ProcessState == nil {
-			up.stop(t)
-		}
-	})
+	t.Cleanup(func() { up.stop(t) })
 	up.url = waitForURL(t, stdout, &stderr)
 	return up
 }
 
-// stop terminates the server gracefully and waits for it to exit.
+// stop terminates the server gracefully and waits for it to exit. It is
+// idempotent so test-body shutdown and Cleanup cannot race on Wait.
+// Signal/Kill errors other than os.ErrProcessDone are reported, and Wait
+// always reaps the child.
 func (up *uiProcess) stop(t *testing.T) {
 	t.Helper()
-	if err := up.cmd.Process.Signal(syscall.SIGTERM); err != nil {
-		t.Fatalf("signalling ui: %v", err)
-	}
-	select {
-	case err := <-up.done:
-		if err != nil {
-			t.Errorf("ui exited with error: %v", err)
+	up.stopOnce.Do(func() {
+		if err := up.cmd.Process.Signal(syscall.SIGTERM); err != nil && !errors.Is(err, os.ErrProcessDone) {
+			t.Errorf("signalling ui: %v", err)
 		}
-	case <-time.After(10 * time.Second):
-		up.cmd.Process.Kill()
-		t.Fatal("ui did not shut down after SIGTERM")
-	}
+		select {
+		case err := <-up.done:
+			if err != nil {
+				t.Errorf("ui exited with error: %v", err)
+			}
+		case <-time.After(10 * time.Second):
+			if err := up.cmd.Process.Kill(); err != nil && !errors.Is(err, os.ErrProcessDone) {
+				t.Errorf("killing ui: %v", err)
+			}
+			select {
+			case err := <-up.done:
+				if err != nil {
+					t.Errorf("ui exited with error after Kill: %v", err)
+				}
+			case <-time.After(5 * time.Second):
+				t.Error("ui did not reap after Kill")
+			}
+			t.Fatal("ui did not shut down after SIGTERM")
+		}
+	})
 }
 
 // waitForURL blocks until the ui process prints its URL line on stdout,
