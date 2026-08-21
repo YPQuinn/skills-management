@@ -49,9 +49,9 @@ export function SlugOverrideDialog({ name, relativeDir, value, disabled, onSave 
             size="sm"
             disabled={disabled}
             aria-label={t('ariaSlugOverrideFor', { name, dir: relativeDir })}
-            className="font-mono text-xs"
+            className="font-mono text-xs text-foreground"
           >
-            {value || <span className="font-normal text-foreground-muted">{t('phSlugDefault')}</span>}
+            {value || t('phSlugDefault')}
           </Button>
         }
       />

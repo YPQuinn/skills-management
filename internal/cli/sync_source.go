@@ -56,7 +56,8 @@ Source check. Each Skill then applies the safe synchronization rules on its
 own: source_changed updates automatically, store_changed and conflict are
 skipped until an explicit action, and missing or invalid entries are
 blocked. One Skill's failure never rolls back another's success.`,
-		Args: exactArgs(1),
+		Example: `  skillctl source sync local`,
+		Args:    exactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			a, err := bm.App()
 			if err != nil {

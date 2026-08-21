@@ -117,7 +117,12 @@ func NewSkillSyncCmd(bm *bootstrap.Manager) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "sync <slug-or-id>",
 		Short: "Synchronize one Skill from its Source (source_changed only)",
-		Args:  exactArgs(1),
+		Long: `Refresh the bound Source and apply the safe synchronization rules.
+source_changed updates Store content automatically. in_sync is a no-op.
+store_changed and conflict are skipped until keep-store or accept-source.
+source_missing, source_invalid, and an unavailable Source block retrieval.`,
+		Example: `  skillctl skill sync demo-skill`,
+		Args:    exactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			a, err := bm.App()
 			if err != nil {
@@ -150,7 +155,12 @@ func NewSkillKeepStoreCmd(bm *bootstrap.Manager) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "keep-store <slug-or-id>",
 		Short: "Keep Store content and accept the Source as the new Baseline",
-		Args:  exactArgs(1),
+		Long: `Leave live Store content untouched and accept the currently
+observed Source as the new Synchronization Baseline. Use this for
+store_changed or conflict. Ordinary sync skips those states and never
+implies keep-store.`,
+		Example: `  skillctl skill keep-store demo-skill`,
+		Args:    exactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			a, err := bm.App()
 			if err != nil {
@@ -184,7 +194,12 @@ func NewSkillAcceptSourceCmd(bm *bootstrap.Manager) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "accept-source <slug-or-id>",
 		Short: "Replace Store content with the Source content (explicit)",
-		Args:  exactArgs(1),
+		Long: `Snapshot current Store content, then replace it with validated
+Source content and advance the Baseline. Use this for store_changed,
+conflict, store_missing, or store_invalid. Ordinary sync never implies
+accept-source.`,
+		Example: `  skillctl skill accept-source demo-skill`,
+		Args:    exactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			a, err := bm.App()
 			if err != nil {
@@ -217,7 +232,11 @@ func NewSkillRollbackCmd(bm *bootstrap.Manager) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "rollback <slug-or-id>",
 		Short: "Roll back one Skill to its previous snapshot",
-		Args:  exactArgs(1),
+		Long: `Restore the single previous Store snapshot. The displaced live
+tree becomes the new previous snapshot, so a second rollback undoes the
+first. Binding, Group, and Assignment relationships are unchanged.`,
+		Example: `  skillctl skill rollback demo-skill`,
+		Args:    exactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			a, err := bm.App()
 			if err != nil {

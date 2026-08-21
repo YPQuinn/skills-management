@@ -1,7 +1,7 @@
 # Document and validate the MVP release candidate
 
 Type: task
-Status: open
+Status: claimed
 Blocked by: 18
 
 ## Question

@@ -65,7 +65,13 @@ func NewTargetDistributeCmd(bm *bootstrap.Manager) *cobra.Command {
 		Long: `Inspect one Target and create missing desired links before removing
 no-longer-desired Managed Links. Creation is atomic and never overwrites an
 existing entry; removal only ever unlinks a symlink that still matches its
-ownership record. --dry-run prints the predicted plan without mutating.`,
+ownership record. A desired broken link is reported and left untouched. A
+no-longer-desired Managed Link whose ownership can still be verified is
+unlinked, including when its destination is broken. Conflicts and
+ownership-lost paths are left on disk. --dry-run prints the predicted plan
+without mutating.`,
+		Example: `  skillctl target distribute demo-target --dry-run
+  skillctl target distribute demo-target`,
 		Args: exactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			a, err := bm.App()
@@ -106,8 +112,11 @@ func NewTargetAdoptCmd(bm *bootstrap.Manager) *cobra.Command {
 		Short: "Adopt an existing symlink as a Managed Link",
 		Long: `Adopt one existing symlink at the Target whose fresh physical
 resolution points exactly at the currently desired Store Skill. The link is
-never rewritten; its existing raw target is recorded as ownership.`,
-		Args: exactArgs(2),
+never rewritten; its existing raw target is recorded as ownership. Files,
+directories, and wrong-target links cannot be adopted. Distribution never
+adopts implicitly.`,
+		Example: `  skillctl target adopt demo-target demo-skill`,
+		Args:    exactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			a, err := bm.App()
 			if err != nil {
