@@ -135,6 +135,9 @@ type LinkIntent struct {
 	Action    string
 	LinkPath  string
 	RawTarget string
+	LinkDev   uint64
+	LinkIno   uint64
+	LinkMtime int64
 	SlotName  string
 	Phase     string
 	CreatedAt time.Time
@@ -147,9 +150,9 @@ func InsertLinkIntent(db *sql.DB, i LinkIntent) (int64, error) {
 		phase = LinkPhasePlanned
 	}
 	res, err := db.Exec(`INSERT INTO link_intents
-		(target_id, skill_id, action, link_path, raw_target, slot_name, phase, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		i.TargetID, i.SkillID, i.Action, i.LinkPath, i.RawTarget, i.SlotName, phase, timeToSQL(&i.CreatedAt))
+		(target_id, skill_id, action, link_path, raw_target, link_dev, link_ino, link_mtime, slot_name, phase, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		i.TargetID, i.SkillID, i.Action, i.LinkPath, i.RawTarget, i.LinkDev, i.LinkIno, i.LinkMtime, i.SlotName, phase, timeToSQL(&i.CreatedAt))
 	if err != nil {
 		return 0, err
 	}
@@ -164,6 +167,20 @@ func SetLinkIntentPhase(db *sql.DB, id int64, phase string) error {
 
 // SetLinkIntentSlot records the private isolation directory (when name is
 // non-empty) and phase of one intent.
+// SetLinkIntentIdentity records the symlink identity sampled at create
+// time, or the Managed Link identity a remove must re-verify.
+func SetLinkIntentIdentity(db *sql.DB, id int64, dev, ino uint64, mtime int64) error {
+	res, err := db.Exec(`UPDATE link_intents SET link_dev = ?, link_ino = ?, link_mtime = ? WHERE id = ?`,
+		dev, ino, mtime, id)
+	if err != nil {
+		return err
+	}
+	if n, _ := res.RowsAffected(); n != 1 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
 func SetLinkIntentSlot(db *sql.DB, id int64, slot, phase string) error {
 	var res sql.Result
 	var err error
@@ -252,7 +269,7 @@ func ListOpenLinkIntentsBySkill(db *sql.DB, skillID int64) ([]LinkIntent, error)
 }
 
 func listLinkIntents(db *sql.DB, where string, args ...any) ([]LinkIntent, error) {
-	rows, err := db.Query(`SELECT id, target_id, skill_id, action, link_path, raw_target, slot_name, phase, created_at
+	rows, err := db.Query(`SELECT id, target_id, skill_id, action, link_path, raw_target, link_dev, link_ino, link_mtime, slot_name, phase, created_at
 		FROM link_intents`+where+` ORDER BY id`, args...)
 	if err != nil {
 		return nil, err
@@ -262,7 +279,7 @@ func listLinkIntents(db *sql.DB, where string, args ...any) ([]LinkIntent, error
 	for rows.Next() {
 		var i LinkIntent
 		var created string
-		if err := rows.Scan(&i.ID, &i.TargetID, &i.SkillID, &i.Action, &i.LinkPath, &i.RawTarget, &i.SlotName, &i.Phase, &created); err != nil {
+		if err := rows.Scan(&i.ID, &i.TargetID, &i.SkillID, &i.Action, &i.LinkPath, &i.RawTarget, &i.LinkDev, &i.LinkIno, &i.LinkMtime, &i.SlotName, &i.Phase, &created); err != nil {
 			return nil, err
 		}
 		if i.CreatedAt, err = time.Parse(time.RFC3339Nano, created); err != nil {

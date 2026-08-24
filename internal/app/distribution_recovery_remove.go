@@ -56,7 +56,11 @@ func (a *App) resolveIsolatedRemove(site *intentSite, it state.LinkIntent, ledge
 }
 
 func (a *App) continueRemoveFromSlug(site *intentSite, it state.LinkIntent, ledger *state.ManagedLink, reuseDir bool) error {
-	kind, raw, err := distribution.ProbeLink(site.target.Path, site.slug)
+	proof := removeProof(it, ledger)
+	if !proof.Proven() {
+		return a.reportUnprovenIntent(it, "the Managed Link identity is unproven")
+	}
+	err := distribution.VerifyLink(site.target.Path, site.slug, proof)
 	if os.IsNotExist(err) {
 		if reuseDir {
 			_ = distribution.DiscardIsolation(site.target.Path, it.SlotName)
@@ -64,13 +68,13 @@ func (a *App) continueRemoveFromSlug(site *intentSite, it state.LinkIntent, ledg
 		return a.finalizeRemoveIntent(it)
 	}
 	if err != nil {
-		return nil
-	}
-	if kind != distribution.KindSymlink || raw != ledger.RawTarget {
-		if reuseDir {
-			_ = distribution.DiscardIsolation(site.target.Path, it.SlotName)
+		if errors.Is(err, distribution.ErrLinkMismatch) {
+			if reuseDir {
+				_ = distribution.DiscardIsolation(site.target.Path, it.SlotName)
+			}
+			return a.relinquishChangedEntry(it)
 		}
-		return a.relinquishChangedEntry(it)
+		return nil
 	}
 	if !reuseDir {
 		if err := distribution.CreateIsolationDir(site.target.Path, it.SlotName); err != nil {
@@ -97,15 +101,19 @@ func (a *App) continueRemoveFromSlug(site *intentSite, it state.LinkIntent, ledg
 }
 
 func (a *App) resolveLegacyRemove(site *intentSite, it state.LinkIntent, ledger *state.ManagedLink) error {
-	kind, raw, err := distribution.ProbeLink(site.target.Path, site.slug)
+	proof := removeProof(it, ledger)
+	if !proof.Proven() {
+		return a.reportUnprovenIntent(it, "the Managed Link identity is unproven")
+	}
+	err := distribution.VerifyLink(site.target.Path, site.slug, proof)
 	if os.IsNotExist(err) {
 		return a.finalizeRemoveIntent(it)
 	}
 	if err != nil {
+		if errors.Is(err, distribution.ErrLinkMismatch) {
+			return a.relinquishChangedEntry(it)
+		}
 		return nil
-	}
-	if kind != distribution.KindSymlink || raw != ledger.RawTarget {
-		return a.relinquishChangedEntry(it)
 	}
 	isolation, err := distribution.NewIsolationName()
 	if err != nil {
@@ -119,7 +127,11 @@ func (a *App) resolveLegacyRemove(site *intentSite, it state.LinkIntent, ledger 
 }
 
 func (a *App) finishPreparedRemove(site *intentSite, it state.LinkIntent, ledger *state.ManagedLink) error {
-	rr, err := distribution.FinishIsolatedRemove(site.target.Path, site.slug, ledger.RawTarget, it.SlotName)
+	proof := removeProof(it, ledger)
+	if !proof.Proven() {
+		return a.reportUnprovenIntent(it, "the Managed Link identity is unproven")
+	}
+	rr, err := distribution.FinishIsolatedRemove(site.target.Path, site.slug, proof, it.SlotName)
 	if err != nil {
 		return a.reportUnprovenIntent(it, "the isolated entry could not be verified: "+err.Error())
 	}
@@ -147,6 +159,14 @@ func (a *App) relinquishChangedEntry(it state.LinkIntent) error {
 		return Errorf(CodeInternal, "recording the relinquished claim of intent %d: %s", it.ID, msg)
 	}
 	return nil
+}
+
+func removeProof(it state.LinkIntent, ledger *state.ManagedLink) distribution.LinkProof {
+	p := intentProof(it)
+	if p.Proven() {
+		return p
+	}
+	return ledgerProof(ledger)
 }
 
 func (a *App) reportUnprovenIntent(it state.LinkIntent, msg string) error {

@@ -15,6 +15,30 @@ func ensureDir(path string) error {
 // physicalTemp returns a temp dir whose path is already prefix-resolved,
 // matching how the application normalizes registered Target and Store
 // paths (macOS /var is a symlink to /private/var).
+func mustCreateLink(t *testing.T, container, slug, raw string) LinkProof {
+	t.Helper()
+	p, err := CreateLink(container, slug, raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return p
+}
+
+func dummyProof(raw string) LinkProof {
+	return LinkProof{Raw: raw, Dev: 1, Ino: 1, Mtime: 1}
+}
+
+func replaceSameRaw(t *testing.T, link, raw string) {
+	t.Helper()
+	sib := link + ".new"
+	if err := os.Symlink(raw, sib); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(sib, link); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func physicalTemp(t *testing.T) string {
 	t.Helper()
 	resolved, err := filepath.EvalSymlinks(t.TempDir())
