@@ -97,7 +97,7 @@ func (a *App) AdoptTargetLink(ctx context.Context, targetID, skillID int64) (*Ad
 	if err != nil {
 		return nil, Errorf(CodeTargetConflict, "the link cannot be adopted: %v", err)
 	}
-	_, dev, ino, err := distribution.ProbeSymlink(gate.Path, d.Skill.Slug)
+	_, dev, ino, mtime, err := distribution.ProbeSymlink(gate.Path, d.Skill.Slug)
 	if err != nil {
 		return nil, Errorf(CodeTargetConflict, "the link cannot be adopted: %v", err)
 	}
@@ -106,7 +106,7 @@ func (a *App) AdoptTargetLink(ctx context.Context, targetID, skillID int64) (*Ad
 	linkPath := filepath.Join(t.Path, d.Skill.Slug)
 	if err := state.ReplaceManagedLink(a.db, state.ManagedLink{
 		TargetID: t.ID, SkillID: skillID, LinkPath: linkPath,
-		RawTarget: raw, LinkDev: dev, LinkIno: ino, EstablishedAt: now,
+		RawTarget: raw, LinkDev: dev, LinkIno: ino, LinkMtime: mtime, EstablishedAt: now,
 	}); err != nil {
 		return nil, Errorf(CodeInternal, "recording the adopted link: %v", err)
 	}

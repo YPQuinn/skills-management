@@ -18,15 +18,16 @@ type ManagedLink struct {
 	RawTarget     string
 	LinkDev       uint64
 	LinkIno       uint64
+	LinkMtime     int64
 	EstablishedAt time.Time
 }
 
-const managedLinkSelect = `id, target_id, skill_id, link_path, raw_target, link_dev, link_ino, established_at`
+const managedLinkSelect = `id, target_id, skill_id, link_path, raw_target, link_dev, link_ino, link_mtime, established_at`
 
 func scanManagedLink(row scanner) (*ManagedLink, error) {
 	var l ManagedLink
 	var established string
-	if err := row.Scan(&l.ID, &l.TargetID, &l.SkillID, &l.LinkPath, &l.RawTarget, &l.LinkDev, &l.LinkIno, &established); err != nil {
+	if err := row.Scan(&l.ID, &l.TargetID, &l.SkillID, &l.LinkPath, &l.RawTarget, &l.LinkDev, &l.LinkIno, &l.LinkMtime, &established); err != nil {
 		return nil, err
 	}
 	var err error
@@ -44,14 +45,15 @@ type ManagedLinkByTargetSkill struct {
 	RawTarget string
 	LinkDev   uint64
 	LinkIno   uint64
+	LinkMtime int64
 }
 
 // InsertManagedLink records one owned link and returns its id.
 func InsertManagedLink(db *sql.DB, l ManagedLink) (int64, error) {
 	res, err := db.Exec(`INSERT INTO managed_links
-		(target_id, skill_id, link_path, raw_target, link_dev, link_ino, established_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		l.TargetID, l.SkillID, l.LinkPath, l.RawTarget, l.LinkDev, l.LinkIno, timeToSQL(&l.EstablishedAt))
+		(target_id, skill_id, link_path, raw_target, link_dev, link_ino, link_mtime, established_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		l.TargetID, l.SkillID, l.LinkPath, l.RawTarget, l.LinkDev, l.LinkIno, l.LinkMtime, timeToSQL(&l.EstablishedAt))
 	if err != nil {
 		return 0, err
 	}
@@ -62,15 +64,16 @@ func InsertManagedLink(db *sql.DB, l ManagedLink) (int64, error) {
 // owned link for a Target–Skill pair with its current raw target.
 func ReplaceManagedLink(db *sql.DB, l ManagedLink) error {
 	res, err := db.Exec(`INSERT INTO managed_links
-		(target_id, skill_id, link_path, raw_target, link_dev, link_ino, established_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)
+		(target_id, skill_id, link_path, raw_target, link_dev, link_ino, link_mtime, established_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT (target_id, skill_id) DO UPDATE SET
 			link_path = excluded.link_path,
 			raw_target = excluded.raw_target,
 			link_dev = excluded.link_dev,
 			link_ino = excluded.link_ino,
+			link_mtime = excluded.link_mtime,
 			established_at = excluded.established_at`,
-		l.TargetID, l.SkillID, l.LinkPath, l.RawTarget, l.LinkDev, l.LinkIno, timeToSQL(&l.EstablishedAt))
+		l.TargetID, l.SkillID, l.LinkPath, l.RawTarget, l.LinkDev, l.LinkIno, l.LinkMtime, timeToSQL(&l.EstablishedAt))
 	if err != nil {
 		return err
 	}
@@ -83,7 +86,7 @@ func ReplaceManagedLink(db *sql.DB, l ManagedLink) error {
 // ListManagedLinksByTarget returns one Target's ledger rows ordered by the
 // Skill slug, each with the Skill's current slug resolved.
 func ListManagedLinksByTarget(db *sql.DB, targetID int64) ([]ManagedLinkByTargetSkill, error) {
-	rows, err := db.Query(`SELECT ml.skill_id, s.slug, ml.link_path, ml.raw_target, ml.link_dev, ml.link_ino
+	rows, err := db.Query(`SELECT ml.skill_id, s.slug, ml.link_path, ml.raw_target, ml.link_dev, ml.link_ino, ml.link_mtime
 		FROM managed_links ml JOIN skills s ON s.id = ml.skill_id
 		WHERE ml.target_id = ? ORDER BY s.slug, s.id`, targetID)
 	if err != nil {
@@ -93,7 +96,7 @@ func ListManagedLinksByTarget(db *sql.DB, targetID int64) ([]ManagedLinkByTarget
 	var out []ManagedLinkByTargetSkill
 	for rows.Next() {
 		var l ManagedLinkByTargetSkill
-		if err := rows.Scan(&l.SkillID, &l.Slug, &l.LinkPath, &l.RawTarget, &l.LinkDev, &l.LinkIno); err != nil {
+		if err := rows.Scan(&l.SkillID, &l.Slug, &l.LinkPath, &l.RawTarget, &l.LinkDev, &l.LinkIno, &l.LinkMtime); err != nil {
 			return nil, err
 		}
 		out = append(out, l)
@@ -188,15 +191,16 @@ func FinalizeCreateLedger(db *sql.DB, l ManagedLink, intentID int64) error {
 	}
 	defer tx.Rollback()
 	if _, err := tx.Exec(`INSERT INTO managed_links
-		(target_id, skill_id, link_path, raw_target, link_dev, link_ino, established_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)
+		(target_id, skill_id, link_path, raw_target, link_dev, link_ino, link_mtime, established_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT (target_id, skill_id) DO UPDATE SET
 			link_path = excluded.link_path,
 			raw_target = excluded.raw_target,
 			link_dev = excluded.link_dev,
 			link_ino = excluded.link_ino,
+			link_mtime = excluded.link_mtime,
 			established_at = excluded.established_at`,
-		l.TargetID, l.SkillID, l.LinkPath, l.RawTarget, l.LinkDev, l.LinkIno, timeToSQL(&l.EstablishedAt)); err != nil {
+		l.TargetID, l.SkillID, l.LinkPath, l.RawTarget, l.LinkDev, l.LinkIno, l.LinkMtime, timeToSQL(&l.EstablishedAt)); err != nil {
 		return err
 	}
 	if _, err := tx.Exec(`DELETE FROM link_intents WHERE id = ?`, intentID); err != nil {
