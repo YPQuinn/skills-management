@@ -94,6 +94,44 @@ func TestDistributionConflictPreservedAndAdopted(t *testing.T) {
 	}
 }
 
+// TestDistributionSameRawReplacementIsNotManaged proves a leftover
+// Managed Link row does not authorize a replacement symlink that happens
+// to carry the same raw target: Distribution must block, never no-op.
+func TestDistributionSameRawReplacementIsNotManaged(t *testing.T) {
+	a := newTestApp(t)
+	ids := importAllSkills(t, a, "demo")
+	tv := registerCustomTarget(t, a)
+	assignSkill(t, a, tv.ID, ids["demo"])
+	if _, err := a.DistributeTarget(context.Background(), tv.ID, false); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(tv.Path, "demo")
+	raw, err := os.Readlink(link)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(link); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(raw, link); err != nil {
+		t.Fatal(err)
+	}
+	res, err := a.DistributeTarget(context.Background(), tv.ID, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res.Items) != 1 || res.Items[0].Result != distribution.OutcomeBlockedConflict {
+		t.Fatalf("same-raw replacement must not stay managed: %+v", res)
+	}
+	st, err := a.InspectTarget(context.Background(), tv.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if st.Items[0].Managed || st.Items[0].Observed != distribution.ObservedConflict || !st.Items[0].Adoptable {
+		t.Fatalf("same-raw replacement observation: %+v", st.Items[0])
+	}
+}
+
 // TestAdoptionEligibility proves the adopt gate: wrong targets, files, and
 // non-desired Skills are refused.
 func TestAdoptionEligibility(t *testing.T) {

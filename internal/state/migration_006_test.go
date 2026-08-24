@@ -68,8 +68,8 @@ func TestMigration006TerminalReceipts(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer db.Close()
-	if got := appliedVersion(t, db); got != 11 {
-		t.Fatalf("schema after upgrade: got %d, want 11", got)
+	if got := appliedVersion(t, db); got != 12 {
+		t.Fatalf("schema after upgrade: got %d, want 12", got)
 	}
 	ops, err := ListOpenOperations(db)
 	if err != nil {

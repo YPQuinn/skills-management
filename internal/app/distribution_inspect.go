@@ -140,21 +140,28 @@ func (a *App) inspectTarget(ctx context.Context, t *state.Target) (*inspectedTar
 	for _, d := range desired {
 		desiredSlugs[d.Skill.Slug] = d.Skill.ID
 	}
-	claims := map[string]string{}
+	claims := map[string]state.ManagedLinkByTargetSkill{}
 	for _, l := range ledger {
-		claims[l.Slug] = l.RawTarget
+		claims[l.Slug] = l
 	}
 	relations := make([]distribution.Relation, 0, len(desired)+len(ledger))
 	for _, d := range desired {
 		// A desired slug keeps its ledger claim: a matching symlink can
-		// only be proven managed through its recorded raw target.
-		relations = append(relations, distribution.Relation{Slug: d.Skill.Slug, LedgerRaw: claims[d.Skill.Slug]})
+		// only be proven managed through its recorded identity and raw
+		// target.
+		rel := distribution.Relation{Slug: d.Skill.Slug}
+		if c, ok := claims[d.Skill.Slug]; ok {
+			rel.LedgerRaw, rel.LedgerDev, rel.LedgerIno = c.RawTarget, c.LinkDev, c.LinkIno
+		}
+		relations = append(relations, rel)
 	}
 	for _, l := range ledger {
 		if _, ok := desiredSlugs[l.Slug]; ok {
 			continue // already inspected once, with the claim
 		}
-		relations = append(relations, distribution.Relation{Slug: l.Slug, LedgerRaw: l.RawTarget})
+		relations = append(relations, distribution.Relation{
+			Slug: l.Slug, LedgerRaw: l.RawTarget, LedgerDev: l.LinkDev, LedgerIno: l.LinkIno,
+		})
 		desiredSlugs[l.Slug] = l.SkillID
 	}
 	sort.Slice(relations, func(i, j int) bool { return relations[i].Slug < relations[j].Slug })
