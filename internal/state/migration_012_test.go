@@ -72,7 +72,7 @@ func TestMigration012PreservesManagedLinks(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.RawTarget != "/store/alpha" || got.LinkDev != 0 || got.LinkIno != 0 {
+	if got.RawTarget != "/store/alpha" || got.LinkDev != 0 || got.LinkIno != 0 || got.LinkMtime != 0 {
 		t.Fatalf("preserved link: %+v", got)
 	}
 }

@@ -70,6 +70,10 @@ func (c *containerHandle) stat(name string) (unix.Stat_t, error) {
 	return st, nil
 }
 
+func symlinkIdentity(st unix.Stat_t) (dev, ino uint64, mtime int64) {
+	return uint64(st.Dev), uint64(st.Ino), st.Mtim.Sec*1_000_000_000 + st.Mtim.Nsec
+}
+
 func statKind(st unix.Stat_t) string {
 	switch st.Mode & unix.S_IFMT {
 	case unix.S_IFLNK:

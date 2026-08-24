@@ -206,24 +206,25 @@ func ProbeLink(containerPath, slug string) (kind, raw string, err error) {
 
 // ProbeSymlink reads one Target symlink's raw target and physical identity
 // through the pinned container fd.
-func ProbeSymlink(containerPath, slug string) (raw string, dev, ino uint64, err error) {
+func ProbeSymlink(containerPath, slug string) (raw string, dev, ino uint64, mtime int64, err error) {
 	container, err := openContainerHandle(containerPath, false)
 	if err != nil {
-		return "", 0, 0, err
+		return "", 0, 0, 0, err
 	}
 	defer container.Close()
 	st, err := container.stat(slug)
 	if err != nil {
-		return "", 0, 0, err
+		return "", 0, 0, 0, err
 	}
 	if statKind(st) != KindSymlink {
-		return "", 0, 0, fmt.Errorf("the entry is not a symlink")
+		return "", 0, 0, 0, fmt.Errorf("the entry is not a symlink")
 	}
 	raw, err = container.readlink(slug)
 	if err != nil {
-		return "", 0, 0, err
+		return "", 0, 0, 0, err
 	}
-	return raw, uint64(st.Dev), uint64(st.Ino), nil
+	dev, ino, mtime = symlinkIdentity(st)
+	return raw, dev, ino, mtime, nil
 }
 
 func ProbeAdoption(containerPath, slug, expectedPath string) (string, error) {

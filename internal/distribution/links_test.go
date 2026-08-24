@@ -57,11 +57,11 @@ func TestInspectMatrix(t *testing.T) {
 	if err := os.Symlink(raw, filepath.Join(container, "demo")); err != nil {
 		t.Fatal(err)
 	}
-	_, dev, ino, err := ProbeSymlink(container, "demo")
+	_, dev, ino, mtime, err := ProbeSymlink(container, "demo")
 	if err != nil {
 		t.Fatal(err)
 	}
-	owned := Relation{Slug: "demo", LedgerRaw: raw, LedgerDev: dev, LedgerIno: ino}
+	owned := Relation{Slug: "demo", LedgerRaw: raw, LedgerDev: dev, LedgerIno: ino, LedgerMtime: mtime}
 	entries, err = Inspect(container, []Relation{owned}, store)
 	if err != nil {
 		t.Fatal(err)
@@ -138,11 +138,11 @@ func TestInspectSameRawReplacementIsNotManaged(t *testing.T) {
 	if err := os.Symlink(raw, link); err != nil {
 		t.Fatal(err)
 	}
-	_, dev, ino, err := ProbeSymlink(container, "demo")
+	_, dev, ino, mtime, err := ProbeSymlink(container, "demo")
 	if err != nil {
 		t.Fatal(err)
 	}
-	rel := Relation{Slug: "demo", LedgerRaw: raw, LedgerDev: dev, LedgerIno: ino}
+	rel := Relation{Slug: "demo", LedgerRaw: raw, LedgerDev: dev, LedgerIno: ino, LedgerMtime: mtime}
 	entries, err := Inspect(container, []Relation{rel}, store)
 	if err != nil {
 		t.Fatal(err)
@@ -156,6 +156,13 @@ func TestInspectSameRawReplacementIsNotManaged(t *testing.T) {
 	}
 	if err := os.Symlink(raw, link); err != nil {
 		t.Fatal(err)
+	}
+	_, dev2, ino2, mtime2, err := ProbeSymlink(container, "demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if dev2 == rel.LedgerDev && ino2 == rel.LedgerIno && mtime2 == rel.LedgerMtime {
+		t.Fatal("replacement reused the recorded identity")
 	}
 	entries, err = Inspect(container, []Relation{rel}, store)
 	if err != nil {

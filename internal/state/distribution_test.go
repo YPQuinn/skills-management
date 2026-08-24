@@ -123,12 +123,12 @@ func TestManagedLinkLedger(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	link := ManagedLink{TargetID: targetID, SkillID: skillID, LinkPath: "/tmp/t/alpha", RawTarget: "/store/alpha", LinkDev: 8, LinkIno: 99, EstablishedAt: now}
+	link := ManagedLink{TargetID: targetID, SkillID: skillID, LinkPath: "/tmp/t/alpha", RawTarget: "/store/alpha", LinkDev: 8, LinkIno: 99, LinkMtime: 111, EstablishedAt: now}
 	if _, err := InsertManagedLink(db, link); err != nil {
 		t.Fatal(err)
 	}
 	got, err := GetManagedLink(db, targetID, skillID)
-	if err != nil || got.RawTarget != "/store/alpha" || got.LinkDev != 8 || got.LinkIno != 99 {
+	if err != nil || got.RawTarget != "/store/alpha" || got.LinkDev != 8 || got.LinkIno != 99 || got.LinkMtime != 111 {
 		t.Fatalf("get: %+v, %v", got, err)
 	}
 	// a duplicate claim is rejected by the unique index
@@ -137,17 +137,17 @@ func TestManagedLinkLedger(t *testing.T) {
 	}
 	// replacement re-records the raw target and identity (adoption)
 	link.RawTarget = "/store/alpha-new"
-	link.LinkDev, link.LinkIno = 9, 100
+	link.LinkDev, link.LinkIno, link.LinkMtime = 9, 100, 222
 	if err := ReplaceManagedLink(db, link); err != nil {
 		t.Fatal(err)
 	}
 	got, err = GetManagedLink(db, targetID, skillID)
-	if err != nil || got.RawTarget != "/store/alpha-new" || got.LinkDev != 9 || got.LinkIno != 100 {
+	if err != nil || got.RawTarget != "/store/alpha-new" || got.LinkDev != 9 || got.LinkIno != 100 || got.LinkMtime != 222 {
 		t.Fatalf("replaced: %+v, %v", got, err)
 	}
 
 	list, err := ListManagedLinksByTarget(db, targetID)
-	if err != nil || len(list) != 1 || list[0].Slug != "alpha" || list[0].LinkDev != 9 || list[0].LinkIno != 100 {
+	if err != nil || len(list) != 1 || list[0].Slug != "alpha" || list[0].LinkDev != 9 || list[0].LinkIno != 100 || list[0].LinkMtime != 222 {
 		t.Fatalf("list: %+v, %v", list, err)
 	}
 	if err := DeleteManagedLink(db, targetID, skillID); err != nil {
@@ -190,7 +190,7 @@ func TestLinkIntentFinalize(t *testing.T) {
 	}
 	if err := FinalizeCreateLedger(db, ManagedLink{
 		TargetID: targetID, SkillID: skillID, LinkPath: "/tmp/t/alpha",
-		RawTarget: "/store/alpha", LinkDev: 3, LinkIno: 7, EstablishedAt: now,
+		RawTarget: "/store/alpha", LinkDev: 3, LinkIno: 7, LinkMtime: 5, EstablishedAt: now,
 	}, intentID); err != nil {
 		t.Fatal(err)
 	}

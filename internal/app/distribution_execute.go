@@ -36,13 +36,13 @@ func (a *App) executeCreate(t *state.Target, p planItem) (result, errMsg string)
 	if a.linkMutateHook != nil {
 		a.linkMutateHook("create")
 	}
-	_, dev, ino, err := distribution.ProbeSymlink(t.Path, p.slug)
+	_, dev, ino, mtime, err := distribution.ProbeSymlink(t.Path, p.slug)
 	if err != nil {
 		return a.failItem(t, p, "reading the created link: "+err.Error(), now)
 	}
 	if err := state.FinalizeCreateLedger(a.db, state.ManagedLink{
 		TargetID: t.ID, SkillID: p.skillID, LinkPath: linkPath,
-		RawTarget: p.rawTarget, LinkDev: dev, LinkIno: ino, EstablishedAt: now,
+		RawTarget: p.rawTarget, LinkDev: dev, LinkIno: ino, LinkMtime: mtime, EstablishedAt: now,
 	}, intentID); err != nil {
 		return a.failItem(t, p, "finalizing the link: "+err.Error(), now)
 	}

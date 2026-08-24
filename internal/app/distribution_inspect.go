@@ -151,7 +151,7 @@ func (a *App) inspectTarget(ctx context.Context, t *state.Target) (*inspectedTar
 		// target.
 		rel := distribution.Relation{Slug: d.Skill.Slug}
 		if c, ok := claims[d.Skill.Slug]; ok {
-			rel.LedgerRaw, rel.LedgerDev, rel.LedgerIno = c.RawTarget, c.LinkDev, c.LinkIno
+			rel.LedgerRaw, rel.LedgerDev, rel.LedgerIno, rel.LedgerMtime = c.RawTarget, c.LinkDev, c.LinkIno, c.LinkMtime
 		}
 		relations = append(relations, rel)
 	}
@@ -160,7 +160,7 @@ func (a *App) inspectTarget(ctx context.Context, t *state.Target) (*inspectedTar
 			continue // already inspected once, with the claim
 		}
 		relations = append(relations, distribution.Relation{
-			Slug: l.Slug, LedgerRaw: l.RawTarget, LedgerDev: l.LinkDev, LedgerIno: l.LinkIno,
+			Slug: l.Slug, LedgerRaw: l.RawTarget, LedgerDev: l.LinkDev, LedgerIno: l.LinkIno, LedgerMtime: l.LinkMtime,
 		})
 		desiredSlugs[l.Slug] = l.SkillID
 	}

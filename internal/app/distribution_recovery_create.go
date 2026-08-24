@@ -34,14 +34,14 @@ func (a *App) resolveCreateIntent(it state.LinkIntent) error {
 
 func (a *App) finalizeCreateIntent(site *intentSite, it state.LinkIntent, raw string) error {
 	now := time.Now().UTC()
-	_, dev, ino, err := distribution.ProbeSymlink(site.target.Path, site.slug)
+	_, dev, ino, mtime, err := distribution.ProbeSymlink(site.target.Path, site.slug)
 	if err != nil {
 		return Errorf(CodeInternal, "reading the recovered link for intent %d: %v", it.ID, err)
 	}
 	if err := state.FinalizeCreateLedger(a.db, state.ManagedLink{
 		TargetID: it.TargetID, SkillID: it.SkillID,
 		LinkPath:  filepath.Join(site.target.Path, site.slug),
-		RawTarget: raw, LinkDev: dev, LinkIno: ino, EstablishedAt: now,
+		RawTarget: raw, LinkDev: dev, LinkIno: ino, LinkMtime: mtime, EstablishedAt: now,
 	}, it.ID); err != nil {
 		return Errorf(CodeInternal, "recovering create intent %d: %v", it.ID, err)
 	}
