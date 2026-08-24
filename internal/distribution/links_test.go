@@ -52,12 +52,17 @@ func TestInspectMatrix(t *testing.T) {
 		t.Fatalf("missing: %+v", entries[0])
 	}
 
-	// managed linked: symlink matching its ledger record to the Store Skill
+	// managed linked: symlink matching its recorded identity and raw target
 	raw := filepath.Join(store, "demo")
 	if err := os.Symlink(raw, filepath.Join(container, "demo")); err != nil {
 		t.Fatal(err)
 	}
-	entries, err = Inspect(container, []Relation{{Slug: "demo", LedgerRaw: raw}}, store)
+	_, dev, ino, err := ProbeSymlink(container, "demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	owned := Relation{Slug: "demo", LedgerRaw: raw, LedgerDev: dev, LedgerIno: ino}
+	entries, err = Inspect(container, []Relation{owned}, store)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +83,7 @@ func TestInspectMatrix(t *testing.T) {
 	if err := os.RemoveAll(filepath.Join(store, "demo")); err != nil {
 		t.Fatal(err)
 	}
-	entries, err = Inspect(container, []Relation{{Slug: "demo", LedgerRaw: raw}}, store)
+	entries, err = Inspect(container, []Relation{owned}, store)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -111,6 +116,61 @@ func TestInspectMatrix(t *testing.T) {
 	}
 	if entries[0].Observed != ObservedConflict || entries[0].NodeKind != KindFile {
 		t.Fatalf("file conflict: %+v", entries[0])
+	}
+}
+
+// TestInspectSameRawReplacementIsNotManaged proves leftover ledger state
+// is not ownership: a new symlink with the same raw target, or a migrated
+// row with zero identity, stays unmanaged.
+func TestInspectSameRawReplacementIsNotManaged(t *testing.T) {
+	base := physicalTemp(t)
+	store := filepath.Join(base, "store")
+	container := filepath.Join(base, "skills")
+	if err := os.MkdirAll(store, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(container, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeStoreSkill(t, store, "demo")
+	raw := filepath.Join(store, "demo")
+	link := filepath.Join(container, "demo")
+	if err := os.Symlink(raw, link); err != nil {
+		t.Fatal(err)
+	}
+	_, dev, ino, err := ProbeSymlink(container, "demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	rel := Relation{Slug: "demo", LedgerRaw: raw, LedgerDev: dev, LedgerIno: ino}
+	entries, err := Inspect(container, []Relation{rel}, store)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if entries[0].Observed != ObservedLinked || !entries[0].Managed {
+		t.Fatalf("original: %+v", entries[0])
+	}
+
+	if err := os.Remove(link); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(raw, link); err != nil {
+		t.Fatal(err)
+	}
+	entries, err = Inspect(container, []Relation{rel}, store)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if entries[0].Observed != ObservedConflict || entries[0].Managed || !entries[0].Adoptable {
+		t.Fatalf("same-raw replacement: %+v", entries[0])
+	}
+
+	entries, err = Inspect(container, []Relation{{Slug: "demo", LedgerRaw: raw}}, store)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if entries[0].Managed || entries[0].Observed != ObservedConflict {
+		t.Fatalf("zero identity: %+v", entries[0])
 	}
 }
 

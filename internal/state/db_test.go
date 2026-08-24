@@ -17,8 +17,8 @@ func TestOpenAppliesAndReopensMigrations(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := appliedVersion(t, db); got != 11 {
-		t.Fatalf("schema version after open: got %d, want 11", got)
+	if got := appliedVersion(t, db); got != 12 {
+		t.Fatalf("schema version after open: got %d, want 12", got)
 	}
 	db.Close()
 
@@ -27,8 +27,8 @@ func TestOpenAppliesAndReopensMigrations(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := appliedVersion(t, db); got != 11 {
-		t.Fatalf("schema version after reopen: got %d, want 11", got)
+	if got := appliedVersion(t, db); got != 12 {
+		t.Fatalf("schema version after reopen: got %d, want 12", got)
 	}
 	db.Close()
 }
@@ -138,7 +138,7 @@ func TestInspectSchema(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got, err := InspectSchema(path); err != nil || got != 11 {
+	if got, err := InspectSchema(path); err != nil || got != 12 {
 		t.Fatalf("InspectSchema: got %d, %v", got, err)
 	}
 	db.Close()
@@ -148,7 +148,7 @@ func TestInspectSchema(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got, err := InspectSchema(path); err != nil || got != 11 {
+	if got, err := InspectSchema(path); err != nil || got != 12 {
 		t.Fatalf("InspectSchema after close: got %d, %v", got, err)
 	}
 	after, err := os.ReadFile(path)

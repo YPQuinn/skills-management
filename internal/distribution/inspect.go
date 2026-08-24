@@ -14,6 +14,8 @@ var ErrInspection = errors.New("Target inspection could not complete")
 type Relation struct {
 	Slug      string
 	LedgerRaw string
+	LedgerDev uint64
+	LedgerIno uint64
 }
 
 type Entry struct {
@@ -53,6 +55,16 @@ func Inspect(containerPath string, relations []Relation, storeRoot string) ([]En
 
 func ExpectedPath(storeRoot, slug string) string { return filepath.Join(storeRoot, slug) }
 
+// owns reports whether the ledger still names this exact symlink: the
+// recorded raw target matches and the recorded physical identity is the
+// current inode. A replacement with the same raw target is a different
+// object. A migrated row with zero identity cannot prove ownership.
+func (rel Relation) owns(raw string, dev, ino uint64) bool {
+	return rel.LedgerRaw != "" && rel.LedgerRaw == raw &&
+		rel.LedgerDev != 0 && rel.LedgerIno != 0 &&
+		rel.LedgerDev == dev && rel.LedgerIno == ino
+}
+
 func inspectEntry(container *containerHandle, rel Relation, storeRoot string) (Entry, error) {
 	e := Entry{Slug: rel.Slug}
 	st, err := container.stat(rel.Slug)
@@ -65,19 +77,19 @@ func inspectEntry(container *containerHandle, rel Relation, storeRoot string) (E
 	}
 	e.NodeKind = statKind(st)
 	if e.NodeKind == KindSymlink {
-		return inspectSymlink(container, e, rel, storeRoot)
+		return inspectSymlink(container, e, rel, storeRoot, uint64(st.Dev), uint64(st.Ino))
 	}
 	e.Observed = ObservedConflict
 	return e, nil
 }
 
-func inspectSymlink(container *containerHandle, e Entry, rel Relation, storeRoot string) (Entry, error) {
+func inspectSymlink(container *containerHandle, e Entry, rel Relation, storeRoot string, dev, ino uint64) (Entry, error) {
 	raw, err := container.readlink(rel.Slug)
 	if err != nil {
 		return Entry{}, fmt.Errorf("%w: reading %s: %v", ErrInspection, rel.Slug, err)
 	}
 	e.RawTarget = raw
-	e.Managed = rel.LedgerRaw != "" && rel.LedgerRaw == raw
+	e.Managed = rel.owns(raw, dev, ino)
 	expected := ExpectedPath(storeRoot, rel.Slug)
 	matches, matchErr := container.targetMatches(raw, expected)
 	if matchErr != nil {
