@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"time"
@@ -18,30 +19,29 @@ func (a *App) resolveCreateIntent(it state.LinkIntent) error {
 	if err != nil || site == nil {
 		return err
 	}
-	kind, raw, err := distribution.ProbeLink(site.target.Path, site.slug)
+	got, err := distribution.ProbeSymlink(site.target.Path, site.slug)
 	if os.IsNotExist(err) {
 		return state.DeleteLinkIntent(a.db, it.ID)
 	}
 	if err != nil {
+		if errors.Is(err, distribution.ErrNotSymlink) || errors.Is(err, distribution.ErrEntryChanged) {
+			return a.endCreateConflict(it)
+		}
 		return nil
 	}
-	expected := distribution.ExpectedPath(site.storeRoot, site.slug)
-	if kind == distribution.KindSymlink && raw == expected {
-		return a.finalizeCreateIntent(site, it, raw)
+	proof := intentProof(it)
+	if !proof.Proven() || !proof.Matches(got) {
+		return a.endCreateConflict(it)
 	}
-	return a.endCreateConflict(it)
+	return a.finalizeCreateIntent(site, it, proof)
 }
 
-func (a *App) finalizeCreateIntent(site *intentSite, it state.LinkIntent, raw string) error {
+func (a *App) finalizeCreateIntent(site *intentSite, it state.LinkIntent, proof distribution.LinkProof) error {
 	now := time.Now().UTC()
-	_, dev, ino, mtime, err := distribution.ProbeSymlink(site.target.Path, site.slug)
-	if err != nil {
-		return Errorf(CodeInternal, "reading the recovered link for intent %d: %v", it.ID, err)
-	}
 	if err := state.FinalizeCreateLedger(a.db, state.ManagedLink{
 		TargetID: it.TargetID, SkillID: it.SkillID,
 		LinkPath:  filepath.Join(site.target.Path, site.slug),
-		RawTarget: raw, LinkDev: dev, LinkIno: ino, LinkMtime: mtime, EstablishedAt: now,
+		RawTarget: proof.Raw, LinkDev: proof.Dev, LinkIno: proof.Ino, LinkMtime: proof.Mtime, EstablishedAt: now,
 	}, it.ID); err != nil {
 		return Errorf(CodeInternal, "recovering create intent %d: %v", it.ID, err)
 	}

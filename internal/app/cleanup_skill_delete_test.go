@@ -91,12 +91,14 @@ func TestSkillDeleteRecoversPendingCreateIntent(t *testing.T) {
 		t.Fatal(err)
 	}
 	raw := filepath.Join(root, "alpha")
-	if err := os.Symlink(raw, filepath.Join(t2.Path, "alpha")); err != nil {
+	proof, err := distribution.CreateLink(t2.Path, "alpha", raw)
+	if err != nil {
 		t.Fatal(err)
 	}
 	if _, err := state.InsertLinkIntent(a.db, state.LinkIntent{
 		TargetID: t2.ID, SkillID: ids["alpha"], Action: "create",
 		LinkPath: filepath.Join(t2.Path, "alpha"), RawTarget: raw,
+		LinkDev: proof.Dev, LinkIno: proof.Ino, LinkMtime: proof.Mtime,
 		Phase: state.LinkPhasePlanned, CreatedAt: time.Now().UTC(),
 	}); err != nil {
 		t.Fatal(err)

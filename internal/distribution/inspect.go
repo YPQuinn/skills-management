@@ -80,22 +80,25 @@ func inspectEntry(container *containerHandle, rel Relation, storeRoot string) (E
 	}
 	e.NodeKind = statKind(st)
 	if e.NodeKind == KindSymlink {
-		dev, ino, mtime := symlinkIdentity(st)
-		return inspectSymlink(container, e, rel, storeRoot, dev, ino, mtime)
+		return inspectSymlink(container, e, rel, storeRoot)
 	}
 	e.Observed = ObservedConflict
 	return e, nil
 }
 
-func inspectSymlink(container *containerHandle, e Entry, rel Relation, storeRoot string, dev, ino uint64, mtime int64) (Entry, error) {
-	raw, err := container.readlink(rel.Slug)
+func inspectSymlink(container *containerHandle, e Entry, rel Relation, storeRoot string) (Entry, error) {
+	got, err := container.probeStableSymlink(rel.Slug)
+	if errors.Is(err, ErrEntryChanged) || errors.Is(err, ErrNotSymlink) {
+		e.Observed = ObservedConflict
+		return e, nil
+	}
 	if err != nil {
 		return Entry{}, fmt.Errorf("%w: reading %s: %v", ErrInspection, rel.Slug, err)
 	}
-	e.RawTarget = raw
-	e.Managed = rel.owns(raw, dev, ino, mtime)
+	e.RawTarget = got.Raw
+	e.Managed = rel.owns(got.Raw, got.Dev, got.Ino, got.Mtime)
 	expected := ExpectedPath(storeRoot, rel.Slug)
-	matches, matchErr := container.targetMatches(raw, expected)
+	matches, matchErr := container.targetMatches(got.Raw, expected)
 	if matchErr != nil {
 		e.ResolutionError = matchErr.Error()
 		if e.Managed {

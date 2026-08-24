@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"skillctl/internal/distribution"
+	"skillctl/internal/state"
 )
 
 // TestDistributionConflictPreservedAndAdopted proves an unmanaged entry is
@@ -129,6 +130,85 @@ func TestDistributionSameRawReplacementIsNotManaged(t *testing.T) {
 	}
 	if st.Items[0].Managed || st.Items[0].Observed != distribution.ObservedConflict || !st.Items[0].Adoptable {
 		t.Fatalf("same-raw replacement observation: %+v", st.Items[0])
+	}
+}
+
+// TestDistributionCreateReplacementIsNotRegistered proves a same-raw
+// replacement after symlinkat and before ledger finalization is not
+// registered as a Managed Link.
+func TestDistributionCreateReplacementIsNotRegistered(t *testing.T) {
+	a := newTestApp(t)
+	ids := importAllSkills(t, a, "demo")
+	tv := registerCustomTarget(t, a)
+	assignSkill(t, a, tv.ID, ids["demo"])
+	link := filepath.Join(tv.Path, "demo")
+	a.linkMutateHook = func(action string) {
+		if action != "create" {
+			return
+		}
+		raw, err := os.Readlink(link)
+		if err != nil {
+			t.Fatal(err)
+		}
+		sib := link + ".new"
+		if err := os.Symlink(raw, sib); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Rename(sib, link); err != nil {
+			t.Fatal(err)
+		}
+	}
+	res, err := a.DistributeTarget(context.Background(), tv.ID, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res.Items) != 1 || res.Items[0].Result != distribution.OutcomeBlockedConflict {
+		t.Fatalf("create replacement: %+v", res)
+	}
+	if _, err := state.GetManagedLink(a.db, tv.ID, ids["demo"]); err == nil {
+		t.Fatal("replacement must not become a Managed Link")
+	}
+	if _, err := os.Lstat(link); err != nil {
+		t.Fatal("replacement must be preserved")
+	}
+}
+
+// TestDistributionRemoveSameRawReplacementIsNotDeleted proves a same-raw
+// replacement after inspection and before isolate is left untouched.
+func TestDistributionRemoveSameRawReplacementIsNotDeleted(t *testing.T) {
+	a := newTestApp(t)
+	ids := importAllSkills(t, a, "demo")
+	tv := registerCustomTarget(t, a)
+	assignSkill(t, a, tv.ID, ids["demo"])
+	if _, err := a.DistributeTarget(context.Background(), tv.ID, false); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := a.UnassignTarget(tv.ID, "skill", ids["demo"]); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(tv.Path, "demo")
+	a.afterInspectHook = func() {
+		raw, err := os.Readlink(link)
+		if err != nil {
+			t.Fatal(err)
+		}
+		sib := link + ".new"
+		if err := os.Symlink(raw, sib); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Rename(sib, link); err != nil {
+			t.Fatal(err)
+		}
+	}
+	res, err := a.DistributeTarget(context.Background(), tv.ID, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res.Items) != 1 || res.Items[0].Result != distribution.OutcomeOwnershipLost {
+		t.Fatalf("remove replacement: %+v", res)
+	}
+	if _, err := os.Lstat(link); err != nil {
+		t.Fatal("replacement must be preserved")
 	}
 }
 
