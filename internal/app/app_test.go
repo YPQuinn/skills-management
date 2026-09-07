@@ -6,6 +6,7 @@ import (
 )
 
 func TestNewAndClose(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	a, err := New(filepath.Join(dir, "store"), filepath.Join(dir, "state.db"))
 	if err != nil {

@@ -144,10 +144,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
           aria-hidden="true"
         />
       </div>
+      {/* Keep content outside rounded overflow clipping: Chrome can drop it when the masked spotlight repaints. */}
       <BackgroundPattern
         variant="dots"
         spotlight
-        className="mx-4 md:mx-6 flex flex-1 flex-col overflow-hidden rounded-t-[2rem] border-x border-t border-border"
+        className="mx-4 md:mx-6 flex flex-1 flex-col rounded-t-[2rem] border-x border-t border-border"
       >
         <main className="flex-1 p-8 max-w-6xl w-full mx-auto">
           {children}

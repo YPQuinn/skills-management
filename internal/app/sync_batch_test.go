@@ -13,6 +13,7 @@ import (
 // TestSyncBatchOneCoherentObservation locks decision 05: one batch uses
 // exactly one fresh Source observation for every bound Skill.
 func TestSyncBatchOneCoherentObservation(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{
 		"skills/alpha": "Alpha",
@@ -58,6 +59,7 @@ func TestSyncBatchOneCoherentObservation(t *testing.T) {
 // TestSyncBatchPerItemIsolation locks decision 05: one Skill's outcome
 // never rolls back a sibling's success, and every item outcome is reported.
 func TestSyncBatchPerItemIsolation(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{
 		"skills/auto":   "Auto",
@@ -104,6 +106,7 @@ func TestSyncBatchPerItemIsolation(t *testing.T) {
 // Source: every bound Skill is reported blocked with its last relationship
 // retained and marked stale, and the Store is never touched.
 func TestSyncBatchUnavailable(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	res := importSkills(t, a, src.ID, "skills/alpha")
@@ -131,6 +134,7 @@ func TestSyncBatchUnavailable(t *testing.T) {
 // TestSyncBatchSkipsMissing locks the missing-entry outcomes inside a
 // batch: source_missing blocks and store_missing skips.
 func TestSyncBatchSkipsMissing(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{
 		"skills/gone":   "Gone",
@@ -170,6 +174,7 @@ func TestSyncBatchSkipsMissing(t *testing.T) {
 // batch reports that item failed/CodeRecovery, stops every later Store
 // write with failed/CodeRecovery, and the next batch's recovery converges.
 func TestSyncBatchBlocksAfterUnresolvedReplace(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{
 		"skills/alpha": "Alpha",
@@ -238,6 +243,7 @@ func TestSyncBatchBlocksAfterUnresolvedReplace(t *testing.T) {
 // live Store, and internal Baseline snapshots plus the three comparisons
 // and path filtering.
 func TestSyncDiffThreeWay(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src, skillID := importOneSkill(t, a, "skills/demo")
 	rewriteSourceFile(t, src, "skills/demo", "notes.md", "upstream\n")

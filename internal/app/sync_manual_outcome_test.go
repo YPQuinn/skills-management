@@ -16,6 +16,7 @@ import (
 // status marked stale when the Source is unreachable) and record a complete
 // outcome instead of leaving the item status empty.
 func TestManualBlockedOutcomePersistsStatus(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src, skillID := importOneSkill(t, a, "skills/demo")
 
@@ -72,6 +73,7 @@ func TestManualBlockedOutcomePersistsStatus(t *testing.T) {
 // the relationship, so the item and the persisted state never show an empty
 // status.
 func TestManualNoOpPersistsStatus(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src, skillID := importOneSkill(t, a, "skills/demo")
 	rewriteSourceFile(t, src, "skills/demo", "notes.md", "upstream\n")

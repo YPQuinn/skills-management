@@ -11,6 +11,7 @@ import (
 )
 
 func TestRecoveryRemovePreparedIsolationCompletes(t *testing.T) {
+	t.Parallel()
 	a, targetID, skillID, tv := seedLinkFixture(t)
 	link, err := state.GetManagedLink(a.db, targetID, skillID)
 	if err != nil {
@@ -57,6 +58,7 @@ func TestRecoveryRemovePreparedIsolationCompletes(t *testing.T) {
 // the final slug. Recovery must isolate into that dir, not treat
 // RemoveAbsent as "already gone".
 func TestRecoveryRemovePlannedEmptyIsolationRetries(t *testing.T) {
+	t.Parallel()
 	a, targetID, skillID, tv := seedLinkFixture(t)
 	link, err := state.GetManagedLink(a.db, targetID, skillID)
 	if err != nil {
@@ -104,6 +106,7 @@ func TestRecoveryRemovePlannedEmptyIsolationRetries(t *testing.T) {
 }
 
 func TestRecoveryRemovePlannedEmptyIsolationMissingSlug(t *testing.T) {
+	t.Parallel()
 	a, targetID, skillID, tv := seedLinkFixture(t)
 	link, err := state.GetManagedLink(a.db, targetID, skillID)
 	if err != nil {
@@ -139,6 +142,7 @@ func TestRecoveryRemovePlannedEmptyIsolationMissingSlug(t *testing.T) {
 }
 
 func TestRecoveryRemovePlannedEmptyIsolationChangedSlug(t *testing.T) {
+	t.Parallel()
 	a, targetID, skillID, tv := seedLinkFixture(t)
 	link, err := state.GetManagedLink(a.db, targetID, skillID)
 	if err != nil {
@@ -180,6 +184,7 @@ func TestRecoveryRemovePlannedEmptyIsolationChangedSlug(t *testing.T) {
 }
 
 func TestRecoveryRemoveUnprovenIsolationKept(t *testing.T) {
+	t.Parallel()
 	a, targetID, skillID, tv := seedLinkFixture(t)
 	link, err := state.GetManagedLink(a.db, targetID, skillID)
 	if err != nil {
@@ -219,6 +224,7 @@ func TestRecoveryRemoveUnprovenIsolationKept(t *testing.T) {
 }
 
 func TestRecoveryLegacyEmptySlotCreateAndRemove(t *testing.T) {
+	t.Parallel()
 	a, targetID, skillID, tv := seedLinkFixture(t)
 	importAllSkills(t, a, "other")
 	otherID := skillIDBySlug(t, a, "other")

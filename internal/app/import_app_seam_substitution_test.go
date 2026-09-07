@@ -17,6 +17,7 @@ import (
 // terminal row and its receipt are kept, and the foreign object is
 // preserved.
 func TestImportSkillsFreshAppBlocksForeignBaselineSwappedAtEvidenceRemoval(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	first := importSkills(t, a, src.ID, "skills/alpha")
@@ -70,6 +71,7 @@ func TestImportSkillsFreshAppBlocksForeignBaselineSwappedAtEvidenceRemoval(t *te
 // refused, the restored row with its receipt is kept, and the foreign tree
 // is preserved.
 func TestImportSkillsBlocksForeignLiveAfterRestoreEvidenceRemoval(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	ctx, cancel := context.WithCancel(context.Background())
@@ -116,6 +118,7 @@ func TestImportSkillsBlocksForeignLiveAfterRestoreEvidenceRemoval(t *testing.T) 
 // final evidence-removal hook is refused, the restored row with its
 // receipt is kept, and both trees are preserved.
 func TestImportSkillsBlocksForeignLiveAfterReplaceRestoreEvidenceRemoval(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	first := importSkills(t, a, src.ID, "skills/alpha")

@@ -5,6 +5,7 @@ import (
 )
 
 func TestDesiredSetExpansionWithReasons(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha", "beta", "gamma")
 	eng, err := a.CreateGroup("eng")

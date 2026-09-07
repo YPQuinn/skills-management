@@ -6,6 +6,7 @@ import (
 )
 
 func TestDefaultSlug(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		name string
 		want string
@@ -34,6 +35,7 @@ func TestDefaultSlug(t *testing.T) {
 }
 
 func TestDefaultSlugRejectsEmptyResult(t *testing.T) {
+	t.Parallel()
 	for _, name := range []string{"", "---", "!!!", "中文", "Ü"} {
 		_, err := defaultSlug(name)
 		if err == nil || !strings.Contains(err.Error(), "explicit slug") {
@@ -46,6 +48,7 @@ func TestDefaultSlugRejectsEmptyResult(t *testing.T) {
 // transliterated: they collapse like any separator and the remaining ASCII
 // letters are preserved.
 func TestDefaultSlugDropsNonASCII(t *testing.T) {
+	t.Parallel()
 	got, err := defaultSlug("Über Cool")
 	if err != nil {
 		t.Fatal(err)
@@ -56,6 +59,7 @@ func TestDefaultSlugDropsNonASCII(t *testing.T) {
 }
 
 func TestDefaultSlugLengthBoundary(t *testing.T) {
+	t.Parallel()
 	long := strings.Repeat("a", 65)
 	if _, err := defaultSlug(long); err == nil || !strings.Contains(err.Error(), "explicit slug") {
 		t.Fatalf("65-character slug must be rejected with guidance: %v", err)

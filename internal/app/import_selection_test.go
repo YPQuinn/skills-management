@@ -12,6 +12,7 @@ func selPath(rel string) ImportSelector { return ImportSelector{RelativeDir: rel
 func selName(name string) ImportSelector { return ImportSelector{Name: name} }
 
 func TestValidateImportInputAcceptsValid(t *testing.T) {
+	t.Parallel()
 	good := "explicit-slug"
 	for _, in := range []ImportSkillsInput{
 		{SourceID: 1, Selectors: []ImportSelector{selPath("skills/a")}},
@@ -27,6 +28,7 @@ func TestValidateImportInputAcceptsValid(t *testing.T) {
 }
 
 func TestValidateImportInputRejectsCombinations(t *testing.T) {
+	t.Parallel()
 	slug := "Bad Slug"
 	empty := ""
 	cases := []struct {
@@ -51,6 +53,7 @@ func TestValidateImportInputRejectsCombinations(t *testing.T) {
 }
 
 func TestResolveImportSelectorsAllSorted(t *testing.T) {
+	t.Parallel()
 	entries := []source.Entry{
 		{RelativeDir: "tools/alpha", Name: "Tools Alpha"},
 		{RelativeDir: "skills/alpha", Name: "Alpha"},
@@ -66,6 +69,7 @@ func TestResolveImportSelectorsAllSorted(t *testing.T) {
 }
 
 func TestResolveImportSelectorsPreservesRequestOrder(t *testing.T) {
+	t.Parallel()
 	entries := []source.Entry{
 		{RelativeDir: "skills/alpha", Name: "Alpha"},
 		{RelativeDir: "skills/beta", Name: "Beta"},
@@ -83,6 +87,7 @@ func TestResolveImportSelectorsPreservesRequestOrder(t *testing.T) {
 }
 
 func TestResolveImportSelectorsRejectsAmbiguousAndMissing(t *testing.T) {
+	t.Parallel()
 	entries := []source.Entry{
 		{RelativeDir: "skills/alpha", Name: "Alpha"},
 		{RelativeDir: "tools/alpha", Name: "Alpha"},
@@ -106,6 +111,7 @@ func TestResolveImportSelectorsRejectsAmbiguousAndMissing(t *testing.T) {
 }
 
 func TestResolveImportSelectorsRejectsCrossDuplicate(t *testing.T) {
+	t.Parallel()
 	entries := []source.Entry{
 		{RelativeDir: "skills/beta", Name: "Beta"},
 	}

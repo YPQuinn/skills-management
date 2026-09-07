@@ -10,6 +10,7 @@ import (
 )
 
 func TestTargetDeleteRemovesManagedLinksKeepsContainer(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha")
 	tv := registerCustomTarget(t, a)

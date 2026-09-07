@@ -14,6 +14,7 @@ import (
 )
 
 func TestSkillDeleteBlockedThenCleansManagedLinks(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha")
 	tv := registerCustomTarget(t, a)
@@ -47,6 +48,7 @@ func TestSkillDeleteBlockedThenCleansManagedLinks(t *testing.T) {
 }
 
 func TestSkillDeleteLeavesOwnershipLostPath(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha")
 	tv := registerCustomTarget(t, a)
@@ -74,6 +76,7 @@ func TestSkillDeleteLeavesOwnershipLostPath(t *testing.T) {
 }
 
 func TestSkillDeleteRecoversPendingCreateIntent(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha")
 	t1 := registerCustomTarget(t, a)
@@ -125,6 +128,7 @@ func TestSkillDeleteRecoversPendingCreateIntent(t *testing.T) {
 }
 
 func TestDeleteSkillRestoresStoreWhenRemoveFailsAfterLiveMoved(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha")
 	id := ids["alpha"]
@@ -158,6 +162,7 @@ func TestDeleteSkillRestoresStoreWhenRemoveFailsAfterLiveMoved(t *testing.T) {
 }
 
 func TestDeleteSkillBlocksConcurrentDirectAssignment(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha")
 	tv := registerCustomTarget(t, a)

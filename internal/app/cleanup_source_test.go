@@ -11,6 +11,7 @@ import (
 )
 
 func TestSourceDeleteRequiresDetachThenKeepsSkills(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha")
 	src, err := a.ListSources()
@@ -46,6 +47,7 @@ func TestSourceDeleteRequiresDetachThenKeepsSkills(t *testing.T) {
 }
 
 func TestDeleteSourceDoesNotDetachReboundSkill(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha")
 	srcs, err := a.ListSources()
@@ -70,6 +72,7 @@ func TestDeleteSourceDoesNotDetachReboundSkill(t *testing.T) {
 }
 
 func TestDeleteSourceMissing(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	if _, err := a.DeleteSource(context.Background(), 99, false); err == nil {
 		t.Fatal("want not found")

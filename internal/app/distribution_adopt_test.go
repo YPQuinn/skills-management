@@ -15,6 +15,7 @@ import (
 // implicitly, and explicit adoption records the existing link without
 // rewriting it.
 func TestDistributionConflictPreservedAndAdopted(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "demo")
 	tv := registerCustomTarget(t, a)
@@ -99,6 +100,7 @@ func TestDistributionConflictPreservedAndAdopted(t *testing.T) {
 // Managed Link row does not authorize a replacement symlink that happens
 // to carry the same raw target: Distribution must block, never no-op.
 func TestDistributionSameRawReplacementIsNotManaged(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "demo")
 	tv := registerCustomTarget(t, a)
@@ -137,6 +139,7 @@ func TestDistributionSameRawReplacementIsNotManaged(t *testing.T) {
 // replacement after symlinkat and before ledger finalization is not
 // registered as a Managed Link.
 func TestDistributionCreateReplacementIsNotRegistered(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "demo")
 	tv := registerCustomTarget(t, a)
@@ -176,6 +179,7 @@ func TestDistributionCreateReplacementIsNotRegistered(t *testing.T) {
 // TestDistributionRemoveSameRawReplacementIsNotDeleted proves a same-raw
 // replacement after inspection and before isolate is left untouched.
 func TestDistributionRemoveSameRawReplacementIsNotDeleted(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "demo")
 	tv := registerCustomTarget(t, a)
@@ -215,6 +219,7 @@ func TestDistributionRemoveSameRawReplacementIsNotDeleted(t *testing.T) {
 // TestAdoptionEligibility proves the adopt gate: wrong targets, files, and
 // non-desired Skills are refused.
 func TestAdoptionEligibility(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "demo", "other")
 	tv := registerCustomTarget(t, a)

@@ -15,6 +15,7 @@ import (
 // installed live tree through the terminal restore protocol, keeps the
 // previous snapshot and the Baseline, and leaves no open operation.
 func TestRollbackCancelBeforeCommit(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src, skillID := importOneSkill(t, a, "skills/demo")
 	rewriteSourceFile(t, src, "skills/demo", "notes.md", "upstream\n")
@@ -71,6 +72,7 @@ func TestRollbackCancelBeforeCommit(t *testing.T) {
 // keep-baseline replace: the Baseline tree is untouched while the live and
 // previous trees are exactly the journaled digests.
 func TestRollbackKeepsBaselineAndSnapshot(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src, skillID := importOneSkill(t, a, "skills/demo")
 	rewriteSourceFile(t, src, "skills/demo", "notes.md", "upstream\n")
@@ -108,6 +110,7 @@ func TestRollbackKeepsBaselineAndSnapshot(t *testing.T) {
 // the Binding's accepted digest and revision — to the freshly sampled live
 // content, never to the stale persisted Store digest.
 func TestConvergedCheckAdvancesBaseline(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src, skillID := importOneSkill(t, a, "skills/demo")
 	// Store diverges first; the persisted Store digest goes stale.

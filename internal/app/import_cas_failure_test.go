@@ -24,6 +24,7 @@ func casFailure() func(skillstore.Operation) error {
 // re-prepares the same terminal state, persists the receipt, cleans the
 // evidence, and clears the row.
 func TestImportSkillsFinalizeReceiptCASFailureConvergesOnFreshApp(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	op := importAndStopBeforeFinalize(t, a, src, "skills/alpha", "alpha")
@@ -62,6 +63,7 @@ func TestImportSkillsFinalizeReceiptCASFailureConvergesOnFreshApp(t *testing.T) 
 // persists the receipt, cleans the evidence, and clears the row, and the
 // entry imports fresh.
 func TestImportSkillsRestoreReceiptCASFailureConvergesOnFreshApp(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	op := importAndStopBeforeCommit(t, a, src, "skills/alpha", "alpha")
@@ -106,6 +108,7 @@ func TestImportSkillsRestoreReceiptCASFailureConvergesOnFreshApp(t *testing.T) {
 // physical identity matching the proof's recovery identity, persists the
 // receipt, cleans the evidence, and clears the row.
 func TestImportSkillsReplaceRestoreReceiptCASFailureConvergesOnFreshApp(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	first := importSkills(t, a, src.ID, "skills/alpha")
@@ -180,6 +183,7 @@ func TestImportSkillsReplaceRestoreReceiptCASFailureConvergesOnFreshApp(t *testi
 // App validates the already-clean receipt-bound terminal result,
 // CAS-deletes the row, and converges.
 func TestImportSkillsTerminalDeleteCASFailureConvergesOnFreshApp(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	op := importAndStopAfterReceiptPersisted(t, a, src, "skills/alpha", "alpha")

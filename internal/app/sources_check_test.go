@@ -9,6 +9,7 @@ import (
 )
 
 func TestCheckSourceLifecycle(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	root := t.TempDir()
 	writeSourceSkill(t, root, "alpha")
@@ -91,6 +92,7 @@ func TestCheckSourceLifecycle(t *testing.T) {
 }
 
 func TestCheckTimestampsAdvanceWithinSameSecond(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	root := t.TempDir()
 	writeSourceSkill(t, root, "alpha")
@@ -123,6 +125,7 @@ func TestCheckTimestampsAdvanceWithinSameSecond(t *testing.T) {
 }
 
 func TestCheckMetadataLifecycle(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	root := t.TempDir()
 	writeSourceSkill(t, root, "alpha")

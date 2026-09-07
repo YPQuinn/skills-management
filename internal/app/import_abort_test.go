@@ -20,6 +20,7 @@ func strPtr(s string) *string { return &s }
 // The next batch recovers the aborted row (preserving the unmanaged
 // content) and imports a sibling.
 func TestImportSkillsAbortedImportSurvivesDeleteFailure(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha", "skills/beta": "Beta"})
 	// unmanaged content occupies the alpha slug
@@ -64,6 +65,7 @@ func TestImportSkillsAbortedImportSurvivesDeleteFailure(t *testing.T) {
 // tree disappeared): the aborted row is retryable and the next batch
 // recovers it before processing items.
 func TestImportSkillsAbortedReplaceSurvivesDeleteFailure(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/one": "Alpha", "skills/two": "Beta"})
 	first := importSkills(t, a, src.ID, "skills/one")
@@ -111,6 +113,7 @@ func TestImportSkillsAbortedReplaceSurvivesDeleteFailure(t *testing.T) {
 // follows an unresolved-intent item still reports its known requested slug
 // (an explicit override) on the blocked outcome.
 func TestImportSkillsBlockedSiblingKeepsRequestedSlug(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/a": "A", "skills/b": "B"})
 	ctx, cancel := context.WithCancel(context.Background())

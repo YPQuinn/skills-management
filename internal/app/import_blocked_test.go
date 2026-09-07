@@ -18,6 +18,7 @@ import (
 // selections are reported failed with CodeRecovery and their content is
 // never materialized or installed.
 func TestImportSkillsBlockedAfterUnresolvedIntent(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/a": "A", "skills/b": "B", "skills/c": "C"})
 	ctx, cancel := context.WithCancel(context.Background())
@@ -80,6 +81,7 @@ func TestImportSkillsBlockedAfterUnresolvedIntent(t *testing.T) {
 // later Store write in the batch; the item still reports its Skill id and
 // slug.
 func TestImportSkillsUnresolvedCommittedIntentBlocksSiblings(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/a": "A", "skills/b": "B"})
 	n := 0
@@ -123,6 +125,7 @@ func TestImportSkillsUnresolvedCommittedIntentBlocksSiblings(t *testing.T) {
 // was persisted before the SQL deletion failed, so the next run converges:
 // it validates the receipt-bound terminal result and CAS-deletes the row.
 func TestImportSkillsDeleteFailureAfterFinalizeIsRecovery(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	a.deleteOperation = func(int64) error { return errors.New("delete failed") }
@@ -162,6 +165,7 @@ func TestImportSkillsDeleteFailureAfterFinalizeIsRecovery(t *testing.T) {
 // validates the receipt-bound restored result and CAS-deletes the row, then
 // imports both entries.
 func TestImportSkillsDeleteFailureAfterRestoreIsRecovery(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/a": "A", "skills/b": "B"})
 	ctx, cancel := context.WithCancel(context.Background())

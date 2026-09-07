@@ -11,6 +11,7 @@ import (
 )
 
 func TestGitAddListsThenImportObservesOnceThenReuses(t *testing.T) {
+	t.Parallel()
 	if _, err := exec.LookPath("git"); err != nil {
 		t.Skip("git is not installed")
 	}
@@ -80,6 +81,7 @@ func TestGitAddListsThenImportObservesOnceThenReuses(t *testing.T) {
 }
 
 func TestReuseGitObservationRequiresCompleteDigests(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	cur := &source.Source{
 		Locator:    source.Locator{Kind: source.KindGit},

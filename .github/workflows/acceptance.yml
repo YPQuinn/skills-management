@@ -1,97 +1,26 @@
 name: acceptance
 
+# Branch pushes are covered by their pull request; running both events would
+# execute the whole matrix twice for one commit. Tags are owned by
+# release-archives.yml, whose release.sh already runs this gate.
 on:
   push:
+    branches: [main]
   pull_request:
 
 permissions:
   contents: read
 
-jobs:
-  candidate:
-    name: record candidate
-    runs-on: ubuntu-latest
-    outputs:
-      sha: ${{ steps.sha.outputs.sha }}
-    steps:
-      - uses: actions/checkout@v4
-      - id: sha
-        run: |
-          sha=$(git rev-parse HEAD)
-          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
-          echo "candidate ${sha}"
-          test "${sha}" = "${GITHUB_SHA}"
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+jobs:
   linux-amd64-functional:
     name: linux/amd64 functional
-    needs: candidate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: same candidate
-        run: test "$(git rev-parse HEAD)" = "${{ needs.candidate.outputs.sha }}"
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: |
-            internal/webui/package-lock.json
-            e2e/webui/package-lock.json
-      - name: quality gate
-        run: ./scripts/check.sh
-      - name: race
-        run: go test -race ./...
-      - name: native archive smoke
-        run: ./scripts/smoke/native-archive.sh
-      - name: Playwright
-        run: ./scripts/e2e-webui.sh
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: playwright-report-linux
-          path: e2e/webui/test-results
-
-  darwin-arm64-functional:
-    name: darwin/arm64 functional
-    needs: candidate
-    runs-on: macos-15
-    steps:
-      - uses: actions/checkout@v4
-      - name: same candidate
-        run: test "$(git rev-parse HEAD)" = "${{ needs.candidate.outputs.sha }}"
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: |
-            internal/webui/package-lock.json
-            e2e/webui/package-lock.json
-      - name: quality gate
-        run: ./scripts/check.sh
-      - name: native archive smoke
-        run: ./scripts/smoke/native-archive.sh
-      - name: Playwright
-        run: ./scripts/e2e-webui.sh
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: playwright-report-darwin-arm64
-          path: e2e/webui/test-results
-
-  linux-arm64-archive-smoke:
-    name: linux/arm64 archive smoke
-    needs: candidate
-    runs-on: ubuntu-24.04-arm
-    steps:
-      - uses: actions/checkout@v4
-      - name: same candidate
-        run: test "$(git rev-parse HEAD)" = "${{ needs.candidate.outputs.sha }}"
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
@@ -100,16 +29,45 @@ jobs:
           node-version: "22"
           cache: npm
           cache-dependency-path: internal/webui/package-lock.json
-      - run: ./scripts/smoke/native-archive.sh
+      - name: quality gate
+        env:
+          GO_TEST_FLAGS: -race
+        run: ./scripts/check.sh
+      - name: native archive smoke
+        run: ./scripts/smoke/native-archive.sh
+      # darwin/amd64 has no per-push native job; release-archives.yml executes
+      # its real archive on a native runner at tag time.
+      - name: cross-compile darwin/amd64
+        run: CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o /dev/null ./cmd/skillctl
 
-  darwin-amd64-archive-smoke:
-    name: darwin/amd64 archive smoke
-    needs: candidate
-    runs-on: macos-15-intel
+  darwin-arm64-functional:
+    name: darwin/arm64 functional
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - name: same candidate
-        run: test "$(git rev-parse HEAD)" = "${{ needs.candidate.outputs.sha }}"
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: internal/webui/package-lock.json
+      # Frontend type checking, lint, and Vitest are platform-independent and
+      # already ran on Linux. macOS builds the SPA only because internal/webui
+      # embeds it, then runs the filesystem-sensitive Go suite.
+      - name: build
+        run: ./scripts/build.sh
+      - name: go test
+        run: go test ./...
+      - name: native archive smoke
+        run: ./scripts/smoke/native-archive.sh
+
+  linux-arm64-archive-smoke:
+    name: linux/arm64 archive smoke
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod

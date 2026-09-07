@@ -22,6 +22,7 @@ import (
 // Baseline advance and previous rotation complete, the receipt persists,
 // and the row is cleared.
 func TestImportSkillsFreshAppResumesInterruptedReplaceFinalize(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	first := importSkills(t, a, src.ID, "skills/alpha")

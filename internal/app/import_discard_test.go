@@ -14,6 +14,7 @@ import (
 // the app never deletes the SQL journal, the intent stays pending, and the
 // unmanaged live content is preserved.
 func TestImportDiscardMissingOpDirKeepsPending(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	// unmanaged content occupies the alpha slug, so Install refuses with
@@ -73,6 +74,7 @@ func TestImportDiscardMissingOpDirKeepsPending(t *testing.T) {
 // blocks the strict operation cleanup) leaves the committed intent in the
 // SQL journal: the app reports CodeRecovery and never deletes the row.
 func TestImportSkillsCommittedJournalRetainedOnFinalizeRefusal(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	op := importAndStopBeforeFinalize(t, a, src, "skills/alpha", "alpha")

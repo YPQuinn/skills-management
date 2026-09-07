@@ -15,6 +15,7 @@ import (
 // symlink at the poisoned path is left untouched; the real Target entry is
 // the one that is removed.
 func TestRecoveryRemoveIgnoresPoisonedLinkPath(t *testing.T) {
+	t.Parallel()
 	a, targetID, skillID, tv := seedLinkFixture(t)
 	link, err := state.GetManagedLink(a.db, targetID, skillID)
 	if err != nil {
@@ -61,6 +62,7 @@ func TestRecoveryRemoveIgnoresPoisonedLinkPath(t *testing.T) {
 // recorded LinkPath already has the expected symlink does not register
 // ownership from that path. Recovery inspects the live Target slug instead.
 func TestRecoveryCreateIgnoresPoisonedLinkPath(t *testing.T) {
+	t.Parallel()
 	a, targetID, _, tv := seedLinkFixture(t)
 	importAllSkills(t, a, "other")
 	otherID := skillIDBySlug(t, a, "other")

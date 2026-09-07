@@ -19,6 +19,10 @@ test('desktop master-detail, narrow list/detail split, no overflow', async ({ pa
     await page.goto(`${ui.url}/skills/wide`)
     await expect(page.getByRole('heading', { name: 'wide' })).toBeVisible()
     await expect(page.getByRole('navigation', { name: 'Skill list' })).toBeVisible()
+    // Rounded overflow clipping around the masked background can drop content during repaint.
+    const background = page.locator('[data-slot="background-pattern"]')
+    await expect(background).toHaveCSS('overflow-x', 'visible')
+    await expect(background).toHaveCSS('overflow-y', 'visible')
     await expectNoHorizontalOverflow(page)
 
     await page.setViewportSize({ width: 390, height: 844 })
@@ -31,6 +35,31 @@ test('desktop master-detail, narrow list/detail split, no overflow', async ({ pa
     await expect(page.getByRole('link', { name: 'All Skills' })).toBeVisible()
     await expect(page.getByRole('navigation', { name: 'Skill list' })).toHaveCount(0)
     await expectNoHorizontalOverflow(page)
+  } finally {
+    await ui.stop()
+  }
+})
+
+test('background decorations stay inside the rounded corners during pointer movement', async ({ page }) => {
+  const ui = await startUI()
+  try {
+    await page.goto(ui.url + '/setup')
+    await initializeStore(page)
+    for (const width of [1280, 390]) {
+      await page.setViewportSize({ width, height: 800 })
+      const panel = await page.locator('[data-slot="background-pattern"]').boundingBox()
+      expect(panel).not.toBeNull()
+      if (!panel) throw new Error('Background panel is missing')
+
+      // These small squares are outside the 32px corner arcs, so they must match the plain margin.
+      const margin = await page.screenshot({ clip: { x: panel.x - 8, y: panel.y + 1, width: 6, height: 6 } })
+      for (const x of [panel.x + 1, panel.x + panel.width - 7]) {
+        await page.mouse.move(width / 2, panel.y + 100)
+        await page.mouse.move(x + 3, panel.y + 4, { steps: 5 })
+        const corner = await page.screenshot({ clip: { x, y: panel.y + 1, width: 6, height: 6 } })
+        expect(corner.equals(margin), `Dots leaked outside a rounded corner at width ${width}`).toBe(true)
+      }
+    }
   } finally {
     await ui.stop()
   }
