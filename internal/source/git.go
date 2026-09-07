@@ -22,39 +22,49 @@ var fullSHARe = regexp.MustCompile(`^[0-9a-fA-F]{40}$`)
 // configured helpers) and never stores or passes tokens itself.
 type Git struct{}
 
-// Observe resolves the Source ref to a commit, refreshes the per-location
-// cache, and discovers Skills in the commit tree under the Source subpath.
-// The cache lives in workDir so repeated checks reuse one clone.
+// Observe resolves the Source ref to a commit, ensures that commit is in
+// the per-location cache, and discovers Skills with complete-tree digests.
 func (Git) Observe(ctx context.Context, loc Locator, workDir string) (Observation, error) {
+	return gitObserve(ctx, loc, workDir, discoverFull)
+}
+
+// ObserveListing is the Git registration scan: SKILL.md frontmatter only,
+// no complete-tree blob download. Import and check use Observe.
+func (Git) ObserveListing(ctx context.Context, loc Locator, workDir string) (Observation, error) {
+	return gitObserve(ctx, loc, workDir, discoverListing)
+}
+
+func gitObserve(ctx context.Context, loc Locator, workDir string, mode discoverMode) (Observation, error) {
 	if loc.Kind != KindGit {
 		return Observation{}, fmt.Errorf("Git observer requires a Git locator")
 	}
-	commit, err := resolveCommit(ctx, loc, workDir)
+	start := time.Now()
+	commit, err := ResolveCommit(ctx, loc)
 	if err != nil {
 		return Observation{}, err
 	}
+	tracef("resolve_commit %s %s", shortSHA(commit), time.Since(start).Round(time.Millisecond))
 	cache := gitCacheDir(workDir, loc.Location)
-	if err := ensureCache(ctx, loc, cache); err != nil {
+	ensured := time.Now()
+	if err := ensureCommit(ctx, loc, cache, commit); err != nil {
 		return Observation{}, err
 	}
-	if isFullSHA(loc.Ref) {
-		if err := ensurePinnedCommit(ctx, cache, loc); err != nil {
-			return Observation{}, err
-		}
-	}
-	obs, err := discoverCommit(ctx, cache, commit, loc)
+	tracef("ensure_commit %s", time.Since(ensured).Round(time.Millisecond))
+	scanned := time.Now()
+	obs, err := discoverCommit(ctx, cache, commit, loc, mode)
 	if err != nil {
 		return Observation{}, err
 	}
+	tracef("discover mode=%s entries=%d issues=%d %s", mode, len(obs.Entries), len(obs.Issues), time.Since(scanned).Round(time.Millisecond))
 	obs.Commit = commit
 	return obs, nil
 }
 
-// resolveCommit resolves the Source ref to a full commit SHA: the remote
+// ResolveCommit resolves the Source ref to a full commit SHA: the remote
 // default branch when no ref is given, the named branch or tag otherwise. A
 // full commit SHA is pinned and returned unchanged (reachability is verified
-// against the cache in ensurePinnedCommit).
-func resolveCommit(ctx context.Context, loc Locator, workDir string) (string, error) {
+// when the cache is filled).
+func ResolveCommit(ctx context.Context, loc Locator) (string, error) {
 	if isFullSHA(loc.Ref) {
 		return strings.ToLower(loc.Ref), nil
 	}
@@ -124,7 +134,10 @@ func runGit(ctx context.Context, args ...string) (string, error) {
 	var out, errBuf bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &errBuf
-	if err := cmd.Run(); err != nil {
+	start := time.Now()
+	err := cmd.Run()
+	traceGit(args, time.Since(start), err)
+	if err != nil {
 		msg := strings.TrimSpace(errBuf.String())
 		if msg == "" {
 			msg = err.Error()

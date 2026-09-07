@@ -22,17 +22,12 @@ func materializeGit(ctx context.Context, loc Locator, commit string, entry Entry
 		return "", fmt.Errorf("Git materialization requires the full observed commit")
 	}
 	cache := gitCacheDir(workDir, loc.Location)
-	if err := ensureCache(ctx, loc, cache); err != nil {
+	if err := ensureCommit(ctx, loc, cache, commit); err != nil {
 		return "", err
 	}
-	if isFullSHA(loc.Ref) {
-		if err := ensurePinnedCommit(ctx, cache, loc); err != nil {
-			return "", err
-		}
-	}
 	args := []string{"-C", cache, "ls-tree", "-z", "-r", "-l", commit}
-	if loc.Subpath != "" {
-		args = append(args, "--", loc.Subpath)
+	if path := gitSkillTreePath(loc.Subpath, entry.RelativeDir); path != "" {
+		args = append(args, "--", path)
 	}
 	out, err := runGit(ctx, args...)
 	if err != nil {

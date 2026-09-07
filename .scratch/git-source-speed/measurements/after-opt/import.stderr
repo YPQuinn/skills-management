@@ -1,0 +1,118 @@
+skillctl-git: git ok 5.768s -c credential.helper=<redacted> ls-remote https://github.com/mattpocock/skills.git HEAD
+skillctl-git: resolve_commit 3cca18b368ae 5.769s
+skillctl-git: git ok 13ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: ensure_commit 14ms
+skillctl-git: git ok 12ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r 3cca18b368ae95cdbdebbff572ccafa662551015
+skillctl-git: discover mode=full entries=37 issues=0 27ms
+skillctl-git: git ok 7ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/engineering/ask-matt
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/engineering/code-review
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/engineering/codebase-design
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/engineering/diagnosing-bugs
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/engineering/domain-modeling
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/engineering/grill-with-docs
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/engineering/implement
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/engineering/improve-codebase-architecture
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/engineering/prototype
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/engineering/research
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/engineering/resolving-merge-conflicts
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/engineering/setup-matt-pocock-skills
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/engineering/tdd
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/engineering/to-spec
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/engineering/to-tickets
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/engineering/triage
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/engineering/wayfinder
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/engineering/wizard
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/in-progress/claude-handoff
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/in-progress/implement-spec
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/in-progress/loop-me
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/in-progress/retro
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/in-progress/setup-ts-deep-modules
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/in-progress/writing-beats
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/in-progress/writing-fragments
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/in-progress/writing-shape
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/misc/git-guardrails-claude-code
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/misc/migrate-to-shoehorn
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/misc/scaffold-exercises
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/misc/setup-pre-commit
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/productivity/grill-me
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/productivity/grilling
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/productivity/handoff
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/productivity/teach
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/productivity/to-questionnaire
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/productivity/wait-what
+skillctl-git: git ok 5ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: cache hit 3cca18b368ae
+skillctl-git: git ok 4ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r -l 3cca18b368ae95cdbdebbff572ccafa662551015 -- skills/productivity/writing-for-agents

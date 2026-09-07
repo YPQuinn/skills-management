@@ -1,0 +1,1 @@
+skillctl-git: git ok 1.24s -c credential.helper=<redacted> ls-remote https://github.com/mattpocock/skills.git HEAD
