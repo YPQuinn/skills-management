@@ -78,12 +78,13 @@ test('Chromium WebUI core journey against embedded skillctl', async ({ page }) =
     await expect(page).toHaveURL(/tab=synchronization/)
     const changed = page.getByText('Source changed', { exact: true })
     for (let attempt = 0; attempt < 5; attempt++) {
+      const checkResponse = page.waitForResponse(response =>
+        response.request().method() === 'POST' && /\/api\/v1\/skills\/\d+\/check$/.test(response.url()))
       await page.getByRole('button', { name: 'Check', exact: true }).click()
-      await expect(page.getByRole('button', { name: 'Checking…' })).toBeVisible()
+      const response = await checkResponse
       await expect(page.getByRole('button', { name: 'Check', exact: true })).toBeEnabled()
-      if (await changed.isVisible()) {
-        break
-      }
+      if (response.ok()) break
+      expect(await response.text()).toContain('already checking Source')
     }
     await expect(changed).toBeVisible()
     await expect(page.getByRole('heading', { name: 'BaselineSource' })).toBeVisible()
@@ -159,7 +160,7 @@ test('WebUI recover_store rebuilds unbound Skills', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'Skills' })).toBeVisible()
     await expect(skillLink(page, 'kept')).toBeVisible()
     await skillLink(page, 'kept').click()
-    await expect(page.getByText('unbound', { exact: false })).toBeVisible()
+    await expect(page.getByText('This Skill is unbound. It was imported or created without an active Source association.', { exact: true })).toBeVisible()
   } finally {
     await again.stop()
   }
