@@ -117,6 +117,12 @@ rm -rf ~/.skillctl
 
 Deleting `~/.skillctl` does not walk Targets. Leftover Managed Links become ordinary unmanaged symlinks. Unmanaged Target files are never deleted. Skill Manager never deletes a Target container.
 
+## Release validation
+
+Maintainers run `./scripts/release.sh v0.1.1` from a clean checkout at that exact tag. It runs the quality, browser, and README gates, then produces four archives and `SHA256SUMS`.
+
+Pushing a version tag also runs the **release archives** workflow: it packages once, then downloads and verifies those same archives on four native runners without rebuilding. Only after all jobs pass should the `release-archives` artifact's four archives and checksum file be published. The workflow has read-only repository permissions and does not create a GitHub Release. A manual rerun must select the version tag, not a branch.
+
 ## Safety and troubleshooting
 
 - [Safety](docs/safety.md): Source versus Store, Synchronization versus Distribution, unmanaged content, conflicts, Adopt, snapshots, and rollback.
