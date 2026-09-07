@@ -55,7 +55,7 @@ describe('Layout background pattern', () => {
     expect(classes).toContain('md:mx-6')
     expect(classes).toContain('flex-1')
     expect(classes).toContain('flex-col')
-    expect(classes).toContain('overflow-hidden')
+    expect(classes).not.toContain('overflow-hidden')
     expect(classes).toContain('rounded-t-[2rem]')
     expect(classes).toContain('border-x')
     expect(classes).toContain('border-t')
