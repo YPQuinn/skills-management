@@ -1,7 +1,7 @@
 # Preserve external replacements before create identity sampling
 
 Type: task
-Status: claimed
+Status: resolved
 
 ## Question
 
@@ -54,4 +54,10 @@ Local validation passed:
 - `./scripts/check.sh`: passed, including 144 frontend tests and all Go tests.
 - Embedded Chromium/Firefox/WebKit acceptance: 8/8 passed; README quickstart and native macOS arm64 archive smoke passed.
 
-Keep this ticket claimed until the updated commit passes remote four-platform acceptance. These local results describe the changed working tree, not the prior binary's embedded Git SHA. PR merge and release remain paused.
+These local results describe the changed working tree, not the prior binary's embedded Git SHA.
+
+## Answer
+
+Resolved by `dff5265bc5b0c8cf1b4bf9fa01726ae3dee1dbb7`. Both [branch acceptance 34085004614](https://github.com/YPQuinn/skills-management/actions/runs/34085004614) and [PR merge-ref acceptance 34085006535](https://github.com/YPQuinn/skills-management/actions/runs/34085006535) passed all four native platform jobs. Linux amd64 passed the full race suite and browser acceptance; macOS arm64 passed full functional/browser acceptance; macOS amd64 and Linux arm64 passed native archive smoke. The original deterministic regression is retained in the test suite and passes.
+
+The cause was sampling ownership from a public path after creating it. Pre-publication staging plus durable identity persistence removes that public-slug sampling window; explicit unknown-staging recovery and the same-UID limitation are documented. Ticket 19 still owns final merged/tagged-candidate and versioned-archive release acceptance.
