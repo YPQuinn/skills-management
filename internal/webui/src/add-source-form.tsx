@@ -5,6 +5,8 @@ import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
 import { Input } from '@appica/ui-react/input'
 import { Field, FieldLabel } from '@appica/ui-react/field'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@appica/ui-react/select'
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@appica/ui-react/collapsible'
+import { ChevronRight } from '@appica/icons-react'
 import { Spinner } from '@appica/ui-react/spinner'
 import { createSource } from './source-api'
 import { useLocale } from './locale-context'
@@ -42,7 +44,7 @@ export function AddSourceForm() {
       const body: Record<string, string> = { kind, location: location.trim() }
       if (name.trim()) body.name = name.trim()
       if (kind === 'git' && ref.trim()) body.ref = ref.trim()
-      if (subpath.trim()) body.subpath = subpath.trim()
+      if (kind === 'git' && subpath.trim()) body.subpath = subpath.trim()
       const created = await createSource(body, controller.signal)
       if (inflight.current !== controller) return
 
@@ -100,15 +102,28 @@ export function AddSourceForm() {
           />
         </Field>
         {kind === 'git' && (
-          <Field name="ref">
-            <FieldLabel>{t('labelRefOptional')}</FieldLabel>
-            <Input value={ref} onChange={(e) => setRef(e.target.value)} placeholder={t('phRef')} />
-          </Field>
+          <Collapsible className="sm:col-span-2">
+            <CollapsibleTrigger
+              type="button"
+              className="group text-foreground-muted inline-flex items-center gap-1.5 text-sm font-medium hover:text-foreground"
+            >
+              <ChevronRight className="size-4 shrink-0 stroke-2 transition-transform duration-200 group-data-panel-open:rotate-90 motion-reduce:transition-none" />
+              {t('addSourceAdvanced')}
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="grid gap-4 sm:grid-cols-2 pt-4">
+                <Field name="ref">
+                  <FieldLabel>{t('labelRefOptional')}</FieldLabel>
+                  <Input value={ref} onChange={(e) => setRef(e.target.value)} placeholder={t('phRef')} />
+                </Field>
+                <Field name="subpath">
+                  <FieldLabel>{t('labelSubpathOptional')}</FieldLabel>
+                  <Input value={subpath} onChange={(e) => setSubpath(e.target.value)} placeholder={t('phSubpath')} />
+                </Field>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         )}
-        <Field name="subpath">
-          <FieldLabel>{t('labelSubpathOptional')}</FieldLabel>
-          <Input value={subpath} onChange={(e) => setSubpath(e.target.value)} placeholder={t('phSubpath')} />
-        </Field>
       </div>
 
       <Button type="submit" disabled={loading} focusableWhenDisabled>

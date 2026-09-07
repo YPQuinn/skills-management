@@ -180,6 +180,6 @@ describe('Localized Accessibility Labels & TableCaptions (English & Chinese)', (
     expect(screen.queryByText(/Ref:/)).toBeNull()
     await userEvent.setup().click(screen.getByRole('button', { name: '详情' }))
     expect(screen.getByText(/Ref:/)).toBeTruthy()
-    expect(screen.getByText(/子路径:/)).toBeTruthy()
+    expect(screen.queryByText(/子路径:/)).toBeNull()
   })
 })

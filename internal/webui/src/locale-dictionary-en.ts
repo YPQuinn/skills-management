@@ -230,6 +230,7 @@ export const translationsEn = {
   phRef: 'Branch, tag, or commit SHA',
   labelSubpathOptional: 'Subpath (optional)',
   phSubpath: 'skills',
+  addSourceAdvanced: 'Advanced options',
   btnRegisterAndScan: 'Register and scan',
   btnScanning: 'Scanning…',
 

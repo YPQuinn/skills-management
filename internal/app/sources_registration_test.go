@@ -131,24 +131,6 @@ func TestAddSourceLocalStoreOverlap(t *testing.T) {
 		t.Fatalf("Store as source: %v", err)
 	}
 
-	// a subpath pointing into the Store is rejected too
-	if _, err := a.AddSource(context.Background(), source.AddInput{
-		Kind: source.KindLocal, Location: filepath.Dir(a.StorePath), Subpath: "store",
-	}); !isCode(err, CodeInvalidArgument) {
-		t.Fatalf("subpath into the Store: %v", err)
-	}
-
-	// a symlinked subpath escaping the Source is refused at registration
-	outer := t.TempDir()
-	if err := os.Symlink(t.TempDir(), filepath.Join(outer, "escape")); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := a.AddSource(context.Background(), source.AddInput{
-		Kind: source.KindLocal, Location: outer, Subpath: "escape",
-	}); err == nil {
-		t.Fatal("symlinked subpath escaping the Source must not register")
-	}
-
 	// non-overlapping Sources still register
 	sibling := t.TempDir()
 	writeSourceSkill(t, sibling, "gamma")
@@ -198,6 +180,9 @@ func TestAddSourceValidatesAndConflicts(t *testing.T) {
 	}
 	if _, err := a.AddSource(context.Background(), source.AddInput{Kind: source.KindLocal, Location: root, Ref: "main"}); !isCode(err, CodeInvalidArgument) {
 		t.Fatalf("local with ref: %v", err)
+	}
+	if _, err := a.AddSource(context.Background(), source.AddInput{Kind: source.KindLocal, Location: root, Subpath: "skills"}); !isCode(err, CodeInvalidArgument) {
+		t.Fatalf("local with subpath: %v", err)
 	}
 	if _, err := a.AddSource(context.Background(), source.AddInput{Kind: source.KindGit, Location: "not a git location"}); !isCode(err, CodeInvalidArgument) {
 		t.Fatalf("bad git location: %v", err)

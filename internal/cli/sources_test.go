@@ -180,6 +180,10 @@ func TestSourcesCLIErrors(t *testing.T) {
 	if err == nil || ExitCode(err) != 2 {
 		t.Fatalf("bad kind: %v\n%s", err, out)
 	}
+	out, err = runCmd(t, NewSourceAddCmd(bm), t.TempDir(), "--subpath", "skills")
+	if err == nil || ExitCode(err) != 2 || !strings.Contains(err.Error(), "cannot have a subpath") {
+		t.Fatalf("local with subpath: %v\n%s", err, out)
+	}
 	// show and check use the typed arity validator and exit 2 on wrong arity
 	for _, tc := range []struct {
 		name string
