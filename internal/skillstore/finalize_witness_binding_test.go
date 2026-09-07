@@ -70,18 +70,9 @@ func TestPrepareFinalizeRefusesCopiedByteIdenticalWitness(t *testing.T) {
 	s := newStore(t)
 	op, opDir := replacedReplaceState(t, s)
 	witnessPath := filepath.Join(opDir, baselineWitnessName)
-	data, err := os.ReadFile(witnessPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Remove(witnessPath); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(witnessPath, data, 0o644); err != nil {
-		t.Fatal(err)
-	}
+	replaceFileWithSiblingCopy(t, witnessPath)
 
-	_, err = New(s.Root).PrepareFinalize(context.Background(), op)
+	_, err := New(s.Root).PrepareFinalize(context.Background(), op)
 	if !errors.Is(err, ErrAmbiguous) {
 		t.Fatalf("copied witness: got %v, want ErrAmbiguous", err)
 	}

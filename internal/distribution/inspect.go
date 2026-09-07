@@ -12,8 +12,11 @@ import (
 var ErrInspection = errors.New("Target inspection could not complete")
 
 type Relation struct {
-	Slug      string
-	LedgerRaw string
+	Slug        string
+	LedgerRaw   string
+	LedgerDev   uint64
+	LedgerIno   uint64
+	LedgerMtime int64
 }
 
 type Entry struct {
@@ -53,6 +56,18 @@ func Inspect(containerPath string, relations []Relation, storeRoot string) ([]En
 
 func ExpectedPath(storeRoot, slug string) string { return filepath.Join(storeRoot, slug) }
 
+// owns reports whether the ledger still names this exact symlink: the
+// recorded raw target matches and the recorded physical identity is the
+// current inode and mtime. A replacement with the same raw target is a
+// different object even when the filesystem reuses the inode. A migrated
+// row with zero identity cannot prove ownership.
+func (rel Relation) owns(raw string, dev, ino uint64, mtime int64) bool {
+	return rel.LedgerRaw != "" && rel.LedgerRaw == raw &&
+		rel.LedgerDev != 0 && rel.LedgerIno != 0 &&
+		rel.LedgerDev == dev && rel.LedgerIno == ino &&
+		rel.LedgerMtime == mtime
+}
+
 func inspectEntry(container *containerHandle, rel Relation, storeRoot string) (Entry, error) {
 	e := Entry{Slug: rel.Slug}
 	st, err := container.stat(rel.Slug)
@@ -72,14 +87,18 @@ func inspectEntry(container *containerHandle, rel Relation, storeRoot string) (E
 }
 
 func inspectSymlink(container *containerHandle, e Entry, rel Relation, storeRoot string) (Entry, error) {
-	raw, err := container.readlink(rel.Slug)
+	got, err := container.probeStableSymlink(rel.Slug)
+	if errors.Is(err, ErrEntryChanged) || errors.Is(err, ErrNotSymlink) {
+		e.Observed = ObservedConflict
+		return e, nil
+	}
 	if err != nil {
 		return Entry{}, fmt.Errorf("%w: reading %s: %v", ErrInspection, rel.Slug, err)
 	}
-	e.RawTarget = raw
-	e.Managed = rel.LedgerRaw != "" && rel.LedgerRaw == raw
+	e.RawTarget = got.Raw
+	e.Managed = rel.owns(got.Raw, got.Dev, got.Ino, got.Mtime)
 	expected := ExpectedPath(storeRoot, rel.Slug)
-	matches, matchErr := container.targetMatches(raw, expected)
+	matches, matchErr := container.targetMatches(got.Raw, expected)
 	if matchErr != nil {
 		e.ResolutionError = matchErr.Error()
 		if e.Managed {

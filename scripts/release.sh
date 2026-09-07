@@ -6,7 +6,7 @@
 set -euo pipefail
 
 usage() {
-  echo "usage: $0 v0.1.0" >&2
+  echo "usage: $0 vMAJOR.MINOR.PATCH" >&2
   exit 2
 }
 

@@ -17,7 +17,7 @@ func TestCreateDoesNotDeleteGuessableTemp(t *testing.T) {
 	if err := os.Symlink(raw, guessable); err != nil {
 		t.Fatal(err)
 	}
-	if err := CreateLink(container, "demo", raw); err != nil {
+	if _, err := createTestLink(t, container, "demo", raw); err != nil {
 		t.Fatal(err)
 	}
 	if got, err := os.Readlink(guessable); err != nil || got != raw {
@@ -35,7 +35,7 @@ func TestCreateDoesNotOverwriteUserMatchingSymlink(t *testing.T) {
 	if err := os.Symlink(raw, filepath.Join(container, "demo")); err != nil {
 		t.Fatal(err)
 	}
-	if err := CreateLink(container, "demo", raw); err != ErrEntryExists {
+	if _, err := createTestLink(t, container, "demo", raw); err != ErrEntryExists {
 		t.Fatalf("user symlink: %v", err)
 	}
 	if got, _ := os.Readlink(filepath.Join(container, "demo")); got != raw {
@@ -53,7 +53,7 @@ func TestCreateRefusesFinalPathReplacement(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(container, "demo"), []byte("user"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := CreateLink(container, "demo", raw); err != ErrEntryExists {
+	if _, err := createTestLink(t, container, "demo", raw); err != ErrEntryExists {
 		t.Fatalf("replaced final path: %v", err)
 	}
 	if data, err := os.ReadFile(filepath.Join(container, "demo")); err != nil || string(data) != "user" {
@@ -65,14 +65,12 @@ func TestRemoveDoesNotDeleteGuessableName(t *testing.T) {
 	base := physicalTemp(t)
 	container := filepath.Join(base, "skills")
 	raw := filepath.Join(base, "store", "demo")
-	if err := CreateLink(container, "demo", raw); err != nil {
-		t.Fatal(err)
-	}
+	proof := mustCreateLink(t, container, "demo", raw)
 	guessable := filepath.Join(container, ".skillctl-remove-demo")
 	if err := os.Symlink(raw, guessable); err != nil {
 		t.Fatal(err)
 	}
-	if rr, err := RemoveManagedLink(container, "demo", raw, mustIsolation(t)); err != nil || rr != RemoveDone {
+	if rr, err := RemoveManagedLink(container, "demo", proof, mustIsolation(t)); err != nil || rr != RemoveDone {
 		t.Fatalf("remove: %v, %v", rr, err)
 	}
 	if got, err := os.Readlink(guessable); err != nil || got != raw {
@@ -84,14 +82,12 @@ func TestRemoveOccupiedIsolationDir(t *testing.T) {
 	base := physicalTemp(t)
 	container := filepath.Join(base, "skills")
 	raw := filepath.Join(base, "store", "demo")
-	if err := CreateLink(container, "demo", raw); err != nil {
-		t.Fatal(err)
-	}
+	proof := mustCreateLink(t, container, "demo", raw)
 	iso := mustIsolation(t)
 	if err := os.WriteFile(filepath.Join(container, iso), []byte("preoccupied"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	rr, err := RemoveManagedLink(container, "demo", raw, iso)
+	rr, err := RemoveManagedLink(container, "demo", proof, iso)
 	if err == nil || rr != RemoveAbsent {
 		t.Fatalf("occupied isolation: %v, %v", rr, err)
 	}
@@ -113,7 +109,7 @@ func TestRemoveRestoresReplacedFinalPath(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(container, "demo"), []byte("user"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	rr, err := RemoveManagedLink(container, "demo", raw, mustIsolation(t))
+	rr, err := RemoveManagedLink(container, "demo", dummyProof(raw), mustIsolation(t))
 	if err != nil || rr != RemoveMismatch {
 		t.Fatalf("replaced final path: %v, %v", rr, err)
 	}

@@ -64,8 +64,8 @@ func TestMigration009Distribution(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer db.Close()
-	if got := appliedVersion(t, db); got != 11 {
-		t.Fatalf("migrated schema: got %d, want 11", got)
+	if got := appliedVersion(t, db); got != 13 {
+		t.Fatalf("migrated schema: got %d, want 13", got)
 	}
 	// The upgraded schema accepts the new entities and keeps the old rows.
 	target, err := GetTargetByID(db, targetID)
@@ -123,30 +123,31 @@ func TestManagedLinkLedger(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	link := ManagedLink{TargetID: targetID, SkillID: skillID, LinkPath: "/tmp/t/alpha", RawTarget: "/store/alpha", EstablishedAt: now}
+	link := ManagedLink{TargetID: targetID, SkillID: skillID, LinkPath: "/tmp/t/alpha", RawTarget: "/store/alpha", LinkDev: 8, LinkIno: 99, LinkMtime: 111, EstablishedAt: now}
 	if _, err := InsertManagedLink(db, link); err != nil {
 		t.Fatal(err)
 	}
 	got, err := GetManagedLink(db, targetID, skillID)
-	if err != nil || got.RawTarget != "/store/alpha" {
+	if err != nil || got.RawTarget != "/store/alpha" || got.LinkDev != 8 || got.LinkIno != 99 || got.LinkMtime != 111 {
 		t.Fatalf("get: %+v, %v", got, err)
 	}
 	// a duplicate claim is rejected by the unique index
 	if _, err := InsertManagedLink(db, link); !IsUniqueViolation(err) {
 		t.Fatalf("duplicate: %v", err)
 	}
-	// replacement re-records the raw target (adoption)
+	// replacement re-records the raw target and identity (adoption)
 	link.RawTarget = "/store/alpha-new"
+	link.LinkDev, link.LinkIno, link.LinkMtime = 9, 100, 222
 	if err := ReplaceManagedLink(db, link); err != nil {
 		t.Fatal(err)
 	}
 	got, err = GetManagedLink(db, targetID, skillID)
-	if err != nil || got.RawTarget != "/store/alpha-new" {
+	if err != nil || got.RawTarget != "/store/alpha-new" || got.LinkDev != 9 || got.LinkIno != 100 || got.LinkMtime != 222 {
 		t.Fatalf("replaced: %+v, %v", got, err)
 	}
 
 	list, err := ListManagedLinksByTarget(db, targetID)
-	if err != nil || len(list) != 1 || list[0].Slug != "alpha" {
+	if err != nil || len(list) != 1 || list[0].Slug != "alpha" || list[0].LinkDev != 9 || list[0].LinkIno != 100 || list[0].LinkMtime != 222 {
 		t.Fatalf("list: %+v, %v", list, err)
 	}
 	if err := DeleteManagedLink(db, targetID, skillID); err != nil {
@@ -189,7 +190,7 @@ func TestLinkIntentFinalize(t *testing.T) {
 	}
 	if err := FinalizeCreateLedger(db, ManagedLink{
 		TargetID: targetID, SkillID: skillID, LinkPath: "/tmp/t/alpha",
-		RawTarget: "/store/alpha", EstablishedAt: now,
+		RawTarget: "/store/alpha", LinkDev: 3, LinkIno: 7, LinkMtime: 5, EstablishedAt: now,
 	}, intentID); err != nil {
 		t.Fatal(err)
 	}

@@ -65,9 +65,9 @@ func runCrashHelper(phase string) error {
 			}
 		}
 		_, err = a.AcceptSource(context.Background(), skillID)
-	case "dist-create":
+	case "dist-create", "dist-create-planned", "dist-create-staged", "dist-create-prepared":
 		a.linkMutateHook = func(action string) {
-			if action == "create" {
+			if action == strings.TrimPrefix(phase, "dist-") {
 				os.Exit(crashHelperExit)
 			}
 		}
@@ -243,6 +243,35 @@ func TestProcessInspectMutateReplacementPreserved(t *testing.T) {
 	fresh := reopenCrash(t, fx)
 	if _, err := state.GetManagedLink(fresh.db, fx.targetID, fx.skillID); err == nil {
 		t.Fatal("replacement must not become a Managed Link")
+	}
+}
+
+// TestProcessCrashCreateThenReplaceBeforeRecovery proves a crash after
+// create identity is persisted, then a same-raw replacement before
+// restart, is fail-closed and not registered as owned.
+func TestProcessCrashCreateThenReplaceBeforeRecovery(t *testing.T) {
+	fx := seedDistCreateCrash(t)
+	runCrashChild(t, fx, "dist-create", crashHelperExit)
+
+	link := filepath.Join(fx.targetPath, "demo")
+	raw, err := os.Readlink(link)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sib := link + ".new"
+	if err := os.Symlink(raw, sib); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(sib, link); err != nil {
+		t.Fatal(err)
+	}
+
+	fresh := reopenCrash(t, fx)
+	if _, err := state.GetManagedLink(fresh.db, fx.targetID, fx.skillID); err == nil {
+		t.Fatal("replacement after crash must not become a Managed Link")
+	}
+	if got, err := os.Readlink(link); err != nil || got != raw {
+		t.Fatalf("replacement must be preserved: %q, %v", got, err)
 	}
 }
 
