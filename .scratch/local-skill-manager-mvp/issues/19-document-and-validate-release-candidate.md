@@ -2,7 +2,7 @@
 
 Type: task
 Status: claimed
-Blocked by: 18
+Blocked by: 18, 21
 
 ## Question
 
@@ -32,3 +32,9 @@ Investigated candidate `b14f290` and [acceptance run 32728683722](https://github
 ### Approved release version
 
 The user approved `v0.1.1` instead of moving the existing `v0.1.0` tag. Preserve `v0.1.0` at `e0d6326`; use a new exact `v0.1.1` tag on the final accepted release commit. README archive examples now use `v0.1.1`; the release script's usage describes its existing generic SemVer argument. This supersedes ticket 09's initial `v0.1.0` designation, not its acceptance requirements. Version approval does not close the outstanding human smoke or final native archive gates.
+
+### Human acceptance and pre-merge review
+
+The user confirmed successful manual public-GitHub registration/import/recheck using the binary reporting `db09150`. Both branch [run 34080086443](https://github.com/YPQuinn/skills-management/actions/runs/34080086443) and PR merge-ref [run 34080089318](https://github.com/YPQuinn/skills-management/actions/runs/34080089318) passed all four native platform jobs.
+
+Pre-merge inspection then reproduced a remaining create-time ownership race: an external same-raw replacement before `CreateLink` samples the visible slug is incorrectly certified and can subsequently be deleted. See [ticket 21](21-fix-create-link-identity-race.md) for the deterministic failing reproduction. PR merge, tag creation, and release are paused despite successful existing CI and human smoke. Keep this ticket claimed until the blocker and final artifact gates are resolved.
