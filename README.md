@@ -8,10 +8,10 @@ The CLI is `skillctl`. The same binary embeds a localhost WebUI.
 
 | Platform | Archive |
 | --- | --- |
-| macOS Apple silicon | `skillctl_v0.1.0_darwin_arm64.tar.gz` |
-| macOS Intel | `skillctl_v0.1.0_darwin_amd64.tar.gz` |
-| Linux amd64 | `skillctl_v0.1.0_linux_amd64.tar.gz` |
-| Linux arm64 | `skillctl_v0.1.0_linux_arm64.tar.gz` |
+| macOS Apple silicon | `skillctl_v0.1.1_darwin_arm64.tar.gz` |
+| macOS Intel | `skillctl_v0.1.1_darwin_amd64.tar.gz` |
+| Linux amd64 | `skillctl_v0.1.1_linux_amd64.tar.gz` |
+| Linux arm64 | `skillctl_v0.1.1_linux_arm64.tar.gz` |
 
 Windows, 32-bit systems, and other Unix targets are unsupported. Each archive is a single statically linked `skillctl` binary (`CGO_ENABLED=0`). The Linux binary has no system SQLite or C toolchain dependency.
 
@@ -24,8 +24,8 @@ Download the archive for this machine and `SHA256SUMS` from the release. Verify 
 Linux (amd64 example):
 
 ```text
-grep 'skillctl_v0.1.0_linux_amd64.tar.gz$' SHA256SUMS | sha256sum -c -
-tar -xzf skillctl_v0.1.0_linux_amd64.tar.gz
+grep 'skillctl_v0.1.1_linux_amd64.tar.gz$' SHA256SUMS | sha256sum -c -
+tar -xzf skillctl_v0.1.1_linux_amd64.tar.gz
 mkdir -p ~/.local/bin
 install -m 0755 skillctl ~/.local/bin/skillctl
 ```
@@ -33,8 +33,8 @@ install -m 0755 skillctl ~/.local/bin/skillctl
 macOS (Apple silicon example):
 
 ```text
-grep 'skillctl_v0.1.0_darwin_arm64.tar.gz$' SHA256SUMS | shasum -a 256 -c -
-tar -xzf skillctl_v0.1.0_darwin_arm64.tar.gz
+grep 'skillctl_v0.1.1_darwin_arm64.tar.gz$' SHA256SUMS | shasum -a 256 -c -
+tar -xzf skillctl_v0.1.1_darwin_arm64.tar.gz
 mkdir -p ~/.local/bin
 install -m 0755 skillctl ~/.local/bin/skillctl
 ```

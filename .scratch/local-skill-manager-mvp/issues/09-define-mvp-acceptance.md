@@ -26,7 +26,7 @@ SHA256SUMS
 
 Windows, 32-bit systems, and other Unix targets are unsupported. The Linux binary has no system SQLite or C toolchain dependency. Local Sources require no external executable. Git Sources require `git`; `gh` remains an optional ambient-authentication convenience. Failure to open a browser prints the URL, and `--no-open` is always supported.
 
-Versions use SemVer, with the first MVP release designated `v0.1.0`. `skillctl --version` reports the version and Git commit but not a build timestamp. The release build requires a clean worktree and a tag matching the injected version. `SHA256SUMS` covers the archives. Signing, SBOMs, SLSA provenance, notarization, and update metadata are not required for this MVP.
+Versions use SemVer. The initial MVP designation was `v0.1.0`; the user-approved release follow-up in [ticket 19](19-document-and-validate-release-candidate.md#approved-release-version) supersedes it with `v0.1.1`, preserving the existing `v0.1.0` tag. `skillctl --version` reports the version and Git commit but not a build timestamp. The release build requires a clean worktree and a tag matching the injected version. `SHA256SUMS` covers the archives. Signing, SBOMs, SLSA provenance, notarization, and update metadata are not required for this MVP.
 
 Every advertised OS/architecture combination must execute its archive on a native CI runner. If no native runner is available, that artifact is not formally released. Each platform smoke extracts the archive, checks `--version`, initializes an isolated HOME, starts `skillctl ui --no-open`, requests the API and a SPA deep link, and shuts down cleanly. The complete functional suites run on at least macOS arm64 and Linux amd64; the other two native platforms run the release smoke. `go test -race ./...` runs at least on Linux amd64.
 
@@ -38,7 +38,7 @@ The repository exposes only these top-level POSIX build entry points:
 
 - `./scripts/build.sh` — install locked frontend dependencies, build the Appica SPA, and build the native development binary at `dist/skillctl`.
 - `./scripts/check.sh` — run all stable static, unit, and integration checks.
-- `./scripts/release.sh v0.1.0` — validate tag and worktree, run checks and end-to-end acceptance, then produce the four archives and checksum file without uploading or creating a tag.
+- `./scripts/release.sh v0.1.1` — validate tag and worktree, run checks and end-to-end acceptance, then produce the four archives and checksum file without uploading or creating a tag.
 
 There is no additional Make, Task, Just, or GoReleaser entry point. Go test packages and Playwright configuration remain the real test runners rather than being wrapped in another custom framework.
 
