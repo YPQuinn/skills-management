@@ -13,6 +13,7 @@ import (
 // Git URLs embedding credentials fail registration with invalid_argument,
 // the error never echoes the secret, and nothing is persisted.
 func TestAddSourceRejectsCredentialURLs(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	for _, loc := range []string{
 		"https://user:supersecret@github.com/o/r.git",
@@ -48,6 +49,7 @@ func TestAddSourceRejectsCredentialURLs(t *testing.T) {
 // into the Skill Store must be rejected without scanning the Store and
 // without mutating the retained Inventory or observation metadata.
 func TestCheckSourceRejectsSymlinkSwapIntoStore(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	root := t.TempDir()
 	writeSourceSkill(t, root, "alpha")
@@ -96,6 +98,7 @@ func TestCheckSourceRejectsSymlinkSwapIntoStore(t *testing.T) {
 // root may not even point into the Store, the physical identity change is
 // rejected on its own.
 func TestCheckSourceSymlinkSwapToOutsideTree(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	root := t.TempDir()
 	writeSourceSkill(t, root, "alpha")

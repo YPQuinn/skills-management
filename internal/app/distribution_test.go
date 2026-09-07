@@ -33,6 +33,7 @@ func physicalStoreRoot(t *testing.T, a *App) string {
 // creating absolute links, idempotent reruns, and assignment removal
 // removing only the provably managed link.
 func TestDistributionLifecycle(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha", "beta")
 	tv := registerCustomTarget(t, a)
@@ -126,6 +127,7 @@ func TestDistributionLifecycle(t *testing.T) {
 // TestCancelledDistributePersistsFailedOutcome proves a cancelled create
 // records failed with a CHECK-valid observed value, not an error code.
 func TestCancelledDistributePersistsFailedOutcome(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "demo")
 	tv := registerCustomTarget(t, a)

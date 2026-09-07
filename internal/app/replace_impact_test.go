@@ -6,6 +6,7 @@ import (
 )
 
 func TestReplaceImpactPreview(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "alpha"})
 	result, err := a.ImportSkills(context.Background(), ImportSkillsInput{

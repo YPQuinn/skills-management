@@ -41,7 +41,8 @@ fi
 echo "==> go vet"
 go vet ./...
 
-echo "==> go test"
-go test ./...
+# GO_TEST_FLAGS lets CI run the suite once under -race instead of twice.
+echo "==> go test${GO_TEST_FLAGS:+ ${GO_TEST_FLAGS}}"
+go test ${GO_TEST_FLAGS:-} ./...
 
 echo "checks passed"

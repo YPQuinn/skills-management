@@ -47,6 +47,7 @@ func baselineAndStopBeforeFinalize(t *testing.T, a *App, src *source.Source, rel
 // read-only views already report the recovered Baseline and the journal is
 // clean without any Store write.
 func TestAppNewRecoversCommittedBaselineBeforeShowDiff(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src, skillID := importOneSkill(t, a, "skills/demo")
 	rewriteSourceFile(t, src, "skills/demo", "notes.md", "upstream\n")

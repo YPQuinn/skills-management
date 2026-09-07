@@ -27,6 +27,7 @@ func secondApp(t *testing.T, a *App) *App {
 // process refuses new mutations with the stable locked code, and succeeds
 // after the lock is released.
 func TestTargetLockContention(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "demo")
 	tv := registerCustomTarget(t, a)
@@ -53,6 +54,7 @@ func TestTargetLockContention(t *testing.T) {
 // exclusive lock (after the Store shared lock) and refuses while another
 // process holds it.
 func TestInspectTargetLockContention(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "demo")
 	tv := registerCustomTarget(t, a)
@@ -79,6 +81,7 @@ func TestInspectTargetLockContention(t *testing.T) {
 // TestConcurrentDistinctTargets proves different Targets reconcile
 // concurrently under the shared Store lock, in stable Target-ID order.
 func TestConcurrentDistinctTargets(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "demo")
 	first := registerCustomTarget(t, a)

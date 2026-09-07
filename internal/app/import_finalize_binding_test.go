@@ -17,6 +17,7 @@ import (
 // proof) is preserved for conservative recovery, and the foreign live tree
 // is never touched.
 func TestImportSkillsCommittedJournalRetainedOnForeignLiveSwap(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	op := importAndStopBeforeFinalize(t, a, src, "skills/alpha", "alpha")
@@ -73,6 +74,7 @@ func TestImportSkillsCommittedJournalRetainedOnForeignLiveSwap(t *testing.T) {
 // install proof) is preserved for conservative recovery, and the foreign
 // live tree is never touched.
 func TestImportSkillsCommittedJournalRetainedOnLiveSwapAtRemoveOp(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	op := importAndStopBeforeFinalize(t, a, src, "skills/alpha", "alpha")

@@ -20,6 +20,7 @@ func registerCustomTarget(t *testing.T, a *App) *TargetView {
 }
 
 func TestAssignUnassignSkillsAndGroups(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha", "beta")
 	g, err := a.CreateGroup("eng")

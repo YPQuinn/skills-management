@@ -18,6 +18,7 @@ import (
 // between the evaluation and the replace is refused and reclassified as a
 // conflict, never auto-overwritten.
 func TestAutoSyncRefusesLocalEditDuringMaterialize(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src, skillID := importOneSkill(t, a, "skills/demo")
 	rewriteSourceFile(t, src, "skills/demo", "notes.md", "upstream\n")
@@ -84,6 +85,7 @@ func TestAutoSyncRefusesLocalEditDuringMaterialize(t *testing.T) {
 // refused as a conflict (never silently overwritten), and the retry
 // re-confirms the current live and succeeds.
 func TestAcceptSourceRefusesMidMaterializeEdit(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src, skillID := importOneSkill(t, a, "skills/demo")
 	rewriteSourceFile(t, src, "skills/demo", "notes.md", "upstream\n")
@@ -141,6 +143,7 @@ func TestAcceptSourceRefusesMidMaterializeEdit(t *testing.T) {
 // a Skill whose Source Binding was removed still rolls back its previous
 // snapshot, and the rotated snapshot records empty Source evidence.
 func TestRollbackUnboundSkillSucceeds(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src, skillID := importOneSkill(t, a, "skills/demo")
 	rewriteSourceFile(t, src, "skills/demo", "notes.md", "upstream\n")

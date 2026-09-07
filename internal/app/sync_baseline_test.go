@@ -57,6 +57,7 @@ func convergeFixture(t *testing.T, a *App) (*source.Source, int64) {
 // the persisted Baseline digest, the Binding, and the live tree exactly as
 // they were, with no open operation.
 func TestKeepStoreCancelBeforeCommit(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src, skillID := importOneSkill(t, a, "skills/demo")
 	pre := skillDetailOf(t, a, skillID)
@@ -97,6 +98,7 @@ func TestKeepStoreCancelBeforeCommit(t *testing.T) {
 // the committed row stays open, and the next Store write converges through
 // recovery instead of re-mutating the Baseline.
 func TestKeepStoreBlockedFinalizeConverges(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src, skillID := importOneSkill(t, a, "skills/demo")
 	rewriteSourceFile(t, src, "skills/demo", "notes.md", "upstream\n")
@@ -147,6 +149,7 @@ func TestKeepStoreBlockedFinalizeConverges(t *testing.T) {
 // must never advance the Baseline, because the Skill facts, the Source
 // facts, and the live tree are all re-sampled under the Store lock.
 func TestCheckSkillSyncConfirmsConvergenceUnderLock(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	_, skillID := convergeFixture(t, a)
 	preBaseline := skillDetailOf(t, a, skillID).Skill.BaselineDigest
@@ -173,6 +176,7 @@ func TestCheckSkillSyncConfirmsConvergenceUnderLock(t *testing.T) {
 // the locked materialization, the check fails with conflict instead of
 // advancing the Baseline to content the Source no longer carries.
 func TestCheckSkillSyncRefusesSourceChangedDuringCheck(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src, skillID := convergeFixture(t, a)
 	preBaseline := skillDetailOf(t, a, skillID).Skill.BaselineDigest
@@ -195,6 +199,7 @@ func TestCheckSkillSyncRefusesSourceChangedDuringCheck(t *testing.T) {
 // the convergence path: the committed Baseline advance survives a failed
 // terminal row deletion and the next check converges through recovery.
 func TestConvergenceBlockedFinalizeConverges(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	_, skillID := convergeFixture(t, a)
 	liveDigest, missing, invalid := a.storeTreeState(context.Background(), "demo")
@@ -231,6 +236,7 @@ func TestConvergenceBlockedFinalizeConverges(t *testing.T) {
 // unwinds the installed tree and leaves the persisted Baseline and its
 // tree exactly as they were.
 func TestAcceptSourceRepairCancelBeforeCommit(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	_, skillID := importOneSkill(t, a, "skills/demo")
 	preBaseline := skillDetailOf(t, a, skillID).Skill.BaselineDigest
@@ -271,6 +277,7 @@ func TestAcceptSourceRepairCancelBeforeCommit(t *testing.T) {
 // the same journal, the failed terminal row deletion keeps the operation
 // open, and the next Accept Source converges through recovery.
 func TestAcceptSourceRepairBlockedFinalizeConverges(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	_, skillID := importOneSkill(t, a, "skills/demo")
 	if err := os.RemoveAll(filepath.Join(a.StorePath, "demo")); err != nil {
@@ -309,6 +316,7 @@ func TestAcceptSourceRepairBlockedFinalizeConverges(t *testing.T) {
 // availability — never the Binding digest, which records the accepted
 // content and would mask a Source that moved or lost the entry.
 func TestRollbackEvaluatesPersistedSourceFacts(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src, skillID := importOneSkill(t, a, "skills/demo")
 	rewriteSourceFile(t, src, "skills/demo", "notes.md", "upstream\n")

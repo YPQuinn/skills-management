@@ -30,6 +30,7 @@ func importAllSkills(t *testing.T, a *App, slugs ...string) map[string]int64 {
 }
 
 func TestCreateAndListGroups(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	g, err := a.CreateGroup("engineering")
 	if err != nil {
@@ -61,6 +62,7 @@ func TestCreateAndListGroups(t *testing.T) {
 // trimmed before validation and persistence: the stored name is the
 // operator-facing value, and a whitespace-only name stays invalid.
 func TestCreateGroupTrimsWhitespace(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	g, err := a.CreateGroup("  ops  ")
 	if err != nil {
@@ -84,6 +86,7 @@ func TestCreateGroupTrimsWhitespace(t *testing.T) {
 }
 
 func TestGroupMembershipFlow(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha", "beta")
 	g, err := a.CreateGroup("eng")
@@ -135,6 +138,7 @@ func TestGroupMembershipFlow(t *testing.T) {
 // TestGroupViewShowsTargets pins that Group detail links the Targets that
 // assign it.
 func TestGroupViewShowsTargets(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha")
 	g, err := a.CreateGroup("eng")

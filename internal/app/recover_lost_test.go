@@ -69,6 +69,7 @@ func hashTree(t *testing.T, root string) map[string]string {
 }
 
 func TestRecoverLostStoreAdoptsValidSkillsAndPreservesInternal(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	store := filepath.Join(dir, "store")
 	if err := os.MkdirAll(store, 0o755); err != nil {
@@ -190,6 +191,7 @@ func TestRecoverLostStoreAdoptsValidSkillsAndPreservesInternal(t *testing.T) {
 }
 
 func TestRecoverLostStoreRefusesSymlinkSwapOfListedName(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	store := filepath.Join(dir, "store")
 	if err := os.MkdirAll(store, 0o755); err != nil {

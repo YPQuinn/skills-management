@@ -15,6 +15,7 @@ import (
 // rotates the replaced content into the previous snapshot (tree plus
 // metadata).
 func TestImportSkillsReplaceRetainsIdentity(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	srcA := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	first := importSkills(t, a, srcA.ID, "skills/alpha")
@@ -85,6 +86,7 @@ func TestImportSkillsReplaceRetainsIdentity(t *testing.T) {
 // TestImportSkillsReplaceFreshSlugImportsNormally proves Replace permission
 // on an unclaimed slug is a plain import, not an error.
 func TestImportSkillsReplaceFreshSlugImportsNormally(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	replace := true
@@ -105,6 +107,7 @@ func TestImportSkillsReplaceFreshSlugImportsNormally(t *testing.T) {
 // the opaque proof and the intent is durably aborted; the edited live
 // content is preserved.
 func TestImportSkillsReplaceRejectsChangedStore(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	srcA := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	first := importSkills(t, a, srcA.ID, "skills/alpha")

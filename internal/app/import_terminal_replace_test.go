@@ -35,6 +35,7 @@ func replaceAndStopAfterReceiptPersisted(t *testing.T, a *App, src *source.Sourc
 // the fresh App validates the receipt-bound terminal objects (live,
 // Baseline, and rotated previous), cleans the evidence, and clears the row.
 func TestImportSkillsFreshAppConvergesReplaceTerminalRow(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	first := importSkills(t, a, src.ID, "skills/alpha")
@@ -76,6 +77,7 @@ func TestImportSkillsFreshAppConvergesReplaceTerminalRow(t *testing.T) {
 // physical identity matching the proof's recovery identity, persists the
 // receipt, cleans the evidence, and clears the row.
 func TestImportSkillsFreshAppConvergesReplaceRestoreResume(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	first := importSkills(t, a, src.ID, "skills/alpha")

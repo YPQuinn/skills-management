@@ -49,6 +49,7 @@ func waitFor(t *testing.T, ch <-chan struct{}) {
 // store_changed (skip), never act on the stale outside sample that would
 // classify source_changed and auto-overwrite the Store.
 func TestSyncSkillReReadsBaselineUnderLock(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src, skillID := importOneSkill(t, a, "skills/demo")
 	rewriteSourceFile(t, src, "skills/demo", "notes.md", "upstream\n")
@@ -109,6 +110,7 @@ func TestSyncSkillReReadsBaselineUnderLock(t *testing.T) {
 // overwriting it, while the sibling item still updates from the same fresh
 // observation.
 func TestSyncBatchReReadsDetailsUnderLock(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha", "skills/beta": "Beta"})
 	if res := importSkills(t, a, src.ID, "skills/alpha"); res.Items[0].Status != StatusImported {
@@ -175,6 +177,7 @@ func TestSyncBatchReReadsDetailsUnderLock(t *testing.T) {
 // removed. The acceptance must refuse with conflict instead of replacing
 // the Store through the stale outside facts.
 func TestAcceptSourceRefusesBindingChangeUnderLock(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src, skillID := importOneSkill(t, a, "skills/demo")
 	rewriteSourceFile(t, src, "skills/demo", "notes.md", "upstream\n")

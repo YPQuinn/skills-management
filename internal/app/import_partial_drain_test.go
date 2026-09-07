@@ -17,6 +17,7 @@ import (
 // fails with CodeRecovery, the row stays pending, and every candidate
 // including the injected child and the recovery slot is preserved.
 func TestImportSkillsFreshAppBlocksPartialReplaceQuarantineDrain(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	first := importSkills(t, a, src.ID, "skills/alpha")
@@ -86,6 +87,7 @@ func TestImportSkillsFreshAppBlocksPartialReplaceQuarantineDrain(t *testing.T) {
 // fails with CodeRecovery, the row stays pending, and the injected foreign
 // child and the proof are preserved.
 func TestImportSkillsFreshAppBlocksPartialImportCandidateDrain(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	op := importAndStopBeforeCommit(t, a, src, "skills/alpha", "alpha")
@@ -120,6 +122,7 @@ func TestImportSkillsFreshAppBlocksPartialImportCandidateDrain(t *testing.T) {
 // same fail-closed refusal for a pending replace: the injected foreign
 // child, the proof, and the recovery slot are all preserved.
 func TestImportSkillsFreshAppBlocksPartialReplaceCandidateDrain(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	first := importSkills(t, a, src.ID, "skills/alpha")

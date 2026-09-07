@@ -23,6 +23,7 @@ func importSkills(t *testing.T, a *App, srcID int64, relDir string) *ImportSkill
 }
 
 func TestImportSkillsPathSelector(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	digest := findEntry(t, src, "skills/alpha").Digest
@@ -57,6 +58,7 @@ func TestImportSkillsPathSelector(t *testing.T) {
 }
 
 func TestImportSkillsNameSelector(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	res, err := a.ImportSkills(context.Background(), ImportSkillsInput{
@@ -71,6 +73,7 @@ func TestImportSkillsNameSelector(t *testing.T) {
 }
 
 func TestImportSkillsAllSorted(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/beta": "Beta", "skills/alpha": "Alpha"})
 	res, err := a.ImportSkills(context.Background(), ImportSkillsInput{SourceID: src.ID, All: true})
@@ -90,6 +93,7 @@ func TestImportSkillsAllSorted(t *testing.T) {
 // TestImportSkillsOneFreshObservationPerBatch proves a multi-entry batch
 // performs exactly one Source observation, which is also persisted.
 func TestImportSkillsOneFreshObservationPerBatch(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/a": "A", "skills/b": "B"})
 	before, err := a.ShowSource(src.ID)
@@ -121,6 +125,7 @@ func TestImportSkillsOneFreshObservationPerBatch(t *testing.T) {
 }
 
 func TestImportSkillsSlugOverride(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	override := "custom"
@@ -142,6 +147,7 @@ func TestImportSkillsSlugOverride(t *testing.T) {
 }
 
 func TestImportSkillsDefaultSlugNormalizes(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/Code Review": "Code Review"})
 	res := importSkills(t, a, src.ID, "skills/Code Review")
@@ -151,6 +157,7 @@ func TestImportSkillsDefaultSlugNormalizes(t *testing.T) {
 }
 
 func TestImportSkillsRepeatIsAlreadyImported(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	first := importSkills(t, a, src.ID, "skills/alpha")
@@ -164,6 +171,7 @@ func TestImportSkillsRepeatIsAlreadyImported(t *testing.T) {
 }
 
 func TestImportSkillsRequestValidation(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	cases := []ImportSkillsInput{
@@ -184,6 +192,7 @@ func TestImportSkillsRequestValidation(t *testing.T) {
 }
 
 func TestImportSkillsSkillQueries(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	importSkills(t, a, src.ID, "skills/alpha")

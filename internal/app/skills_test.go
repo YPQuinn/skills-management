@@ -44,6 +44,7 @@ func insertTestSkill(t *testing.T, a *App, srcID int64, slug, relativeDir string
 }
 
 func TestListSkillsIncludesBindingAndSourceName(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	srcID := insertTestSource(t, a, "vercel")
 	insertTestSkill(t, a, srcID, "alpha", "skills/alpha")
@@ -68,6 +69,7 @@ func TestListSkillsIncludesBindingAndSourceName(t *testing.T) {
 }
 
 func TestListSkillsUnboundBindingIsNil(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	srcID := insertTestSource(t, a, "vercel")
 	id := insertTestSkill(t, a, srcID, "alpha", "skills/alpha")
@@ -85,6 +87,7 @@ func TestListSkillsUnboundBindingIsNil(t *testing.T) {
 }
 
 func TestShowSkill(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	srcID := insertTestSource(t, a, "vercel")
 	id := insertTestSkill(t, a, srcID, "alpha", "skills/alpha")
@@ -103,6 +106,7 @@ func TestShowSkill(t *testing.T) {
 }
 
 func TestResolveSkillArg(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	srcID := insertTestSource(t, a, "vercel")
 	id := insertTestSkill(t, a, srcID, "alpha", "skills/alpha")

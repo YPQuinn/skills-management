@@ -71,6 +71,7 @@ func skillDetailOf(t *testing.T, a *App, skillID int64) *state.SkillDetail {
 // no-op, source_changed is the only automatic update, store_changed and
 // conflict are skipped, and missing states block or skip.
 func TestSyncSafeRules(t *testing.T) {
+	t.Parallel()
 	// in_sync → no_op
 	a := newTestApp(t)
 	src, skillID := importOneSkill(t, a, "skills/demo")
@@ -171,6 +172,7 @@ func TestSyncSafeRules(t *testing.T) {
 // content untouched, the observed Source becomes the Baseline, and the
 // relationship becomes store_changed.
 func TestKeepStoreAdvancesBaseline(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src, skillID := importOneSkill(t, a, "skills/demo")
 	storeDigestBefore := findEntry(t, src, "skills/demo").Digest
