@@ -1,6 +1,7 @@
 # Deliver the runnable Skill Manager MVP
 
 Label: wayfinder:map
+Status: resolved
 
 ## Destination
 
@@ -53,6 +54,8 @@ Deliver a runnable, local-first Skill Manager MVP for macOS and Linux, preferabl
 - [Implement the end-to-end acceptance suites](issues/18-implement-acceptance-suites.md) — Delivered state-loss Store recovery, process crash and concurrency acceptance, embedded Chromium/Firefox/WebKit journeys, accessibility and responsive gates, and four-platform native CI/release wiring.
 
 - [Preserve external replacements before create identity sampling](issues/21-fix-create-link-identity-race.md) — Recorded staged symlink identity before no-overwrite publication, added deterministic replacement and process-crash regressions, and passed branch plus PR four-platform acceptance. Unproven staging is preserved rather than implicitly adopted.
+
+- [Document and validate the MVP release candidate](issues/19-document-and-validate-release-candidate.md) — Published [v0.1.1](https://github.com/YPQuinn/skills-management/releases/tag/v0.1.1) from `a234a4f` with the exact four-platform verified archives and checksums, final-package browser/README checks, and user-confirmed public GitHub smoke. The MVP destination gate is complete.
 
 ## Not yet specified
 

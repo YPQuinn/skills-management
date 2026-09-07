@@ -1,14 +1,29 @@
 # Document and validate the MVP release candidate
 
 Type: task
-Status: claimed
+Status: resolved
 Blocked by: 18, 21
 
 ## Question
 
 Finish the destination gate against one release candidate: write and verify the README, safety guide, troubleshooting guide, and Cobra help; run the complete check, native archive, CLI, REST, WebUI, recovery, concurrency, and Store-recovery gates; perform the public GitHub Source smoke; resolve release-blocking findings; and produce the final `v0.1.1` archives and checksums with recorded validation results.
 
+## Answer
+
+Published [Skill Manager v0.1.1](https://github.com/YPQuinn/skills-management/releases/tag/v0.1.1) as a non-draft, non-prerelease on 2026-09-07. The immutable release candidate is `a234a4f8801a8f4d55e32dae52389a628b8d73e9`; the existing `v0.1.0` tag remains unchanged.
+
+- PR #1 and PR #2 are merged. README, safety/troubleshooting documentation, and the exact-tag packaging workflow describe this candidate.
+- [Main acceptance 34088639943](https://github.com/YPQuinn/skills-management/actions/runs/34088639943) and [tag acceptance 34089094472](https://github.com/YPQuinn/skills-management/actions/runs/34089094472) passed, including the full CLI/REST/Go recovery and concurrency suites, Linux race tests, and embedded browser acceptance.
+- [Release archives 34089094446](https://github.com/YPQuinn/skills-management/actions/runs/34089094446) ran `release.sh v0.1.1`, then checksum-verified and executed those exact archives on native macOS arm64/amd64 and Linux arm64/amd64 runners without rebuilding.
+- Published exactly four `skillctl_v0.1.1_<os>_<arch>.tar.gz` files and `SHA256SUMS`. Downloaded artifact checksums matched; downloaded Release attachments were checked again against the same checksum file before publication.
+- The final macOS arm64 archive also passed local native/empty-PATH smoke, README quickstart, and all eight Chromium/Firefox/WebKit tests. Its binary reports `v0.1.1 (a234a4f8801a8f4d55e32dae52389a628b8d73e9)`.
+- The final-archive public GitHub smoke registered `vercel-labs/agent-skills` with subpath `skills/web-design-guidelines`, imported one Skill, and checked `in_sync` with `sync_stale=false` (upstream `063bee94c3f4df8453406c830b0a7df0f2860278`). After the agent run, the user explicitly confirmed the final-package manual smoke succeeded before publication; this supersedes the earlier old-candidate confirmation.
+
+The MVP destination gate is complete. This ticket's closure is post-release documentation and does not move or rebuild the accepted release tag.
+
 ## Comments
+
+The following entries are chronological history; the final outcome is recorded above.
 
 ### CI follow-up on `fix/linux-ci-link-identity`
 
