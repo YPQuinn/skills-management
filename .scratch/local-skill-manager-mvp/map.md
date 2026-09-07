@@ -52,6 +52,8 @@ Deliver a runnable, local-first Skill Manager MVP for macOS and Linux, preferabl
 - [Add English and Simplified Chinese WebUI localization](issues/20-add-webui-localization.md) — Added a typed dependency-free locale layer, persisted Appica language switching, localized WebUI copy/accessibility/timestamps/client fallbacks, and no-refetch locale transitions while preserving server messages verbatim.
 - [Implement the end-to-end acceptance suites](issues/18-implement-acceptance-suites.md) — Delivered state-loss Store recovery, process crash and concurrency acceptance, embedded Chromium/Firefox/WebKit journeys, accessibility and responsive gates, and four-platform native CI/release wiring.
 
+- [Preserve external replacements before create identity sampling](issues/21-fix-create-link-identity-race.md) — Recorded staged symlink identity before no-overwrite publication, added deterministic replacement and process-crash regressions, and passed branch plus PR four-platform acceptance. Unproven staging is preserved rather than implicitly adopted.
+
 ## Not yet specified
 
 <!-- No remaining in-scope fog. -->
