@@ -39,4 +39,10 @@ The user confirmed successful manual public-GitHub registration/import/recheck u
 
 Pre-merge inspection then reproduced a remaining create-time ownership race: an external same-raw replacement before `CreateLink` samples the visible slug is incorrectly certified and can subsequently be deleted. See [ticket 21](21-fix-create-link-identity-race.md) for the deterministic failing reproduction. PR merge, tag creation, and release were paused despite successful existing CI and human smoke.
 
-Ticket 21 is now resolved by `dff5265`: staged identity is durable before publication, and branch [run 34085004614](https://github.com/YPQuinn/skills-management/actions/runs/34085004614) plus PR merge-ref [run 34085006535](https://github.com/YPQuinn/skills-management/actions/runs/34085006535) passed all four native platform jobs. The prior create-time release blocker is closed. Keep ticket 19 claimed for final merged/tagged candidate, exact versioned archives, checksums, and publication; no merge, new tag, or Release has yet been performed.
+Ticket 21 is now resolved by `dff5265`: staged identity is durable before publication, and branch [run 34085004614](https://github.com/YPQuinn/skills-management/actions/runs/34085004614) plus PR merge-ref [run 34085006535](https://github.com/YPQuinn/skills-management/actions/runs/34085006535) passed all four native platform jobs. The prior create-time release blocker is closed. Keep ticket 19 claimed for final merged/tagged candidate, exact versioned archives, checksums, and publication.
+
+### Merge and final-archive acceptance wiring
+
+PR #1 was merged as `5cdb3a3d3de616c262f86213e225004780c3047a` after both branch and merge-ref four-platform checks passed for `00fa87b`. The existing native CI jobs rebuild temporary archives independently; those results alone cannot certify the exact files later uploaded as a release.
+
+The `release archives` workflow closes that artifact gap: a tag-only invocation runs the existing exact-tag `release.sh` once, uploads its four archives and checksums, then four native runners download and checksum/execute those same files without rebuilding. It has read-only repository permissions and never publishes a Release. This workflow must be merged and successfully exercised for the final tag; static validation is not artifact acceptance. No `v0.1.1` tag or Release has yet been created.
