@@ -6,7 +6,7 @@ Blocked by: 18
 
 ## Question
 
-Finish the destination gate against one release candidate: write and verify the README, safety guide, troubleshooting guide, and Cobra help; run the complete check, native archive, CLI, REST, WebUI, recovery, concurrency, and Store-recovery gates; perform the public GitHub Source smoke; resolve release-blocking findings; and produce the final `v0.1.0` archives and checksums with recorded validation results.
+Finish the destination gate against one release candidate: write and verify the README, safety guide, troubleshooting guide, and Cobra help; run the complete check, native archive, CLI, REST, WebUI, recovery, concurrency, and Store-recovery gates; perform the public GitHub Source smoke; resolve release-blocking findings; and produce the final `v0.1.1` archives and checksums with recorded validation results.
 
 ## Comments
 
@@ -28,3 +28,7 @@ Investigated candidate `b14f290` and [acceptance run 32728683722](https://github
 - Corrected `docs/safety.md` to describe the recorded raw target plus physical symlink identity for ownership and adoption, matching this branch's implementation.
 - Release blocker: both local and remote annotated `v0.1.0` resolve to `e0d6326a967324ef2c3ba2666916ba259c051531`, which predates these fixes. No GitHub Release exists. Existing local `dist/skillctl_v0.1.0_*` archives are not accepted as artifacts for the fixed candidate. Preserve the published tag unless the user explicitly decides otherwise; proposed next version is `v0.1.1`, pending confirmation and corresponding release-documentation updates.
 - Remaining: validate the final candidate after documentation/version changes, obtain human public-smoke evidence, run exact-tag release packaging, and verify final versioned archives on native runners before publishing. Native CI smokes above build candidate binaries, not the final versioned release archives. Keep this ticket claimed.
+
+### Approved release version
+
+The user approved `v0.1.1` instead of moving the existing `v0.1.0` tag. Preserve `v0.1.0` at `e0d6326`; use a new exact `v0.1.1` tag on the final accepted release commit. README archive examples now use `v0.1.1`; the release script's usage describes its existing generic SemVer argument. This supersedes ticket 09's initial `v0.1.0` designation, not its acceptance requirements. Version approval does not close the outstanding human smoke or final native archive gates.
