@@ -188,7 +188,7 @@ func TestCreateLinkNoOverwrite(t *testing.T) {
 	raw := filepath.Join(base, "store", "demo")
 
 	// the missing container is created
-	if _, err := CreateLink(container, "demo", raw); err != nil {
+	if _, err := createTestLink(t, container, "demo", raw); err != nil {
 		t.Fatal(err)
 	}
 	got, err := os.Readlink(filepath.Join(container, "demo"))
@@ -201,7 +201,7 @@ func TestCreateLinkNoOverwrite(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(container, "other"), before, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := CreateLink(container, "other", raw); err != ErrEntryExists {
+	if _, err := createTestLink(t, container, "other", raw); err != ErrEntryExists {
 		t.Fatalf("existing entry: %v", err)
 	}
 	after, err := os.ReadFile(filepath.Join(container, "other"))
@@ -213,7 +213,7 @@ func TestCreateLinkNoOverwrite(t *testing.T) {
 	if err := os.Symlink("elsewhere", filepath.Join(container, "link")); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := CreateLink(container, "link", raw); err != ErrEntryExists {
+	if _, err := createTestLink(t, container, "link", raw); err != ErrEntryExists {
 		t.Fatalf("existing symlink: %v", err)
 	}
 	if got, _ := os.Readlink(filepath.Join(container, "link")); got != "elsewhere" {

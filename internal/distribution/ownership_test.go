@@ -17,7 +17,7 @@ func TestCreateDoesNotDeleteGuessableTemp(t *testing.T) {
 	if err := os.Symlink(raw, guessable); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := CreateLink(container, "demo", raw); err != nil {
+	if _, err := createTestLink(t, container, "demo", raw); err != nil {
 		t.Fatal(err)
 	}
 	if got, err := os.Readlink(guessable); err != nil || got != raw {
@@ -35,7 +35,7 @@ func TestCreateDoesNotOverwriteUserMatchingSymlink(t *testing.T) {
 	if err := os.Symlink(raw, filepath.Join(container, "demo")); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := CreateLink(container, "demo", raw); err != ErrEntryExists {
+	if _, err := createTestLink(t, container, "demo", raw); err != ErrEntryExists {
 		t.Fatalf("user symlink: %v", err)
 	}
 	if got, _ := os.Readlink(filepath.Join(container, "demo")); got != raw {
@@ -53,7 +53,7 @@ func TestCreateRefusesFinalPathReplacement(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(container, "demo"), []byte("user"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := CreateLink(container, "demo", raw); err != ErrEntryExists {
+	if _, err := createTestLink(t, container, "demo", raw); err != ErrEntryExists {
 		t.Fatalf("replaced final path: %v", err)
 	}
 	if data, err := os.ReadFile(filepath.Join(container, "demo")); err != nil || string(data) != "user" {

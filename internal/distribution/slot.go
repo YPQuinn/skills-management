@@ -15,7 +15,7 @@ const (
 )
 
 // NewIsolationName returns one unguessable single-component directory
-// name for a remove intent. The name is persisted on the intent before
+// name for create staging or remove isolation. It is persisted before
 // mkdirat; it is never a visible symlink at the Target root.
 func NewIsolationName() (string, error) {
 	var b [16]byte

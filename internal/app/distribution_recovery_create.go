@@ -10,17 +10,21 @@ import (
 	"skillctl/internal/state"
 )
 
-// resolveCreateIntent converges one unfinished create from the final slug
-// only: missing clears the intent; the exact expected symlink completes
-// the ledger; any other entry is preserved and the intent ends as a
-// conflict. Create uses no visible slot (decision 06 / symlinkat).
+// resolveCreateIntent first retires only proven staging, then reconciles
+// the live slug against the pre-publication proof. Unknown staging blocks
+// recovery without deleting its receipt or claiming the live entry.
 func (a *App) resolveCreateIntent(it state.LinkIntent) error {
 	site, err := a.loadIntentSite(it)
 	if err != nil || site == nil {
 		return err
 	}
+	if it.SlotName != "" {
+		if err := distribution.DiscardCreateStaging(site.target.Path, it.SlotName, intentProof(it)); err != nil {
+			return Errorf(CodeRecovery, "preserving create intent %d staging %s: %v", it.ID, it.SlotName, err)
+		}
+	}
 	got, err := distribution.ProbeSymlink(site.target.Path, site.slug)
-	if os.IsNotExist(err) {
+	if errors.Is(err, os.ErrNotExist) {
 		return state.DeleteLinkIntent(a.db, it.ID)
 	}
 	if err != nil {

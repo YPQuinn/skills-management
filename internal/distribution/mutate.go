@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"golang.org/x/sys/unix"
-
 	"skillctl/internal/source"
 )
 
@@ -33,33 +31,6 @@ func EnsureContainer(containerPath string) error {
 		return err
 	}
 	return container.Close()
-}
-
-// CreateLink writes the Managed Link with symlinkat on the pinned Target
-// directory fd and returns the created symlink's identity sampled from
-// that same fd. The call is atomic and fails with ErrEntryExists instead
-// of overwriting. There is no visible temporary name.
-func CreateLink(containerPath, slug, rawTarget string) (LinkProof, error) {
-	container, err := openContainerHandle(containerPath, true)
-	if err != nil {
-		return LinkProof{}, err
-	}
-	defer container.Close()
-	if err := container.symlink(rawTarget, slug); err != nil {
-		if errors.Is(err, unix.EEXIST) {
-			return LinkProof{}, ErrEntryExists
-		}
-		return LinkProof{}, fmt.Errorf("creating the link: %v", err)
-	}
-	st, err := container.stat(slug)
-	if err != nil {
-		return LinkProof{}, fmt.Errorf("reading the created link: %v", err)
-	}
-	if statKind(st) != KindSymlink {
-		return LinkProof{}, fmt.Errorf("the created entry is not a symlink")
-	}
-	dev, ino, mtime := symlinkIdentity(st)
-	return LinkProof{Raw: rawTarget, Dev: dev, Ino: ino, Mtime: mtime}, nil
 }
 
 type RemoveResult int

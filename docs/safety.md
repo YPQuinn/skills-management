@@ -32,6 +32,10 @@ skillctl target distribute <target>
 
 Distribution creates missing desired links, then removes **Managed Links** that are no longer desired. It never writes Source content onto a Target.
 
+For creation, a symlink is staged inside a random 0700 directory under the Target. Its identity is recorded before a no-overwrite rename publishes the final link. Completed operations remove empty staging directories. Interrupted operations preserve unproven staging rather than guessing ownership; see [Recovery](troubleshooting.md#recovery).
+
+Private staging and removal-isolation directories are not a security boundary against other processes running as the same OS user. Such processes can modify their contents; pinned handles and identity checks do not provide complete exclusion of malicious same-user writers.
+
 ## Unmanaged content
 
 A **Managed Link** is a Target symlink Skill Manager created or that was **Adopted**, and whose recorded raw target and physical identity (device, inode, and symlink modification time) still match. A replacement symlink is not owned merely because it points to the same Store path. Only a Managed Link may be changed or removed.

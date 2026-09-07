@@ -65,9 +65,9 @@ func runCrashHelper(phase string) error {
 			}
 		}
 		_, err = a.AcceptSource(context.Background(), skillID)
-	case "dist-create":
+	case "dist-create", "dist-create-planned", "dist-create-staged", "dist-create-prepared":
 		a.linkMutateHook = func(action string) {
-			if action == "create" {
+			if action == strings.TrimPrefix(phase, "dist-") {
 				os.Exit(crashHelperExit)
 			}
 		}

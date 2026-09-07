@@ -165,8 +165,6 @@ func SetLinkIntentPhase(db *sql.DB, id int64, phase string) error {
 	return SetLinkIntentSlot(db, id, "", phase)
 }
 
-// SetLinkIntentSlot records the private isolation directory (when name is
-// non-empty) and phase of one intent.
 // SetLinkIntentIdentity records the symlink identity sampled at create
 // time, or the Managed Link identity a remove must re-verify.
 func SetLinkIntentIdentity(db *sql.DB, id int64, dev, ino uint64, mtime int64) error {
@@ -181,6 +179,8 @@ func SetLinkIntentIdentity(db *sql.DB, id int64, dev, ino uint64, mtime int64) e
 	return nil
 }
 
+// SetLinkIntentSlot records the private isolation directory (when name is
+// non-empty) and phase of one intent.
 func SetLinkIntentSlot(db *sql.DB, id int64, slot, phase string) error {
 	var res sql.Result
 	var err error
