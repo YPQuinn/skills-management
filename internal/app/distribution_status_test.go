@@ -27,6 +27,7 @@ func writeStoreSkill(t *testing.T, store, slug string) {
 // destination is gone blocks as broken_link, and a desired Skill whose
 // Store tree is missing blocks instead of being created broken.
 func TestDistributionBrokenLinkAndStoreMissing(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "demo", "ghost")
 	tv := registerCustomTarget(t, a)
@@ -93,6 +94,7 @@ func TestDistributionBrokenLinkAndStoreMissing(t *testing.T) {
 // is left untouched, its invalid claim is discarded, and the result
 // reports ownership_lost.
 func TestOwnershipLostOnReplacement(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "demo")
 	tv := registerCustomTarget(t, a)
@@ -133,6 +135,7 @@ func TestOwnershipLostOnReplacement(t *testing.T) {
 // TestRedirectedTargetBlocksMutation proves a symlink introduced after
 // registration redirects the Target and receives no mutations.
 func TestRedirectedTargetBlocksMutation(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "demo")
 	tv := registerCustomTarget(t, a)

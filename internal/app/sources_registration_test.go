@@ -70,6 +70,7 @@ func (c cancelObserver) Observe(ctx context.Context, _ source.Locator, _ string)
 }
 
 func TestAddSourceLocal(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	root := t.TempDir()
 	writeSourceSkill(t, root, "alpha")
@@ -110,6 +111,7 @@ func TestAddSourceLocal(t *testing.T) {
 }
 
 func TestAddSourceLocalStoreOverlap(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 
 	// the Source containing the Store is rejected
@@ -170,6 +172,7 @@ func TestAddSourceLocalStoreOverlap(t *testing.T) {
 }
 
 func TestAddSourceCancellationSavesNothing(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	root := t.TempDir()
 	writeSourceSkill(t, root, "alpha")
@@ -189,6 +192,7 @@ func TestAddSourceCancellationSavesNothing(t *testing.T) {
 }
 
 func TestAddSourceValidatesAndConflicts(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	root := t.TempDir()
 	writeSourceSkill(t, root, "alpha")
@@ -212,6 +216,7 @@ func TestAddSourceValidatesAndConflicts(t *testing.T) {
 }
 
 func TestAddSourceUnreachableNotSaved(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	_, err := a.AddSource(context.Background(), source.AddInput{Kind: source.KindLocal, Location: filepath.Join(t.TempDir(), "missing")})
 	if !isCode(err, CodeSourceUnavailable) {

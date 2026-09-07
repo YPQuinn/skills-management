@@ -13,6 +13,7 @@ import (
 )
 
 func TestProcessCrashCreateBeforePublication(t *testing.T) {
+	t.Parallel()
 	for _, phase := range []string{"dist-create-planned", "dist-create-prepared"} {
 		t.Run(phase, func(t *testing.T) {
 			fx := seedDistCreateCrash(t)
@@ -41,6 +42,7 @@ func TestProcessCrashCreateBeforePublication(t *testing.T) {
 }
 
 func TestProcessCrashCreateUnprovenStagingIsPreserved(t *testing.T) {
+	t.Parallel()
 	fx := seedDistCreateCrash(t)
 	runCrashChild(t, fx, "dist-create-staged", crashHelperExit)
 	db, err := state.Open(fx.db)
@@ -79,6 +81,7 @@ func TestProcessCrashCreateUnprovenStagingIsPreserved(t *testing.T) {
 }
 
 func TestDistributionCreateRecordsProofAndPreservesConcurrentEntry(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "demo")
 	tv := registerCustomTarget(t, a)
@@ -122,6 +125,7 @@ func TestDistributionCreateRecordsProofAndPreservesConcurrentEntry(t *testing.T)
 }
 
 func TestRecoveryCreatePreservesReplacedStaging(t *testing.T) {
+	t.Parallel()
 	fx := seedDistCreateCrash(t)
 	runCrashChild(t, fx, "dist-create-prepared", crashHelperExit)
 	db, err := state.Open(fx.db)
@@ -158,6 +162,7 @@ func TestRecoveryCreatePreservesReplacedStaging(t *testing.T) {
 }
 
 func TestProcessCrashCreateAfterPublicationCleansStaging(t *testing.T) {
+	t.Parallel()
 	fx := seedDistCreateCrash(t)
 	runCrashChild(t, fx, "dist-create", crashHelperExit)
 	fresh := reopenCrash(t, fx)

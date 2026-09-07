@@ -12,6 +12,7 @@ import (
 )
 
 func TestClearBaselineFreshAppFinishesAfterCommitCrash(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha")
 	id := ids["alpha"]
@@ -38,6 +39,7 @@ func TestClearBaselineFreshAppFinishesAfterCommitCrash(t *testing.T) {
 }
 
 func TestDetachSkillCommitFailureRestoresBaseline(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha")
 	id := ids["alpha"]
@@ -63,6 +65,7 @@ func TestDetachSkillCommitFailureRestoresBaseline(t *testing.T) {
 }
 
 func TestSourceDeleteDetachCommitFailureKeepsSource(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha")
 	srcs, err := a.ListSources()

@@ -39,6 +39,7 @@ func copyTreeForApp(dst, src string) error {
 // operation intent stays pending, and the foreign operation directory is
 // preserved for the next recovery.
 func TestImportStageForeignSwapKeepsPending(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	a.store.SetHook(func(p skillstore.HookPoint) {
@@ -96,6 +97,7 @@ func TestImportStageForeignSwapKeepsPending(t *testing.T) {
 // durable receipt) recovery reports CodeRecovery and never drains a fresh
 // sample of the operation name.
 func TestImportRecoveryStagedOnlyPreserves(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	op := importAndStopAfterStage(t, a, src, "skills/alpha", "alpha")

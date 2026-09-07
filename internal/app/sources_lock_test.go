@@ -10,6 +10,7 @@ import (
 )
 
 func TestCheckSourceCancellationLeavesState(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	root := t.TempDir()
 	writeSourceSkill(t, root, "alpha")
@@ -47,6 +48,7 @@ func TestCheckSourceCancellationLeavesState(t *testing.T) {
 }
 
 func TestLockContentionMapsToCodeLocked(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	root := t.TempDir()
 	writeSourceSkill(t, root, "alpha")
@@ -85,6 +87,7 @@ func TestLockContentionMapsToCodeLocked(t *testing.T) {
 }
 
 func TestCheckSourcePerSourceLock(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	root := t.TempDir()
 	writeSourceSkill(t, root, "alpha")
@@ -128,6 +131,7 @@ func TestCheckSourcePerSourceLock(t *testing.T) {
 // read. A delayed check can therefore never act on stale pre-lock state.
 // Without contention the missing Source still reports not_found.
 func TestCheckSourceLockBeforeRead(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	const missingID = 9999
 

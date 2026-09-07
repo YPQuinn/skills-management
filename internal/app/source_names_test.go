@@ -12,6 +12,7 @@ import (
 // TestAddSourceNameValidation pins the browser-contract name rules: names
 // must survive trimming and be safe as one URL path segment.
 func TestAddSourceNameValidation(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	root := t.TempDir()
 	writeSourceSkill(t, root, "alpha")
@@ -38,6 +39,7 @@ func TestAddSourceNameValidation(t *testing.T) {
 // TestAddSourceNameConflictDistinctFromLocator proves the two unique
 // constraints produce distinct, clear conflict messages.
 func TestAddSourceNameConflictDistinctFromLocator(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	root := t.TempDir()
 	writeSourceSkill(t, root, "alpha")

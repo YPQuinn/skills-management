@@ -37,6 +37,7 @@ func addReplacementSource(t *testing.T, a *App) *source.Source {
 // persists the receipt, cleans the evidence, and clears the row with live,
 // Baseline, and previous in their terminal state.
 func TestImportSkillsReplaceFinalizeReceiptCASFailureConvergesOnFreshApp(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	first := importSkills(t, a, src.ID, "skills/alpha")
@@ -86,6 +87,7 @@ func TestImportSkillsReplaceFinalizeReceiptCASFailureConvergesOnFreshApp(t *test
 // already-clean receipt-bound restored result, CAS-deletes the row, and
 // imports the entry fresh.
 func TestImportSkillsRestoreTerminalDeleteCASFailureConvergesOnFreshApp(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	ctx, cancel := context.WithCancel(context.Background())
@@ -128,6 +130,7 @@ func TestImportSkillsRestoreTerminalDeleteCASFailureConvergesOnFreshApp(t *testi
 // the replace terminal state (live, Baseline, previous) is validated and
 // the row is CAS-deleted.
 func TestImportSkillsReplaceFinalizeDeleteCASFailureConvergesOnFreshApp(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	first := importSkills(t, a, src.ID, "skills/alpha")

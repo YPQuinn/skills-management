@@ -13,6 +13,7 @@ import (
 )
 
 func TestDetachAndRebindSkill(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha")
 	sk, err := a.DetachSkill(context.Background(), ids["alpha"])
@@ -53,6 +54,7 @@ func TestDetachAndRebindSkill(t *testing.T) {
 }
 
 func TestRebindUnavailableSource(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha")
 	srcB := addLocalSource(t, a, map[string]string{"skills/alpha": "alpha"})
@@ -70,6 +72,7 @@ func TestRebindUnavailableSource(t *testing.T) {
 }
 
 func TestIdenticalRebindEstablishesBaseline(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha")
 	if _, err := a.DetachSkill(context.Background(), ids["alpha"]); err != nil {
@@ -92,6 +95,7 @@ func TestIdenticalRebindEstablishesBaseline(t *testing.T) {
 }
 
 func TestRebindIdenticalUsesLiveDigest(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha")
 	if err := os.WriteFile(filepath.Join(a.StorePath, "alpha", "SKILL.md"),
@@ -109,6 +113,7 @@ func TestRebindIdenticalUsesLiveDigest(t *testing.T) {
 }
 
 func TestRebindFinalizeFailureKeepsCommittedJournal(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha")
 	id := ids["alpha"]
@@ -151,6 +156,7 @@ func TestRebindFinalizeFailureKeepsCommittedJournal(t *testing.T) {
 }
 
 func TestRebindBaselineVerifyFailureRestoresBinding(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha")
 	if _, err := a.DetachSkill(context.Background(), ids["alpha"]); err != nil {
@@ -193,6 +199,7 @@ func isolateBaselineClearAndStop(t *testing.T, a *App, skillID int64, slug, oldB
 }
 
 func TestRebindClearBaselineFreshAppRestoresAfterIsolateCrash(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha")
 	id := ids["alpha"]
@@ -218,6 +225,7 @@ func TestRebindClearBaselineFreshAppRestoresAfterIsolateCrash(t *testing.T) {
 }
 
 func TestRebindClearBaselineCommitFailureRestoresTree(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha")
 	id := ids["alpha"]

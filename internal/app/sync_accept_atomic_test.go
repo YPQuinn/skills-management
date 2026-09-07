@@ -18,6 +18,7 @@ import (
 // never auto-overwrite it. A retried Accept Source then commits with
 // Baseline equal to the Source.
 func TestAcceptSourceFailureKeepsBaseline(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src, skillID := importOneSkill(t, a, "skills/demo")
 	preBaseline := skillDetailOf(t, a, skillID).Skill.BaselineDigest
@@ -100,6 +101,7 @@ func TestAcceptSourceFailureKeepsBaseline(t *testing.T) {
 // committed Baseline equals the Source and the next Accept Source converges
 // through recovery instead of re-mutating the Baseline.
 func TestAcceptSourceBlockedFinalizeConverges(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src, skillID := importOneSkill(t, a, "skills/demo")
 	rewriteSourceFile(t, src, "skills/demo", "notes.md", "upstream\n")
@@ -141,6 +143,7 @@ func TestAcceptSourceBlockedFinalizeConverges(t *testing.T) {
 // digests and the relationship are persisted, and no snapshot exists for
 // the unreadable content.
 func TestAcceptSourceRepairsPlainFile(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src, skillID := importOneSkill(t, a, "skills/demo")
 	if err := os.RemoveAll(filepath.Join(a.StorePath, "demo")); err != nil {
@@ -189,6 +192,7 @@ func TestAcceptSourceRepairsPlainFile(t *testing.T) {
 // the shared Skill validator, Accept Source snapshots the invalid content
 // as the previous snapshot, and the committed Baseline equals the Source.
 func TestAcceptSourceRepairsInvalidSkill(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	_, skillID := importOneSkill(t, a, "skills/demo")
 	rewriteStoreFile(t, a, "demo", "SKILL.md", "just a note, no frontmatter\n")

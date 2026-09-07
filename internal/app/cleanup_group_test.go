@@ -6,6 +6,7 @@ import (
 )
 
 func TestGroupDeleteRequiresUnassign(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha")
 	g, err := a.CreateGroup("eng")

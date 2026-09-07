@@ -31,6 +31,7 @@ func isolateSkillDeleteAndStop(t *testing.T, a *App, skillID int64, slug string)
 }
 
 func TestDeleteSkillFreshAppRestoresAfterLiveIsolateCrash(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha")
 	id := ids["alpha"]
@@ -56,6 +57,7 @@ func TestDeleteSkillFreshAppRestoresAfterLiveIsolateCrash(t *testing.T) {
 }
 
 func TestDeleteSkillRowFailureRestoresStore(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha")
 	id := ids["alpha"]
@@ -75,6 +77,7 @@ func TestDeleteSkillRowFailureRestoresStore(t *testing.T) {
 }
 
 func TestDeleteSkillFreshAppFinishesAfterRowCommitCrash(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	ids := importAllSkills(t, a, "alpha")
 	id := ids["alpha"]

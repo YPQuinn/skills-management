@@ -7,6 +7,7 @@ import (
 )
 
 func TestImportStatusValues(t *testing.T) {
+	t.Parallel()
 	for status, want := range map[ImportStatus]string{
 		StatusImported:        "imported",
 		StatusAlreadyImported: "already_imported",
@@ -24,6 +25,7 @@ func TestImportStatusValues(t *testing.T) {
 // snake_case field names, optional fields omitted when empty, and the
 // replacement preview carried as the existing app Skill with its Binding.
 func TestImportItemResultJSON(t *testing.T) {
+	t.Parallel()
 	now := time.Now().UTC()
 	preview := &Skill{
 		ID: 7, Slug: "alpha", Name: "Alpha", Description: "one",
@@ -76,6 +78,7 @@ func TestImportItemResultJSON(t *testing.T) {
 }
 
 func TestImportItemResultFailedFields(t *testing.T) {
+	t.Parallel()
 	item := ImportItemResult{
 		Status:        StatusFailed,
 		RelativeDir:   "skills/broken",
@@ -108,6 +111,7 @@ func TestImportItemResultFailedFields(t *testing.T) {
 }
 
 func TestSummarizeImportItems(t *testing.T) {
+	t.Parallel()
 	items := []ImportItemResult{
 		{Status: StatusImported, RelativeDir: "skills/a"},
 		{Status: StatusImported, RelativeDir: "skills/b"},
@@ -131,6 +135,7 @@ func TestSummarizeImportItems(t *testing.T) {
 }
 
 func TestImportSkillsResultJSON(t *testing.T) {
+	t.Parallel()
 	result := ImportSkillsResult{
 		Items: []ImportItemResult{{Status: StatusImported, RelativeDir: "skills/a"}},
 		Summary: SummarizeImportItems([]ImportItemResult{

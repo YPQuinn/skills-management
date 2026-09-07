@@ -15,6 +15,7 @@ import (
 // receipt), so recovery preserves the staging and the intent with
 // CodeRecovery instead of draining a fresh sample of the operation name.
 func TestImportSkillsRecoversPendingAfterStage(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	op := importAndStopAfterStage(t, a, src, "skills/alpha", "alpha")
@@ -44,6 +45,7 @@ func TestImportSkillsRecoversPendingAfterStage(t *testing.T) {
 // an installed-but-uncommitted live tree (proven by the consumed staged
 // tree plus the Baseline candidate) before the fresh import proceeds.
 func TestImportSkillsRecoversPendingAfterInstall(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	op := importAndStopBeforeCommit(t, a, src, "skills/alpha", "alpha")
@@ -69,6 +71,7 @@ func TestImportSkillsRecoversPendingAfterInstall(t *testing.T) {
 // before the batch continues; the already-committed entry then reports
 // already_imported.
 func TestImportSkillsRecoversCommittedBeforeFinalize(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	op := importAndStopBeforeFinalize(t, a, src, "skills/alpha", "alpha")
@@ -93,6 +96,7 @@ func TestImportSkillsRecoversCommittedBeforeFinalize(t *testing.T) {
 // whose state cannot be proven stops the batch with CodeRecovery before any
 // item processing, preserving every candidate and the intent.
 func TestImportSkillsAmbiguousRecoveryBlocksWrites(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	op := importAndStopBeforeFinalize(t, a, src, "skills/alpha", "alpha")

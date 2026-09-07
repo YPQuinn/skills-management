@@ -44,6 +44,7 @@ func skillIDBySlug(t *testing.T, a *App, slug string) int64 {
 // TestRecoveryPendingCreateMissingPath proves a pending create with a
 // missing path clears the intent and leaves the item missing.
 func TestRecoveryPendingCreateMissingPath(t *testing.T) {
+	t.Parallel()
 	a, targetID, _, tv := seedLinkFixture(t)
 	importAllSkills(t, a, "other")
 	otherID := skillIDBySlug(t, a, "other")
@@ -80,6 +81,7 @@ func TestRecoveryPendingCreateMissingPath(t *testing.T) {
 // TestRecoveryPendingCreateUnprovenIntentIsNotAdopted proves a pending
 // create without a persisted identity cannot claim a matching symlink.
 func TestRecoveryPendingCreateUnprovenIntentIsNotAdopted(t *testing.T) {
+	t.Parallel()
 	a, targetID, _, tv := seedLinkFixture(t)
 	importAllSkills(t, a, "other")
 	otherID := skillIDBySlug(t, a, "other")
@@ -120,6 +122,7 @@ func TestRecoveryPendingCreateUnprovenIntentIsNotAdopted(t *testing.T) {
 // TestRecoveryPendingCreateProvenIdentityCompletes proves a create intent
 // that recorded the symlink identity at create time completes the ledger.
 func TestRecoveryPendingCreateProvenIdentityCompletes(t *testing.T) {
+	t.Parallel()
 	a, targetID, _, tv := seedLinkFixture(t)
 	importAllSkills(t, a, "other")
 	otherID := skillIDBySlug(t, a, "other")
@@ -159,6 +162,7 @@ func TestRecoveryPendingCreateProvenIdentityCompletes(t *testing.T) {
 // TestRecoveryPendingCreateForeignEntry proves a pending create with any
 // other entry preserves it as a conflict.
 func TestRecoveryPendingCreateForeignEntry(t *testing.T) {
+	t.Parallel()
 	a, targetID, _, tv := seedLinkFixture(t)
 	importAllSkills(t, a, "other")
 	otherID := skillIDBySlug(t, a, "other")
@@ -199,6 +203,7 @@ func TestRecoveryPendingCreateForeignEntry(t *testing.T) {
 // TestRecoveryPendingRemoveRetriesRemoval proves a pending remove with the
 // unchanged Managed Link retries the removal.
 func TestRecoveryPendingRemoveRetriesRemoval(t *testing.T) {
+	t.Parallel()
 	a, targetID, skillID, tv := seedLinkFixture(t)
 	link, err := state.GetManagedLink(a.db, targetID, skillID)
 	if err != nil {
@@ -236,6 +241,7 @@ func TestRecoveryPendingRemoveRetriesRemoval(t *testing.T) {
 // TestRecoveryPendingRemoveMissingPath proves a pending remove with a
 // missing path completes the ledger cleanup.
 func TestRecoveryPendingRemoveMissingPath(t *testing.T) {
+	t.Parallel()
 	a, targetID, skillID, tv := seedLinkFixture(t)
 	link, err := state.GetManagedLink(a.db, targetID, skillID)
 	if err != nil {
@@ -274,6 +280,7 @@ func TestRecoveryPendingRemoveMissingPath(t *testing.T) {
 // TestRecoveryPendingRemoveChangedEntry proves a pending remove with a
 // replaced entry leaves it untouched and records ownership_lost.
 func TestRecoveryPendingRemoveChangedEntry(t *testing.T) {
+	t.Parallel()
 	a, targetID, skillID, _ := seedLinkFixture(t)
 	link, err := state.GetManagedLink(a.db, targetID, skillID)
 	if err != nil {
@@ -320,6 +327,7 @@ func TestRecoveryPendingRemoveChangedEntry(t *testing.T) {
 // whose slug was replaced with a new symlink of the same raw target
 // leaves the replacement and records ownership_lost.
 func TestRecoveryPendingRemoveSameRawReplacement(t *testing.T) {
+	t.Parallel()
 	a, targetID, skillID, tv := seedLinkFixture(t)
 	link, err := state.GetManagedLink(a.db, targetID, skillID)
 	if err != nil {

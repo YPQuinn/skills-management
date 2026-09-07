@@ -14,6 +14,7 @@ import (
 // TestImportSkillsSourceLockContention proves the per-Source lock is taken
 // before observation and its contention is CodeLocked with no Store writes.
 func TestImportSkillsSourceLockContention(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	lockPath, err := a.sourceLockPath(src.ID)
@@ -39,6 +40,7 @@ func TestImportSkillsSourceLockContention(t *testing.T) {
 // TestImportSkillsStoreLockContention proves a second Store writer receives
 // CodeLocked while the exclusive Store lock is held.
 func TestImportSkillsStoreLockContention(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	lockPath, err := a.storeLockPath()
@@ -65,6 +67,7 @@ func TestImportSkillsStoreLockContention(t *testing.T) {
 // unobservable Source records the same failed check metadata as CheckSource
 // and blocks the batch before any Store mutation.
 func TestImportSkillsUnavailableSourcePersistsFailedCheck(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	if err := os.Rename(src.Location, src.Location+"-moved"); err != nil {
@@ -95,6 +98,7 @@ func TestImportSkillsUnavailableSourcePersistsFailedCheck(t *testing.T) {
 // TestImportSkillsCancelledBeforeProcessing proves a pre-cancelled request
 // fails before any Store work with no item outcomes.
 func TestImportSkillsCancelledBeforeProcessing(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	ctx, cancel := context.WithCancel(context.Background())
@@ -114,6 +118,7 @@ func TestImportSkillsCancelledBeforeProcessing(t *testing.T) {
 // processing never becomes a top-level error and every item still receives
 // an outcome; the cancelled item leaves no live tree or intent.
 func TestImportSkillsCancelledMidMaterialize(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/a": "A", "skills/b": "B", "skills/c": "C"})
 	ctx, cancel := context.WithCancel(context.Background())
@@ -154,6 +159,7 @@ func TestImportSkillsCancelledMidMaterialize(t *testing.T) {
 // deterministically: the installed live tree is removed and the intent is
 // cleared, while already-committed siblings stay intact.
 func TestImportSkillsCancelledAfterInstallBeforeCommit(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/a": "A", "skills/b": "B", "skills/c": "C"})
 	ctx, cancel := context.WithCancel(context.Background())
@@ -190,6 +196,7 @@ func TestImportSkillsCancelledAfterInstallBeforeCommit(t *testing.T) {
 // SQLite commit has completed, cancellation cannot interrupt finalization:
 // the item still reports imported with its Baseline installed.
 func TestImportSkillsCancelledAfterCommitFinishesFinalize(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	ctx, cancel := context.WithCancel(context.Background())

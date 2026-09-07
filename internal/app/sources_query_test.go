@@ -9,6 +9,7 @@ import (
 )
 
 func TestResolveSourceArg(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	root := t.TempDir()
 	writeSourceSkill(t, root, "alpha")

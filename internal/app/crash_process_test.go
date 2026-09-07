@@ -22,6 +22,7 @@ const crashHelperExit = 99
 // TestCrashHelper is the test-only child. Production skillctl never
 // consults these environment variables; only this helper process does.
 func TestCrashHelper(t *testing.T) {
+	t.Parallel()
 	phase := os.Getenv("SKILLCTL_TEST_CRASH")
 	if phase == "" {
 		return
@@ -109,6 +110,7 @@ func runCrashHelper(phase string) error {
 }
 
 func TestProcessCrashReplaceIntentBeforeFilesystem(t *testing.T) {
+	t.Parallel()
 	fx := seedReplaceCrash(t)
 	old := readLive(t, fx.store, "demo")
 	runCrashChild(t, fx, "intent", crashHelperExit)
@@ -125,6 +127,7 @@ func TestProcessCrashReplaceIntentBeforeFilesystem(t *testing.T) {
 }
 
 func TestProcessCrashReplaceOldContentInRecovery(t *testing.T) {
+	t.Parallel()
 	fx := seedReplaceCrash(t)
 	old := readLive(t, fx.store, "demo")
 	runCrashChild(t, fx, "old-in-recovery", crashHelperExit)
@@ -158,6 +161,7 @@ func TestProcessCrashReplaceOldContentInRecovery(t *testing.T) {
 }
 
 func TestProcessCrashReplaceInstalledBeforeCommit(t *testing.T) {
+	t.Parallel()
 	fx := seedReplaceCrash(t)
 	old := readLive(t, fx.store, "demo")
 	runCrashChild(t, fx, "installed", crashHelperExit)
@@ -174,6 +178,7 @@ func TestProcessCrashReplaceInstalledBeforeCommit(t *testing.T) {
 }
 
 func TestProcessCrashReplaceCommittedBeforeCleanup(t *testing.T) {
+	t.Parallel()
 	fx := seedReplaceCrash(t)
 	runCrashChild(t, fx, "committed", crashHelperExit)
 
@@ -192,6 +197,7 @@ func TestProcessCrashReplaceCommittedBeforeCleanup(t *testing.T) {
 }
 
 func TestProcessCrashDistributionCreateBeforeFinalize(t *testing.T) {
+	t.Parallel()
 	fx := seedDistCreateCrash(t)
 	runCrashChild(t, fx, "dist-create", crashHelperExit)
 
@@ -212,6 +218,7 @@ func TestProcessCrashDistributionCreateBeforeFinalize(t *testing.T) {
 }
 
 func TestProcessCrashDistributionRemoveBeforeFinalize(t *testing.T) {
+	t.Parallel()
 	fx := seedDistRemoveCrash(t)
 	runCrashChild(t, fx, "dist-remove", crashHelperExit)
 
@@ -228,6 +235,7 @@ func TestProcessCrashDistributionRemoveBeforeFinalize(t *testing.T) {
 }
 
 func TestProcessInspectMutateReplacementPreserved(t *testing.T) {
+	t.Parallel()
 	fx := seedDistCreateCrash(t)
 	swap := filepath.Join(fx.targetPath, "demo")
 	cmd := crashCmd(fx, "inspect-mutate")
@@ -250,6 +258,7 @@ func TestProcessInspectMutateReplacementPreserved(t *testing.T) {
 // create identity is persisted, then a same-raw replacement before
 // restart, is fail-closed and not registered as owned.
 func TestProcessCrashCreateThenReplaceBeforeRecovery(t *testing.T) {
+	t.Parallel()
 	fx := seedDistCreateCrash(t)
 	runCrashChild(t, fx, "dist-create", crashHelperExit)
 

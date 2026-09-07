@@ -15,6 +15,7 @@ import (
 // superseded Store content with reason accept_source, and rollback undoes
 // it.
 func TestAcceptSourceReplaces(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src, skillID := importOneSkill(t, a, "skills/demo")
 	rewriteStoreFile(t, a, "demo", "SKILL.md", "---\nname: demo\ndescription: desc\n---\n# local body\n")
@@ -58,6 +59,7 @@ func TestAcceptSourceReplaces(t *testing.T) {
 // TestAcceptSourceRepairsMissing locks the repair path: an absent Store
 // tree is restored by explicit Accept Source without a snapshot rotation.
 func TestAcceptSourceRepairsMissing(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	_, skillID := importOneSkill(t, a, "skills/demo")
 	if err := os.RemoveAll(filepath.Join(a.StorePath, "demo")); err != nil {
@@ -82,6 +84,7 @@ func TestAcceptSourceRepairsMissing(t *testing.T) {
 // restored, Binding/relationships untouched, the pre-rollback live tree
 // becomes the new snapshot, and a second rollback reverses the first.
 func TestRollbackRestoresAndReverses(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src, skillID := importOneSkill(t, a, "skills/demo")
 	originalDigest := findEntry(t, src, "skills/demo").Digest
@@ -149,6 +152,7 @@ func TestRollbackRestoresAndReverses(t *testing.T) {
 // content that changed since the last persisted digest blocks the rollback
 // without touching anything.
 func TestRollbackBlocksOnLiveChange(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src, skillID := importOneSkill(t, a, "skills/demo")
 	rewriteSourceFile(t, src, "skills/demo", "notes.md", "upstream\n")
@@ -172,6 +176,7 @@ func TestRollbackBlocksOnLiveChange(t *testing.T) {
 // unreachable Source blocks retrieval, retains the last relationship, and
 // marks it stale.
 func TestSyncUnavailableMarksStale(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src, skillID := importOneSkill(t, a, "skills/demo")
 	checked, err := a.CheckSkillSync(context.Background(), skillID)

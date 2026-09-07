@@ -10,6 +10,7 @@ import (
 )
 
 func TestImportSkillsDefaultSlugConflict(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	srcA := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	importSkills(t, a, srcA.ID, "skills/alpha")
@@ -44,6 +45,7 @@ func TestImportSkillsDefaultSlugConflict(t *testing.T) {
 // TestImportSkillsMixedBatchIndependence proves one item's failure never
 // rolls back its siblings: a batch returns every outcome independently.
 func TestImportSkillsMixedBatchIndependence(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	srcA := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	importSkills(t, a, srcA.ID, "skills/alpha")
@@ -84,6 +86,7 @@ func TestImportSkillsMixedBatchIndependence(t *testing.T) {
 // TestImportSkillsGuardFailureIndependent proves a per-Skill guard failure
 // fails only its own item while the batch continues.
 func TestImportSkillsGuardFailureIndependent(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	root := t.TempDir()
 	writeSkillFile(t, root, "skills/alpha", "Alpha")
@@ -134,6 +137,7 @@ func TestImportSkillsGuardFailureIndependent(t *testing.T) {
 // TestImportSkillsUnmanagedCollisionPreserved proves an unmanaged Store
 // directory is never overwritten and its content stays byte-for-byte.
 func TestImportSkillsUnmanagedCollisionPreserved(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	live := filepath.Join(a.StorePath, "alpha")
@@ -166,6 +170,7 @@ func TestImportSkillsUnmanagedCollisionPreserved(t *testing.T) {
 // TestImportSkillsByteIdenticalUnmanagedCollisionPreserved proves even a
 // byte-identical unmanaged directory blocks the import and is preserved.
 func TestImportSkillsByteIdenticalUnmanagedCollisionPreserved(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	live := filepath.Join(a.StorePath, "alpha")
@@ -192,6 +197,7 @@ func TestImportSkillsByteIdenticalUnmanagedCollisionPreserved(t *testing.T) {
 // TestImportSkillsAmbiguousNameRejected proves a non-unique name cannot
 // select an entry and fails before any item processing.
 func TestImportSkillsAmbiguousNameRejected(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/a1": "Same", "skills/a2": "Same"})
 	if _, err := a.ImportSkills(context.Background(), ImportSkillsInput{

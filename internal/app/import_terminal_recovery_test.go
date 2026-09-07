@@ -70,6 +70,7 @@ func importAndStopAfterReceiptPersisted(t *testing.T, a *App, src *source.Source
 // removal hook is refused with CodeRecovery, the terminal row and its
 // receipt are kept, and the foreign object is preserved.
 func TestImportSkillsFreshAppBlocksForeignLiveSwappedAtEvidenceRemoval(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	op := importAndStopAfterReceiptPersisted(t, a, src, "skills/alpha", "alpha")
@@ -122,6 +123,7 @@ func TestImportSkillsFreshAppBlocksForeignLiveSwappedAtEvidenceRemoval(t *testin
 // recovery fails with CodeRecovery, the row stays pending, and every
 // candidate including the injected child is preserved.
 func TestImportSkillsFreshAppBlocksPartialQuarantineDrain(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	op := importAndStopBeforeCommit(t, a, src, "skills/alpha", "alpha")
@@ -170,6 +172,7 @@ func TestImportSkillsFreshAppBlocksPartialQuarantineDrain(t *testing.T) {
 // terminal result, removes the exact evidence, and CAS-deletes the row; the
 // already-committed entry then reports already_imported.
 func TestImportSkillsFreshAppConvergesAfterReceiptPersistedBeforeCleanup(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	op := importAndStopAfterReceiptPersisted(t, a, src, "skills/alpha", "alpha")
@@ -198,6 +201,7 @@ func TestImportSkillsFreshAppConvergesAfterReceiptPersistedBeforeCleanup(t *test
 // when the process died. The fresh App resumes the cleanup by the
 // receipt-bound operation-directory identity and converges.
 func TestImportSkillsFreshAppResumesPartialTerminalCleanup(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	op := importAndStopAfterReceiptPersisted(t, a, src, "skills/alpha", "alpha")
@@ -224,6 +228,7 @@ func TestImportSkillsFreshAppResumesPartialTerminalCleanup(t *testing.T) {
 // foreign tree and the evidence, keeps the terminal row, and blocks with
 // CodeRecovery.
 func TestImportSkillsFreshAppBlocksForeignLiveOnTerminalRow(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	op := importAndStopAfterReceiptPersisted(t, a, src, "skills/alpha", "alpha")
@@ -265,6 +270,7 @@ func TestImportSkillsFreshAppBlocksForeignLiveOnTerminalRow(t *testing.T) {
 // refused by fresh-App recovery with CodeRecovery, the committed row is
 // kept, and the foreign proof and operation evidence are preserved.
 func TestImportSkillsFreshAppBlocksByteIdenticalForeignProof(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	op := importAndStopBeforeFinalize(t, a, src, "skills/alpha", "alpha")

@@ -38,6 +38,7 @@ type fileIDView struct {
 // before recovery; live, Baseline, and previous bound to the actual
 // terminal objects).
 func TestImportSkillsFreshAppResumesStalePreviousWitnessWithStableReceipt(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	first := importSkills(t, a, src.ID, "skills/alpha")
@@ -155,6 +156,7 @@ func TestImportSkillsFreshAppResumesStalePreviousWitnessWithStableReceipt(t *tes
 // CodeRecovery, the committed row is kept, and the foreign witness and the
 // witnessed backup are preserved.
 func TestImportSkillsFreshAppBlocksCopiedWitness(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	first := importSkills(t, a, src.ID, "skills/alpha")

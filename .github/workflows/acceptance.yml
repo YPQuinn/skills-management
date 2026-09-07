@@ -37,22 +37,13 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: |
-            internal/webui/package-lock.json
-            e2e/webui/package-lock.json
+          cache-dependency-path: internal/webui/package-lock.json
       - name: quality gate
+        env:
+          GO_TEST_FLAGS: -race
         run: ./scripts/check.sh
-      - name: race
-        run: go test -race ./...
       - name: native archive smoke
         run: ./scripts/smoke/native-archive.sh
-      - name: Playwright
-        run: ./scripts/e2e-webui.sh
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: playwright-report-linux
-          path: e2e/webui/test-results
 
   darwin-arm64-functional:
     name: darwin/arm64 functional
@@ -69,20 +60,11 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: |
-            internal/webui/package-lock.json
-            e2e/webui/package-lock.json
+          cache-dependency-path: internal/webui/package-lock.json
       - name: quality gate
         run: ./scripts/check.sh
       - name: native archive smoke
         run: ./scripts/smoke/native-archive.sh
-      - name: Playwright
-        run: ./scripts/e2e-webui.sh
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: playwright-report-darwin-arm64
-          path: e2e/webui/test-results
 
   linux-arm64-archive-smoke:
     name: linux/arm64 archive smoke

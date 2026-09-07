@@ -19,6 +19,7 @@ import (
 // CAS clears it. The old live tree is preserved and the already-bound
 // entry reports already_imported.
 func TestImportSkillsFreshAppRecoversPreStageReplaceIntent(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	first := importSkills(t, a, src.ID, "skills/alpha")
@@ -66,6 +67,7 @@ func TestImportSkillsFreshAppRecoversPreStageReplaceIntent(t *testing.T) {
 // its durable aborted phase (the approved ordering marks aborted before
 // Store Abort verification), and the evidence is preserved.
 func TestImportSkillsFreshAppBlocksPendingImportWithForeignRecoveryEvidence(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	_, digest := materializeTo(t, a, src, "skills/alpha")
@@ -110,6 +112,7 @@ func TestImportSkillsFreshAppBlocksPendingImportWithForeignRecoveryEvidence(t *t
 // ordering), Store Abort then refuses on the tombstone, and the row and
 // the object are retained.
 func TestImportSkillsFreshAppBlocksPendingEmptyRowWithTerminalTombstone(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	if res := importSkills(t, a, src.ID, "skills/alpha"); res.Items[0].Status != StatusImported {
@@ -152,6 +155,7 @@ func TestImportSkillsFreshAppBlocksPendingEmptyRowWithTerminalTombstone(t *testi
 // same refusal for an already-aborted row: Store Abort sees the tombstone
 // and recovery fails with the row and the object retained.
 func TestImportSkillsFreshAppBlocksAbortedRowWithTerminalTombstone(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	if res := importSkills(t, a, src.ID, "skills/alpha"); res.Items[0].Status != StatusImported {
@@ -197,6 +201,7 @@ func TestImportSkillsFreshAppBlocksAbortedRowWithTerminalTombstone(t *testing.T)
 // the time Store Abort runs its verification (observed at the layout
 // hook), the row is already durably aborted through the full-identity CAS.
 func TestImportImmediateAbortMarksAbortedBeforeAbortVerification(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	unmanaged := filepath.Join(a.StorePath, "alpha")
@@ -242,6 +247,7 @@ func TestImportImmediateAbortMarksAbortedBeforeAbortVerification(t *testing.T) {
 // pending row: the row is already durably aborted when Store Abort runs
 // its verification, and the recovery converges.
 func TestImportFreshAppPreStageMarksAbortedBeforeAbortVerification(t *testing.T) {
+	t.Parallel()
 	a := newTestApp(t)
 	src := addLocalSource(t, a, map[string]string{"skills/alpha": "Alpha"})
 	first := importSkills(t, a, src.ID, "skills/alpha")
