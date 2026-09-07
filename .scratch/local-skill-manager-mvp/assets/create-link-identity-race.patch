@@ -1,0 +1,59 @@
+diff --git a/internal/distribution/mutate.go b/internal/distribution/mutate.go
+index b3ac64d..29510c1 100644
+--- a/internal/distribution/mutate.go
++++ b/internal/distribution/mutate.go
+@@ -51,6 +51,9 @@ func CreateLink(containerPath, slug, rawTarget string) (LinkProof, error) {
+ 		}
+ 		return LinkProof{}, fmt.Errorf("creating the link: %v", err)
+ 	}
++	if testAfterCreateBeforeStat != nil {
++		testAfterCreateBeforeStat()
++	}
+ 	st, err := container.stat(slug)
+ 	if err != nil {
+ 		return LinkProof{}, fmt.Errorf("reading the created link: %v", err)
+@@ -266,3 +269,6 @@ func probeEntry(container *containerHandle, name string) (kind, raw string, err
+ 	}
+ 	return kind, raw, err
+ }
++
++// testAfterCreateBeforeStat controls the external replacement window in tests.
++var testAfterCreateBeforeStat func()
+diff --git a/internal/distribution/create_identity_race_test.go b/internal/distribution/create_identity_race_test.go
+new file mode 100644
+index 0000000..1bfe0f7
+--- /dev/null
++++ b/internal/distribution/create_identity_race_test.go
+@@ -0,0 +1,32 @@
++package distribution
++
++import (
++	"os"
++	"path/filepath"
++	"testing"
++)
++
++func TestCreateIdentityDoesNotClaimPreSampleReplacement(t *testing.T) {
++	base := physicalTemp(t)
++	container := filepath.Join(base, "target")
++	raw := filepath.Join(base, "store", "demo")
++	link := filepath.Join(container, "demo")
++	testAfterCreateBeforeStat = func() {
++		replaceSameRaw(t, link, raw)
++	}
++	t.Cleanup(func() { testAfterCreateBeforeStat = nil })
++	proof, err := CreateLink(container, "demo", raw)
++	if err != nil {
++		if got, readErr := os.Readlink(link); readErr != nil || got != raw {
++			t.Fatalf("replacement was not preserved: %q, %v", got, readErr)
++		}
++		return
++	}
++	if err := VerifyLink(container, "demo", proof); err == nil {
++		t.Error("created proof incorrectly authorizes an externally replaced symlink")
++	}
++	result, err := RemoveManagedLink(container, "demo", proof, mustIsolation(t))
++	if _, statErr := os.Lstat(link); os.IsNotExist(statErr) {
++		t.Fatalf("external replacement deleted: remove result=%v, error=%v", result, err)
++	}
++}
