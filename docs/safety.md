@@ -34,7 +34,7 @@ Distribution creates missing desired links, then removes **Managed Links** that 
 
 ## Unmanaged content
 
-A **Managed Link** is a Target symlink Skill Manager created or that was **Adopted**, and whose recorded raw target still matches. Only a Managed Link may be changed or removed.
+A **Managed Link** is a Target symlink Skill Manager created or that was **Adopted**, and whose recorded raw target and physical identity (device, inode, and symlink modification time) still match. A replacement symlink is not owned merely because it points to the same Store path. Only a Managed Link may be changed or removed.
 
 Distribution:
 
@@ -69,7 +69,7 @@ An unmanaged symlink is never adopted implicitly, even when it already points at
 skillctl target adopt <target> <slug>
 ```
 
-Adoption succeeds only when a fresh physical resolution of that symlink is exactly the currently desired Store Skill. The link is not rewritten; its existing raw target is recorded as ownership. Files, directories, wrong-target links, and links that do not resolve into the Store cannot be adopted.
+Adoption succeeds only when a fresh physical resolution of that symlink is exactly the currently desired Store Skill. The link is not rewritten; its existing raw target and physical identity are recorded as ownership. Files, directories, wrong-target links, and links that do not resolve into the Store cannot be adopted.
 
 ## Snapshots and rollback
 
