@@ -189,8 +189,11 @@ func TestCLISourcesGitLifecycle(t *testing.T) {
 	if shown.Kind != "git" || len(shown.LastCommit) != 40 || len(shown.Inventory) != 1 || shown.Inventory[0].Name != "repo-skill" {
 		t.Fatalf("git show: %+v", shown)
 	}
-	if shown.LastCheckResult != "ok" || shown.LastInventoryDigest == "" || shown.Inventory[0].Digest == "" {
+	if shown.LastCheckResult != "ok" || shown.LastInventoryDigest == "" {
 		t.Fatalf("git show metadata: %+v", shown)
+	}
+	if shown.Inventory[0].Digest != "" {
+		t.Fatalf("git add is listing-only and must omit complete-tree digests: %+v", shown.Inventory[0])
 	}
 
 	// upstream advances; a fresh check resolves the new commit
@@ -207,7 +210,8 @@ func TestCLISourcesGitLifecycle(t *testing.T) {
 	var checked struct {
 		LastCommit string `json:"last_commit"`
 		Inventory  []struct {
-			Name string `json:"name"`
+			Name   string `json:"name"`
+			Digest string `json:"digest"`
 		} `json:"inventory"`
 	}
 	if err := json.Unmarshal([]byte(out), &checked); err != nil {
@@ -215,6 +219,11 @@ func TestCLISourcesGitLifecycle(t *testing.T) {
 	}
 	if checked.LastCommit == shown.LastCommit || len(checked.Inventory) != 2 {
 		t.Fatalf("git check did not observe the update: %+v (was %+v)", checked, shown)
+	}
+	for _, e := range checked.Inventory {
+		if e.Digest == "" {
+			t.Fatalf("git check must fill complete-tree digests: %+v", checked.Inventory)
+		}
 	}
 
 	// an unreachable repository is refused at registration

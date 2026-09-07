@@ -19,13 +19,25 @@ type treeLine struct {
 	size int64 // byte size from `ls-tree -l`; -1 when unknown
 }
 
+type discoverMode int
+
+const (
+	discoverFull discoverMode = iota
+	discoverListing
+)
+
+func (m discoverMode) String() string {
+	if m == discoverListing {
+		return "listing"
+	}
+	return "full"
+}
+
 // discoverCommit validates the Source subpath at the commit, lists the tree
 // under it with NUL-safe plumbing, and applies the same depth-three
-// discovery rules as Discover. Every entry carries the canonical digest of
-// its complete tree; the Observation carries the aggregate Inventory
-// digest. The locator identifies the remote so blob fetches reuse the same
-// ambient credential helper as every other git invocation.
-func discoverCommit(ctx context.Context, cache, commit string, loc Locator) (Observation, error) {
+// discovery rules as Discover. Full mode fetches every Skill blob once and
+// records complete-tree digests. Listing mode fetches only SKILL.md blobs.
+func discoverCommit(ctx context.Context, cache, commit string, loc Locator, mode discoverMode) (Observation, error) {
 	if err := validateSubpathTree(ctx, cache, commit, loc.Subpath); err != nil {
 		return Observation{}, err
 	}
@@ -66,7 +78,7 @@ func discoverCommit(ctx context.Context, cache, commit string, loc Locator) (Obs
 	var obs Observation
 	// A SKILL.md directly in the subpath root is the whole Inventory.
 	if marker, ok := skills["."]; ok {
-		if err := obs.addSkill(ctx, cache, all, marker, "", loc); err != nil {
+		if err := obs.recordSkills(ctx, cache, all, map[string]treeLine{".": marker}, []string{""}, loc, mode); err != nil {
 			return Observation{}, err
 		}
 		obs.Digest = inventoryDigest(obs.Entries, obs.Issues)
@@ -78,16 +90,14 @@ func discoverCommit(ctx context.Context, cache, commit string, loc Locator) (Obs
 		if dir == "." || isNestedSkillDir(dir, skills) || hasSkippedSegment(dir) {
 			continue
 		}
-		dirs = append(dirs, dir)
-	}
-	sort.Strings(dirs)
-	for _, dir := range dirs {
 		if len(strings.Split(dir, "/")) > 3 {
 			continue
 		}
-		if err := obs.addSkill(ctx, cache, all, skills[dir], dir, loc); err != nil {
-			return Observation{}, err
-		}
+		dirs = append(dirs, dir)
+	}
+	sort.Strings(dirs)
+	if err := obs.recordSkills(ctx, cache, all, skills, dirs, loc, mode); err != nil {
+		return Observation{}, err
 	}
 	obs.Digest = inventoryDigest(obs.Entries, obs.Issues)
 	return obs, nil
@@ -110,34 +120,50 @@ func validateSubpathTree(ctx context.Context, cache, commit, subpath string) err
 	return nil
 }
 
-// addSkill validates one Skill candidate: it fetches the blobs of its tree,
-// computes the canonical digest, validates the SKILL.md marker, and records
-// an Entry or an Issue. dir is "" for the whole-subpath root Skill (whose
-// entries are recorded as ".") and the relative directory otherwise. loc
-// carries the remote identity for the blob fetch's credential helper.
-func (obs *Observation) addSkill(ctx context.Context, cache string, all []treeLine, marker treeLine, dir string, loc Locator) error {
-	rows := skillRows(all, dir)
-	blobs, err := fetchTreeBlobs(ctx, cache, rows, loc)
+// recordSkills validates Skill candidates from one shared blob fetch.
+// Listing mode reads only SKILL.md markers. Full mode reads every blob in
+// every candidate tree once, then computes each complete-tree digest.
+func (obs *Observation) recordSkills(ctx context.Context, cache string, all []treeLine, skills map[string]treeLine, dirs []string, loc Locator, mode discoverMode) error {
+	needed := make([]treeLine, 0, len(dirs))
+	for _, dir := range dirs {
+		key := dir
+		if key == "" {
+			key = "."
+		}
+		marker, ok := skills[key]
+		if !ok {
+			continue
+		}
+		if mode == discoverListing {
+			needed = append(needed, marker)
+			continue
+		}
+		needed = append(needed, skillRows(all, dir)...)
+	}
+	blobs, err := fetchTreeBlobs(ctx, cache, needed, loc)
 	if err != nil {
 		return fmt.Errorf("reading Skill tree: %v", err)
 	}
-	relDir := dir
-	if relDir == "" {
-		relDir = "."
+	for _, dir := range dirs {
+		relDir := dir
+		if relDir == "" {
+			relDir = "."
+		}
+		marker := skills[relDir]
+		if mode == discoverListing {
+			data, ok := blobs[marker.oid]
+			obs.addSkillBlob(marker, relDir, "", data, ok)
+			continue
+		}
+		rows := skillRows(all, dir)
+		digest, err := skillTreeEffectiveDigest(rows, dir, blobs)
+		if err != nil {
+			obs.Issues = append(obs.Issues, Issue{RelativeDir: relDir, Reason: err.Error()})
+			continue
+		}
+		data, ok := blobs[marker.oid]
+		obs.addSkillBlob(marker, relDir, digest, data, ok)
 	}
-	// The entry digest is the effective materialized digest: safe internal
-	// symlinks are dereferenced, so it equals the digest of the Store copy
-	// import produces. A tree that cannot be materialized (broken or
-	// escaping symlink, gitlink, special node, non-canonical path) is an
-	// invalid entry reported as an Issue rather than a digest that import
-	// could never satisfy.
-	digest, err := skillTreeEffectiveDigest(rows, dir, blobs)
-	if err != nil {
-		obs.Issues = append(obs.Issues, Issue{RelativeDir: relDir, Reason: err.Error()})
-		return nil
-	}
-	data, ok := blobs[marker.oid]
-	obs.addSkillBlob(marker, relDir, digest, data, ok)
 	return nil
 }
 
@@ -158,6 +184,17 @@ func skillRows(all []treeLine, dir string) []treeLine {
 		rows = append(rows, l)
 	}
 	return rows
+}
+
+// gitSkillTreePath is the repository path passed to ls-tree for one Skill.
+func gitSkillTreePath(subpath, relativeDir string) string {
+	if relativeDir == "" || relativeDir == "." {
+		return subpath
+	}
+	if subpath == "" {
+		return relativeDir
+	}
+	return subpath + "/" + relativeDir
 }
 
 // isNestedSkillDir reports whether dir lies inside another Skill directory.

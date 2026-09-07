@@ -54,6 +54,20 @@ func (a *App) observeSource(ctx context.Context, id int64) (*source.Source, erro
 	}
 
 	started := time.Now().UTC()
+	if reused, err := a.reuseGitObservation(ctx, cur); err != nil {
+		return nil, err
+	} else if reused != nil {
+		reused.LastCheckStartedAt = &started
+		now := time.Now().UTC()
+		reused.UpdatedAt = now
+		reused.LastCheckedAt = &now
+		reused.LastCheckResult = source.CheckResultOK
+		reused.LastSuccessfulCheckAt = &now
+		if err := state.ReplaceSourceObservation(a.db, id, *reused); err != nil {
+			return nil, Errorf(CodeInternal, "saving Source %d observation: %v", id, err)
+		}
+		return reused, nil
+	}
 	obs, err := a.observer.Observe(ctx, cur.Locator, a.workDir())
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
