@@ -1,7 +1,7 @@
 # Preserve external replacements before create identity sampling
 
 Type: task
-Status: open
+Status: claimed
 
 ## Question
 
@@ -27,7 +27,7 @@ created proof incorrectly authorizes an externally replaced symlink
 external replacement deleted: remove result=0, error=<nil>
 ```
 
-The test and temporary hook are retained in the patch, not installed in production code. `git apply --check` passed after removing the temporary instrumentation from the checkout. This is an unresolved release blocker, not a passing regression.
+The original failing reproduction is retained in the patch against `db09150`. The implementation follow-up promotes the regression into the test suite; do not re-apply the historical patch over the fixed implementation.
 
 ## Acceptance
 
@@ -36,3 +36,22 @@ The test and temporary hook are retained in the patch, not installed in producti
 - Promote the reproduction into a regression at the actual create boundary and show it green after the fix.
 - Re-run creation/replacement/crash/recovery tests and four-platform acceptance on the updated candidate.
 - Revisit ticket 06's creation representation if closing the race needs a staging/installation step; document any contract change explicitly.
+
+## Implementation follow-up
+
+Creation now stages a symlink under a random 0700 directory, samples the identity there, persists it through the application's intent callback, and only then publishes with a no-overwrite rename. The live slug is checked against that pre-publication proof, never used to obtain a new identity. The existing `slot_name` and identity fields suffice; no schema migration was added. Create and remove reuse the pinned-directory and no-overwrite primitives.
+
+Create recovery cleans only staging that matches its recorded proof (or an empty directory), then checks the live slug. Unproven/replaced staging and its receipt are preserved with `recovery_failed`. A crash before publication with proven staging rolls back that staging and leaves the desired link missing for a fresh explicit retry. A crash after publication finalizes only the matching original link. The missing-Target recovery regression also exposed and fixed `os.IsNotExist` failing to recognize a wrapped missing-path error; `errors.Is` now recognizes it.
+
+Ticket 06 and the safety/troubleshooting guides record the staging-contract amendment, conservative recovery behavior, and the remaining same-UID limitation. A private directory is not claimed to exclude a malicious process running as the same OS user.
+
+Local validation passed:
+
+- Original create-before-live-sample regression: three repetitions, now green.
+- New persistence-before-publication, failed-persistence, concurrent-final-entry, replaced/unknown/occupied-staging tests.
+- Process crashes before staging, before proof persistence, after proof persistence, and after publication; replaced-staging recovery and actual app intent persistence.
+- Focused race-detector regression suite: three repetitions, passed.
+- `./scripts/check.sh`: passed, including 144 frontend tests and all Go tests.
+- Embedded Chromium/Firefox/WebKit acceptance: 8/8 passed; README quickstart and native macOS arm64 archive smoke passed.
+
+Keep this ticket claimed until the updated commit passes remote four-platform acceptance. These local results describe the changed working tree, not the prior binary's embedded Git SHA. PR merge and release remain paused.

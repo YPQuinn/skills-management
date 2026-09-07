@@ -129,7 +129,7 @@ func TestRecoveryPendingCreateProvenIdentityCompletes(t *testing.T) {
 		t.Fatal(err)
 	}
 	raw := filepath.Join(root, "other")
-	proof, err := distribution.CreateLink(tv.Path, "other", raw)
+	proof, err := createFixtureLink(t, tv.Path, "other", raw)
 	if err != nil {
 		t.Fatal(err)
 	}

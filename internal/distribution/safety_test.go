@@ -117,7 +117,7 @@ func TestPinnedHandleRejectsPrefixSymlink(t *testing.T) {
 	if _, err := Inspect(container, []Relation{{Slug: "demo", LedgerRaw: raw}}, store); err == nil {
 		t.Fatal("inspect must refuse a prefix symlink")
 	}
-	if _, err := CreateLink(container, "other", raw); err == nil {
+	if _, err := createTestLink(t, container, "other", raw); err == nil {
 		t.Fatal("create must refuse a prefix symlink")
 	}
 	if _, err := RemoveManagedLink(container, "demo", dummyProof(raw), mustIsolation(t)); err == nil {

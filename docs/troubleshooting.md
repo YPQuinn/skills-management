@@ -94,6 +94,10 @@ The WebUI setup screen offers the same recovery when it detects `state_missing`.
 
 An unfinished Store operation cannot be proven valid. Skill Manager preserves every candidate tree and blocks new Store writes. Do not delete staging or snapshot directories by hand. Retry after the competing process exits; if the error persists, the leftover evidence under the Store is the recovery input, not trash.
 
+An interrupted Target link creation can also report `recovery_failed`, naming its intent and `.skillctl-r-…` staging directory. If the staged link's identity was not durably recorded before the interruption, or staging has changed, recovery keeps both the directory and its database intent and refuses to proceed. It never infers ownership from a matching destination. Missing staging or staging matching the recorded identity can be cleaned automatically; a published link is accepted only if it matches the recorded identity.
+
+For a persistent staging error, stop all Skill Manager processes and preserve a copy of `state.db` and the named directory before investigating. Do not remove the intent or recursively delete unknown contents to force startup. Any manual repair should preserve the unproven entries outside the named staging location; retry recovery only once that location is absent or verified safe.
+
 ## Browser opening
 
 `skillctl ui` always prints `UI available at http://127.0.0.1:<port>` after it binds loopback.

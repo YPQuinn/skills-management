@@ -91,7 +91,7 @@ func TestSkillDeleteRecoversPendingCreateIntent(t *testing.T) {
 		t.Fatal(err)
 	}
 	raw := filepath.Join(root, "alpha")
-	proof, err := distribution.CreateLink(t2.Path, "alpha", raw)
+	proof, err := createFixtureLink(t, t2.Path, "alpha", raw)
 	if err != nil {
 		t.Fatal(err)
 	}

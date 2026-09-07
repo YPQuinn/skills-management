@@ -1,6 +1,7 @@
 package distribution
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -12,16 +13,23 @@ func ensureDir(path string) error {
 	return os.MkdirAll(path, 0o755)
 }
 
-// physicalTemp returns a temp dir whose path is already prefix-resolved,
-// matching how the application normalizes registered Target and Store
-// paths (macOS /var is a symlink to /private/var).
 func mustCreateLink(t *testing.T, container, slug, raw string) LinkProof {
 	t.Helper()
-	p, err := CreateLink(container, slug, raw)
+	p, err := createTestLink(t, container, slug, raw)
 	if err != nil {
 		t.Fatal(err)
 	}
 	return p
+}
+
+func createTestLink(t *testing.T, container, slug, raw string) (LinkProof, error) {
+	t.Helper()
+	slot := mustIsolation(t)
+	proof, err := CreateLink(container, slug, raw, slot, func(LinkProof) error { return nil })
+	if cleanupErr := DiscardCreateStaging(container, slot, proof); cleanupErr != nil {
+		return proof, errors.Join(err, cleanupErr)
+	}
+	return proof, err
 }
 
 func dummyProof(raw string) LinkProof {
@@ -39,6 +47,9 @@ func replaceSameRaw(t *testing.T, link, raw string) {
 	}
 }
 
+// physicalTemp returns a temp dir whose path is already prefix-resolved,
+// matching how the application normalizes registered Target and Store
+// paths (macOS /var is a symlink to /private/var).
 func physicalTemp(t *testing.T) string {
 	t.Helper()
 	resolved, err := filepath.EvalSymlinks(t.TempDir())

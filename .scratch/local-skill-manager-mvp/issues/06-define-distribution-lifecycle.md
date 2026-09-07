@@ -18,13 +18,13 @@ Assignment and Group-membership changes update desired state immediately but nev
 
 ### Link representation and ownership
 
-Skill Manager creates absolute symbolic links from `<target>/<slug>` to the normalized physical `<store>/<slug>` path. It writes no marker, sidecar, or hidden management file into a Target.
+Skill Manager creates absolute symbolic links from `<target>/<slug>` to the normalized physical `<store>/<slug>` path. It writes no persistent marker or sidecar into a Target. Creation and removal may use a transient, random 0700 directory recorded in the operation's durable intent; completed operations remove that directory only when empty.
 
-A **Managed Link** is established only when Skill Manager creates a link successfully or the user explicitly adopts an eligible existing link. SQLite records Target ID, Skill ID, link path, the exact raw link target, and creation or adoption time. A current entry remains provably managed only while the ownership record exists, the path is still a symlink, and its raw link target still matches that record. Physical resolution is checked separately for correctness and safety.
+A **Managed Link** is established only when Skill Manager creates a link successfully or the user explicitly adopts an eligible existing link. SQLite records Target ID, Skill ID, link path, the exact raw link target, physical symlink identity (device, inode, and modification time), and creation or adoption time. A current entry remains provably managed only while the ownership record exists, the path is still a symlink, and its raw target and physical identity still match that record. Physical resolution is checked separately for correctness and safety.
 
 If a user replaces the entry with a file, directory, or different symlink, the old record does not authorize Skill Manager to modify the replacement. Loss of SQLite likewise makes existing Target links unmanaged; ownership is never reconstructed from path or naming alone.
 
-An unmanaged symlink can be explicitly **Adopted** only when fresh physical resolution proves that it points exactly to the currently desired Store Skill. Adoption rechecks the path, records its existing raw target, and does not rewrite the link. Files, directories, wrong-target links, and links outside the Store cannot be adopted. There is no automatic adoption.
+An unmanaged symlink can be explicitly **Adopted** only when fresh physical resolution proves that it points exactly to the currently desired Store Skill. Adoption rechecks the path, records its existing raw target and physical identity, and does not rewrite the link. Files, directories, wrong-target links, and links outside the Store cannot be adopted. There is no automatic adoption.
 
 ### Target path safety and creation
 
@@ -74,7 +74,7 @@ Fresh inspection runs for an explicit status refresh, a WebUI refresh, and every
 
 A reconciliation first completes the Target-level safety gate and one coherent inspection. A redirected, invalid, or unsafely opened Target receives no mutations. It then reconciles independent Skill entries, creating missing desired links before removing links that are no longer desired. One item's conflict, broken link, or I/O failure does not prevent other entries from completing safely.
 
-Creation uses an atomic no-overwrite symlink operation. A path that appears concurrently becomes a conflict. Removal immediately rechecks the entry and unlinks only a symlink that still matches its ownership record. An explicit Store migration may update a proven Managed Link by removing the verified old link and creating the new link without overwrite; failure attempts to restore the old link only if the path remains empty, and never overwrites a concurrently created entry.
+Creation first records a random staging directory name, creates the symlink inside that fresh 0700 directory, and samples its identity through the pinned directory handle. It durably records that identity before publishing the symlink using an atomic no-overwrite rename. The final path is only verified against the staged identity; it never supplies a replacement identity. A path that appears concurrently becomes a conflict. This supersedes direct creation at the final slug: ticket 21 demonstrated that sampling that visible path after creation could certify an external replacement. Removal immediately rechecks the entry and unlinks only a symlink that still matches its ownership record. An explicit Store migration may update a proven Managed Link by removing the verified old link and creating the new link without overwrite; failure attempts to restore the old link only if the path remains empty, and never overwrites a concurrently created entry.
 
 Target-level outcomes are:
 
@@ -105,13 +105,17 @@ Reconciliation takes a shared Store lock followed by an exclusive lock for its T
 
 Before each link mutation, SQLite records a durable intent containing the action, path, expected raw target, and filesystem precondition. The filesystem operation then runs and the Managed Link ledger and result finalize afterward. Recovery handles unfinished intents deterministically:
 
-- pending create plus a missing path clears the intent and remains `missing`;
-- pending create plus the exact expected symlink completes ownership registration;
-- pending create plus any other entry preserves it as `conflict`;
+- pending create first cleans only staged content matching its persisted identity and removes an empty staging directory; absent staging needs no cleanup;
+- pending create with non-empty unproven, replaced, or unreadable staging preserves the content and intent and blocks with `recovery_failed`; it does not guess ownership or publish staged content;
+- after staging cleanup, pending create plus a missing final path clears the intent and remains `missing`;
+- after staging cleanup, pending create plus a final symlink matching its persisted raw target and physical identity completes ownership registration;
+- after staging cleanup, pending create plus any other final entry preserves it as `conflict`; legacy intents without identity cannot establish ownership;
 - pending remove plus a missing path completes ledger cleanup;
 - pending remove plus the unchanged Managed Link safely retries removal;
 - pending remove plus a changed entry leaves it untouched and records `ownership_lost`.
 
 All creation is no-overwrite and every removal revalidates its precondition. External processes can still mutate a Target; Skill Manager guarantees detection and non-overwrite of unknown content rather than pretending to exclude external writers.
+
+The private staging/isolation directories reduce races at public slug paths; they are not a security boundary against another process running as the same UID. Such a process can discover and modify a 0700 directory. Portable Unix operations provide neither atomic symlink-creation-with-an-inode-handle nor unlink-by-inode; paired observations and pinned handles do not promise exclusion of a malicious same-UID writer.
 
 Reconciliation is idempotent and safe to rerun from fresh inspection. It performs no hidden, scheduled, background, or exponential retries. Users explicitly retry after correcting network-independent filesystem, permission, lock, Store, or conflict conditions.
