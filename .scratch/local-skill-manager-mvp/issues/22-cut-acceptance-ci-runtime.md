@@ -1,7 +1,7 @@
 # Cut acceptance CI runtime
 
 Type: task
-Status: claimed
+Status: resolved
 
 ## Question
 
@@ -32,7 +32,7 @@ Three sources of duplicated work:
 - Do not weaken the four-platform native archive smoke.
 - Parallelize only tests proven isolated; leave packages with shared process state serial.
 
-## Answer
+## Implementation
 
 Per-push CI now covers the CLI and the Go/frontend quality gate; the WebUI browser journeys move to the release path only.
 
@@ -44,9 +44,9 @@ Both functional jobs drop the `Playwright` step and its failure-artifact upload,
 
 `internal/skillstore` was deliberately left serial. Making it parallel needs the four package-level hooks reworked into per-test state first, which is a separate change.
 
-Verification is local only so far. Runs [34100751825](https://github.com/YPQuinn/skills-management/actions/runs/34100751825) on `main` and [34102203547](https://github.com/YPQuinn/skills-management/actions/runs/34102203547) on this branch both fail in `record candidate` before any step executes, with `The job was not started because recent account payments have failed or your spending limit needs to be increased`. The `main` failure predates this branch, so it is an account billing block rather than a workflow regression. This ticket stays claimed until a real run confirms the new step timings.
+Verification was blocked for a while. Runs [34100751825](https://github.com/YPQuinn/skills-management/actions/runs/34100751825) on `main` and [34102203547](https://github.com/YPQuinn/skills-management/actions/runs/34102203547) on this branch both failed in `record candidate` before any step executed, with `The job was not started because recent account payments have failed or your spending limit needs to be increased`. The `main` failure predated this branch, so it was an account billing block rather than a workflow regression. The repository was later made public, which restores free standard runners and unblocked the measurement below.
 
-The billing block also reframes the cost side. The repository is private, so Actions minutes are billed and the two macOS jobs carry a 10x multiplier: `darwin/arm64 functional` and `darwin/amd64 archive smoke` together account for most of the per-push spend even though `linux/amd64 functional` dominates wall clock. Of the 115s `darwin/amd64 archive smoke` job, 55s is `setup-go` alone.
+The billing block also reframed the cost side. The repository is private, so Actions minutes are billed and the two macOS jobs carry a 10x multiplier: `darwin/arm64 functional` and `darwin/amd64 archive smoke` together account for most of the per-push spend even though `linux/amd64 functional` dominates wall clock. Of the 115s `darwin/amd64 archive smoke` job, 55s is `setup-go` alone.
 
 ## Follow-up: how often the matrix runs, and on what
 
@@ -61,3 +61,15 @@ The `record candidate` job is removed along with the four `same candidate` steps
 `darwin/amd64 archive smoke` is removed from the per-push matrix. It built a throwaway `skillctl_ci_darwin_amd64.tar.gz`, not a release artifact, and cost about 20 billable-minute equivalents per push at the 10x macOS rate. Ticket 09 asks the two non-functional platforms to run the *release* smoke, which `release-archives.yml` already does against the real archives and `SHA256SUMS` on four native runners. A `CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build` step on the linux job keeps early warning of build breakage for about six seconds.
 
 `darwin/arm64 functional` no longer runs the full `check.sh`. TypeScript, Oxlint, and Vitest are platform-independent and already run on Linux; Vitest alone was 36s of the macOS job. The macOS-specific risk is in the Go suite, which the code comments tie to `/var` to `/private/var` resolution and APFS behavior. The job now runs `build.sh`, `go test ./...`, and the native archive smoke. The frontend build cannot be dropped entirely because `internal/webui` declares `//go:embed all:dist` and `internal/webui/dist` is gitignored, so no package importing it compiles until Vite has run — the fail-closed property ticket 09 asked for. Skipping the frontend build on macOS is also defensible in the other direction: `release-archives.yml` packages on `ubuntu-latest`, so the SPA that actually ships is always a Linux build.
+
+## Answer
+
+Resolved by [PR #4](https://github.com/YPQuinn/skills-management/pull/4), squash-merged as `93d09ca`. Run [34105038818](https://github.com/YPQuinn/skills-management/actions/runs/34105038818) passed all three jobs and is the first measurement of the new matrix.
+
+Wall clock fell from 601s to 224s. `linux/amd64 functional` is 224s against 601s, `darwin/arm64 functional` 153s against 257s, and `linux/arm64 archive smoke` 34s against 37s. `record candidate` and `darwin/amd64 archive smoke` no longer exist; the cross-compile step that replaces the latter costs 21s. Only one run now fires per pull-request push instead of two, so the per-push spend is roughly a quarter of what it was.
+
+`internal/app` under `-race` went from 273.1s to 110.5s in CI. That is 2.5x rather than the 8.5x measured locally, because the hosted Linux runner has far fewer cores than the development machine and the race detector adds its own overhead; parallelism is capped by `GOMAXPROCS`, not by the tests.
+
+The remaining tail is `internal/app` at 110s, `internal/skillstore` at 74s, and Vitest at roughly 82s. Reworking the four `skillstore` hooks into per-test state is the next available win and needs per-test judgement rather than a mechanical edit. Vitest is unrelated to Go and would have to be addressed in the frontend suite itself.
+
+One operational note for future releases: force-pushing the tags during an unrelated history rewrite re-triggered `release archives` on `v0.1.1`, which would have re-run `release.sh` and re-uploaded archives had the billing block not stopped it first. Tag pushes are load-bearing.

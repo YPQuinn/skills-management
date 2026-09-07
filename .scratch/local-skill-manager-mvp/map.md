@@ -57,6 +57,8 @@ Deliver a runnable, local-first Skill Manager MVP for macOS and Linux, preferabl
 
 - [Document and validate the MVP release candidate](issues/19-document-and-validate-release-candidate.md) — Published [v0.1.1](https://github.com/YPQuinn/skills-management/releases/tag/v0.1.1) from `a234a4f` with the exact four-platform verified archives and checksums, final-package browser/README checks, and user-confirmed public GitHub smoke. The MVP destination gate is complete.
 
+- [Cut acceptance CI runtime](issues/22-cut-acceptance-ci-runtime.md) — Stopped running the matrix two or three times per commit, dropped the tautological candidate job, folded `go test` into a single `-race` pass, parallelized `internal/app`, and moved browser acceptance plus the darwin/amd64 archive smoke to the release path. Wall clock 601s to 224s, verified by [run 34105038818](https://github.com/YPQuinn/skills-management/actions/runs/34105038818).
+
 ## Not yet specified
 
 <!-- No remaining in-scope fog. -->
