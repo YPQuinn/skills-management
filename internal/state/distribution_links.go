@@ -6,24 +6,28 @@ import (
 )
 
 // ManagedLink is one owned Target symlink: the Target, Skill, exact link
-// path, the exact raw link target, and the time Skill Manager created or
-// adopted it (decision 06). Ownership is provable only while this row
-// exists and the filesystem entry still matches it.
+// path, the exact raw link target, the symlink's physical identity, and
+// the time Skill Manager created or adopted it (decision 06). Ownership
+// is provable only while this row exists and the filesystem entry still
+// matches the recorded identity and raw target.
 type ManagedLink struct {
 	ID            int64
 	TargetID      int64
 	SkillID       int64
 	LinkPath      string
 	RawTarget     string
+	LinkDev       uint64
+	LinkIno       uint64
+	LinkMtime     int64
 	EstablishedAt time.Time
 }
 
-const managedLinkSelect = `id, target_id, skill_id, link_path, raw_target, established_at`
+const managedLinkSelect = `id, target_id, skill_id, link_path, raw_target, link_dev, link_ino, link_mtime, established_at`
 
 func scanManagedLink(row scanner) (*ManagedLink, error) {
 	var l ManagedLink
 	var established string
-	if err := row.Scan(&l.ID, &l.TargetID, &l.SkillID, &l.LinkPath, &l.RawTarget, &established); err != nil {
+	if err := row.Scan(&l.ID, &l.TargetID, &l.SkillID, &l.LinkPath, &l.RawTarget, &l.LinkDev, &l.LinkIno, &l.LinkMtime, &established); err != nil {
 		return nil, err
 	}
 	var err error
@@ -39,14 +43,17 @@ type ManagedLinkByTargetSkill struct {
 	Slug      string
 	LinkPath  string
 	RawTarget string
+	LinkDev   uint64
+	LinkIno   uint64
+	LinkMtime int64
 }
 
 // InsertManagedLink records one owned link and returns its id.
 func InsertManagedLink(db *sql.DB, l ManagedLink) (int64, error) {
 	res, err := db.Exec(`INSERT INTO managed_links
-		(target_id, skill_id, link_path, raw_target, established_at)
-		VALUES (?, ?, ?, ?, ?)`,
-		l.TargetID, l.SkillID, l.LinkPath, l.RawTarget, timeToSQL(&l.EstablishedAt))
+		(target_id, skill_id, link_path, raw_target, link_dev, link_ino, link_mtime, established_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		l.TargetID, l.SkillID, l.LinkPath, l.RawTarget, l.LinkDev, l.LinkIno, l.LinkMtime, timeToSQL(&l.EstablishedAt))
 	if err != nil {
 		return 0, err
 	}
@@ -57,13 +64,16 @@ func InsertManagedLink(db *sql.DB, l ManagedLink) (int64, error) {
 // owned link for a Target–Skill pair with its current raw target.
 func ReplaceManagedLink(db *sql.DB, l ManagedLink) error {
 	res, err := db.Exec(`INSERT INTO managed_links
-		(target_id, skill_id, link_path, raw_target, established_at)
-		VALUES (?, ?, ?, ?, ?)
+		(target_id, skill_id, link_path, raw_target, link_dev, link_ino, link_mtime, established_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT (target_id, skill_id) DO UPDATE SET
 			link_path = excluded.link_path,
 			raw_target = excluded.raw_target,
+			link_dev = excluded.link_dev,
+			link_ino = excluded.link_ino,
+			link_mtime = excluded.link_mtime,
 			established_at = excluded.established_at`,
-		l.TargetID, l.SkillID, l.LinkPath, l.RawTarget, timeToSQL(&l.EstablishedAt))
+		l.TargetID, l.SkillID, l.LinkPath, l.RawTarget, l.LinkDev, l.LinkIno, l.LinkMtime, timeToSQL(&l.EstablishedAt))
 	if err != nil {
 		return err
 	}
@@ -76,7 +86,7 @@ func ReplaceManagedLink(db *sql.DB, l ManagedLink) error {
 // ListManagedLinksByTarget returns one Target's ledger rows ordered by the
 // Skill slug, each with the Skill's current slug resolved.
 func ListManagedLinksByTarget(db *sql.DB, targetID int64) ([]ManagedLinkByTargetSkill, error) {
-	rows, err := db.Query(`SELECT ml.skill_id, s.slug, ml.link_path, ml.raw_target
+	rows, err := db.Query(`SELECT ml.skill_id, s.slug, ml.link_path, ml.raw_target, ml.link_dev, ml.link_ino, ml.link_mtime
 		FROM managed_links ml JOIN skills s ON s.id = ml.skill_id
 		WHERE ml.target_id = ? ORDER BY s.slug, s.id`, targetID)
 	if err != nil {
@@ -86,7 +96,7 @@ func ListManagedLinksByTarget(db *sql.DB, targetID int64) ([]ManagedLinkByTarget
 	var out []ManagedLinkByTargetSkill
 	for rows.Next() {
 		var l ManagedLinkByTargetSkill
-		if err := rows.Scan(&l.SkillID, &l.Slug, &l.LinkPath, &l.RawTarget); err != nil {
+		if err := rows.Scan(&l.SkillID, &l.Slug, &l.LinkPath, &l.RawTarget, &l.LinkDev, &l.LinkIno, &l.LinkMtime); err != nil {
 			return nil, err
 		}
 		out = append(out, l)
@@ -125,6 +135,9 @@ type LinkIntent struct {
 	Action    string
 	LinkPath  string
 	RawTarget string
+	LinkDev   uint64
+	LinkIno   uint64
+	LinkMtime int64
 	SlotName  string
 	Phase     string
 	CreatedAt time.Time
@@ -137,9 +150,9 @@ func InsertLinkIntent(db *sql.DB, i LinkIntent) (int64, error) {
 		phase = LinkPhasePlanned
 	}
 	res, err := db.Exec(`INSERT INTO link_intents
-		(target_id, skill_id, action, link_path, raw_target, slot_name, phase, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		i.TargetID, i.SkillID, i.Action, i.LinkPath, i.RawTarget, i.SlotName, phase, timeToSQL(&i.CreatedAt))
+		(target_id, skill_id, action, link_path, raw_target, link_dev, link_ino, link_mtime, slot_name, phase, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		i.TargetID, i.SkillID, i.Action, i.LinkPath, i.RawTarget, i.LinkDev, i.LinkIno, i.LinkMtime, i.SlotName, phase, timeToSQL(&i.CreatedAt))
 	if err != nil {
 		return 0, err
 	}
@@ -150,6 +163,20 @@ func InsertLinkIntent(db *sql.DB, i LinkIntent) (int64, error) {
 // progressed, so recovery converges from the persisted slot and phase.
 func SetLinkIntentPhase(db *sql.DB, id int64, phase string) error {
 	return SetLinkIntentSlot(db, id, "", phase)
+}
+
+// SetLinkIntentIdentity records the symlink identity sampled at create
+// time, or the Managed Link identity a remove must re-verify.
+func SetLinkIntentIdentity(db *sql.DB, id int64, dev, ino uint64, mtime int64) error {
+	res, err := db.Exec(`UPDATE link_intents SET link_dev = ?, link_ino = ?, link_mtime = ? WHERE id = ?`,
+		dev, ino, mtime, id)
+	if err != nil {
+		return err
+	}
+	if n, _ := res.RowsAffected(); n != 1 {
+		return sql.ErrNoRows
+	}
+	return nil
 }
 
 // SetLinkIntentSlot records the private isolation directory (when name is
@@ -181,13 +208,16 @@ func FinalizeCreateLedger(db *sql.DB, l ManagedLink, intentID int64) error {
 	}
 	defer tx.Rollback()
 	if _, err := tx.Exec(`INSERT INTO managed_links
-		(target_id, skill_id, link_path, raw_target, established_at)
-		VALUES (?, ?, ?, ?, ?)
+		(target_id, skill_id, link_path, raw_target, link_dev, link_ino, link_mtime, established_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT (target_id, skill_id) DO UPDATE SET
 			link_path = excluded.link_path,
 			raw_target = excluded.raw_target,
+			link_dev = excluded.link_dev,
+			link_ino = excluded.link_ino,
+			link_mtime = excluded.link_mtime,
 			established_at = excluded.established_at`,
-		l.TargetID, l.SkillID, l.LinkPath, l.RawTarget, timeToSQL(&l.EstablishedAt)); err != nil {
+		l.TargetID, l.SkillID, l.LinkPath, l.RawTarget, l.LinkDev, l.LinkIno, l.LinkMtime, timeToSQL(&l.EstablishedAt)); err != nil {
 		return err
 	}
 	if _, err := tx.Exec(`DELETE FROM link_intents WHERE id = ?`, intentID); err != nil {
@@ -239,7 +269,7 @@ func ListOpenLinkIntentsBySkill(db *sql.DB, skillID int64) ([]LinkIntent, error)
 }
 
 func listLinkIntents(db *sql.DB, where string, args ...any) ([]LinkIntent, error) {
-	rows, err := db.Query(`SELECT id, target_id, skill_id, action, link_path, raw_target, slot_name, phase, created_at
+	rows, err := db.Query(`SELECT id, target_id, skill_id, action, link_path, raw_target, link_dev, link_ino, link_mtime, slot_name, phase, created_at
 		FROM link_intents`+where+` ORDER BY id`, args...)
 	if err != nil {
 		return nil, err
@@ -249,7 +279,7 @@ func listLinkIntents(db *sql.DB, where string, args ...any) ([]LinkIntent, error
 	for rows.Next() {
 		var i LinkIntent
 		var created string
-		if err := rows.Scan(&i.ID, &i.TargetID, &i.SkillID, &i.Action, &i.LinkPath, &i.RawTarget, &i.SlotName, &i.Phase, &created); err != nil {
+		if err := rows.Scan(&i.ID, &i.TargetID, &i.SkillID, &i.Action, &i.LinkPath, &i.RawTarget, &i.LinkDev, &i.LinkIno, &i.LinkMtime, &i.SlotName, &i.Phase, &created); err != nil {
 			return nil, err
 		}
 		if i.CreatedAt, err = time.Parse(time.RFC3339Nano, created); err != nil {

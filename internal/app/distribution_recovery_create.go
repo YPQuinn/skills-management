@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"time"
@@ -9,35 +10,42 @@ import (
 	"skillctl/internal/state"
 )
 
-// resolveCreateIntent converges one unfinished create from the final slug
-// only: missing clears the intent; the exact expected symlink completes
-// the ledger; any other entry is preserved and the intent ends as a
-// conflict. Create uses no visible slot (decision 06 / symlinkat).
+// resolveCreateIntent first retires only proven staging, then reconciles
+// the live slug against the pre-publication proof. Unknown staging blocks
+// recovery without deleting its receipt or claiming the live entry.
 func (a *App) resolveCreateIntent(it state.LinkIntent) error {
 	site, err := a.loadIntentSite(it)
 	if err != nil || site == nil {
 		return err
 	}
-	kind, raw, err := distribution.ProbeLink(site.target.Path, site.slug)
-	if os.IsNotExist(err) {
+	if it.SlotName != "" {
+		if err := distribution.DiscardCreateStaging(site.target.Path, it.SlotName, intentProof(it)); err != nil {
+			return Errorf(CodeRecovery, "preserving create intent %d staging %s: %v", it.ID, it.SlotName, err)
+		}
+	}
+	got, err := distribution.ProbeSymlink(site.target.Path, site.slug)
+	if errors.Is(err, os.ErrNotExist) {
 		return state.DeleteLinkIntent(a.db, it.ID)
 	}
 	if err != nil {
+		if errors.Is(err, distribution.ErrNotSymlink) || errors.Is(err, distribution.ErrEntryChanged) {
+			return a.endCreateConflict(it)
+		}
 		return nil
 	}
-	expected := distribution.ExpectedPath(site.storeRoot, site.slug)
-	if kind == distribution.KindSymlink && raw == expected {
-		return a.finalizeCreateIntent(site, it, raw)
+	proof := intentProof(it)
+	if !proof.Proven() || !proof.Matches(got) {
+		return a.endCreateConflict(it)
 	}
-	return a.endCreateConflict(it)
+	return a.finalizeCreateIntent(site, it, proof)
 }
 
-func (a *App) finalizeCreateIntent(site *intentSite, it state.LinkIntent, raw string) error {
+func (a *App) finalizeCreateIntent(site *intentSite, it state.LinkIntent, proof distribution.LinkProof) error {
 	now := time.Now().UTC()
 	if err := state.FinalizeCreateLedger(a.db, state.ManagedLink{
 		TargetID: it.TargetID, SkillID: it.SkillID,
 		LinkPath:  filepath.Join(site.target.Path, site.slug),
-		RawTarget: raw, EstablishedAt: now,
+		RawTarget: proof.Raw, LinkDev: proof.Dev, LinkIno: proof.Ino, LinkMtime: proof.Mtime, EstablishedAt: now,
 	}, it.ID); err != nil {
 		return Errorf(CodeInternal, "recovering create intent %d: %v", it.ID, err)
 	}

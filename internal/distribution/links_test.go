@@ -1,6 +1,7 @@
 package distribution
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -52,12 +53,17 @@ func TestInspectMatrix(t *testing.T) {
 		t.Fatalf("missing: %+v", entries[0])
 	}
 
-	// managed linked: symlink matching its ledger record to the Store Skill
+	// managed linked: symlink matching its recorded identity and raw target
 	raw := filepath.Join(store, "demo")
 	if err := os.Symlink(raw, filepath.Join(container, "demo")); err != nil {
 		t.Fatal(err)
 	}
-	entries, err = Inspect(container, []Relation{{Slug: "demo", LedgerRaw: raw}}, store)
+	got, err := ProbeSymlink(container, "demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	owned := Relation{Slug: "demo", LedgerRaw: raw, LedgerDev: got.Dev, LedgerIno: got.Ino, LedgerMtime: got.Mtime}
+	entries, err = Inspect(container, []Relation{owned}, store)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +84,7 @@ func TestInspectMatrix(t *testing.T) {
 	if err := os.RemoveAll(filepath.Join(store, "demo")); err != nil {
 		t.Fatal(err)
 	}
-	entries, err = Inspect(container, []Relation{{Slug: "demo", LedgerRaw: raw}}, store)
+	entries, err = Inspect(container, []Relation{owned}, store)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -114,13 +120,75 @@ func TestInspectMatrix(t *testing.T) {
 	}
 }
 
+// TestInspectSameRawReplacementIsNotManaged proves leftover ledger state
+// is not ownership: a new symlink with the same raw target, or a migrated
+// row with zero identity, stays unmanaged.
+func TestInspectSameRawReplacementIsNotManaged(t *testing.T) {
+	base := physicalTemp(t)
+	store := filepath.Join(base, "store")
+	container := filepath.Join(base, "skills")
+	if err := os.MkdirAll(store, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(container, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeStoreSkill(t, store, "demo")
+	raw := filepath.Join(store, "demo")
+	link := filepath.Join(container, "demo")
+	if err := os.Symlink(raw, link); err != nil {
+		t.Fatal(err)
+	}
+	got, err := ProbeSymlink(container, "demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	rel := Relation{Slug: "demo", LedgerRaw: raw, LedgerDev: got.Dev, LedgerIno: got.Ino, LedgerMtime: got.Mtime}
+	entries, err := Inspect(container, []Relation{rel}, store)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if entries[0].Observed != ObservedLinked || !entries[0].Managed {
+		t.Fatalf("original: %+v", entries[0])
+	}
+
+	if err := os.Remove(link); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(raw, link); err != nil {
+		t.Fatal(err)
+	}
+	got2, err := ProbeSymlink(container, "demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got2.Dev == rel.LedgerDev && got2.Ino == rel.LedgerIno && got2.Mtime == rel.LedgerMtime {
+		t.Fatal("replacement reused the recorded identity")
+	}
+	entries, err = Inspect(container, []Relation{rel}, store)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if entries[0].Observed != ObservedConflict || entries[0].Managed || !entries[0].Adoptable {
+		t.Fatalf("same-raw replacement: %+v", entries[0])
+	}
+
+	entries, err = Inspect(container, []Relation{{Slug: "demo", LedgerRaw: raw}}, store)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if entries[0].Managed || entries[0].Observed != ObservedConflict {
+		t.Fatalf("zero identity: %+v", entries[0])
+	}
+}
+
 func TestCreateLinkNoOverwrite(t *testing.T) {
 	base := physicalTemp(t)
 	container := filepath.Join(base, "skills")
 	raw := filepath.Join(base, "store", "demo")
 
 	// the missing container is created
-	if err := CreateLink(container, "demo", raw); err != nil {
+	if _, err := createTestLink(t, container, "demo", raw); err != nil {
 		t.Fatal(err)
 	}
 	got, err := os.Readlink(filepath.Join(container, "demo"))
@@ -133,8 +201,7 @@ func TestCreateLinkNoOverwrite(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(container, "other"), before, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	err = CreateLink(container, "other", raw)
-	if err != ErrEntryExists {
+	if _, err := createTestLink(t, container, "other", raw); err != ErrEntryExists {
 		t.Fatalf("existing entry: %v", err)
 	}
 	after, err := os.ReadFile(filepath.Join(container, "other"))
@@ -146,7 +213,7 @@ func TestCreateLinkNoOverwrite(t *testing.T) {
 	if err := os.Symlink("elsewhere", filepath.Join(container, "link")); err != nil {
 		t.Fatal(err)
 	}
-	if err := CreateLink(container, "link", raw); err != ErrEntryExists {
+	if _, err := createTestLink(t, container, "link", raw); err != ErrEntryExists {
 		t.Fatalf("existing symlink: %v", err)
 	}
 	if got, _ := os.Readlink(filepath.Join(container, "link")); got != "elsewhere" {
@@ -158,12 +225,10 @@ func TestRemoveManagedLink(t *testing.T) {
 	base := physicalTemp(t)
 	container := filepath.Join(base, "skills")
 	raw := filepath.Join(base, "store", "demo")
-	if err := CreateLink(container, "demo", raw); err != nil {
-		t.Fatal(err)
-	}
+	proof := mustCreateLink(t, container, "demo", raw)
 
 	// a matching symlink is removed
-	rr, err := RemoveManagedLink(container, "demo", raw, mustIsolation(t))
+	rr, err := RemoveManagedLink(container, "demo", proof, mustIsolation(t))
 	if err != nil || rr != RemoveDone {
 		t.Fatalf("remove: %v, %v", rr, err)
 	}
@@ -172,7 +237,7 @@ func TestRemoveManagedLink(t *testing.T) {
 	}
 
 	// a missing entry reports absent
-	rr, err = RemoveManagedLink(container, "demo", raw, mustIsolation(t))
+	rr, err = RemoveManagedLink(container, "demo", proof, mustIsolation(t))
 	if err != nil || rr != RemoveAbsent {
 		t.Fatalf("absent: %v, %v", rr, err)
 	}
@@ -181,7 +246,7 @@ func TestRemoveManagedLink(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(container, "demo"), []byte("mine"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	rr, err = RemoveManagedLink(container, "demo", raw, mustIsolation(t))
+	rr, err = RemoveManagedLink(container, "demo", proof, mustIsolation(t))
 	if err != nil || rr != RemoveMismatch {
 		t.Fatalf("mismatch: %v, %v", rr, err)
 	}
@@ -196,7 +261,7 @@ func TestRemoveManagedLink(t *testing.T) {
 	if err := os.Symlink("elsewhere", filepath.Join(container, "demo")); err != nil {
 		t.Fatal(err)
 	}
-	rr, err = RemoveManagedLink(container, "demo", raw, mustIsolation(t))
+	rr, err = RemoveManagedLink(container, "demo", proof, mustIsolation(t))
 	if err != nil || rr != RemoveMismatch {
 		t.Fatalf("different symlink: %v, %v", rr, err)
 	}
@@ -219,8 +284,8 @@ func TestProbeAdoption(t *testing.T) {
 		t.Fatal(err)
 	}
 	got, err := ProbeAdoption(container, "demo", expected)
-	if err != nil || got != raw {
-		t.Fatalf("adopt: %q, %v", got, err)
+	if err != nil || got.Raw != raw {
+		t.Fatalf("adopt: %+v, %v", got, err)
 	}
 
 	// a file cannot be adopted
@@ -236,5 +301,58 @@ func TestProbeAdoption(t *testing.T) {
 	}
 	if _, err := ProbeAdoption(container, "wrong", expected); err == nil {
 		t.Fatal("wrong-target adoption must fail")
+	}
+}
+
+func TestRemoveSameRawReplacementIsNotDeleted(t *testing.T) {
+	base := physicalTemp(t)
+	container := filepath.Join(base, "skills")
+	raw := filepath.Join(base, "store", "demo")
+	proof := mustCreateLink(t, container, "demo", raw)
+	replaceSameRaw(t, filepath.Join(container, "demo"), raw)
+
+	rr, err := RemoveManagedLink(container, "demo", proof, mustIsolation(t))
+	if err != nil || rr != RemoveMismatch {
+		t.Fatalf("same-raw replacement: %v, %v", rr, err)
+	}
+	if got, _ := os.Readlink(filepath.Join(container, "demo")); got != raw {
+		t.Fatal("replacement must be preserved")
+	}
+}
+
+func TestFinishIsolatedRemoveSameRawReplacementRestores(t *testing.T) {
+	base := physicalTemp(t)
+	container := filepath.Join(base, "skills")
+	raw := filepath.Join(base, "store", "demo")
+	proof := mustCreateLink(t, container, "demo", raw)
+	iso := mustIsolation(t)
+	if err := CreateIsolationDir(container, iso); err != nil {
+		t.Fatal(err)
+	}
+	if err := IsolateInto(container, "demo", iso); err != nil {
+		t.Fatal(err)
+	}
+	replaceSameRaw(t, filepath.Join(container, iso, IsolatedEntry), raw)
+
+	rr, err := FinishIsolatedRemove(container, "demo", proof, iso)
+	if err != nil || rr != RemoveMismatch {
+		t.Fatalf("isolated same-raw replacement: %v, %v", rr, err)
+	}
+	if got, _ := os.Readlink(filepath.Join(container, "demo")); got != raw {
+		t.Fatal("replacement must be restored onto the slug")
+	}
+}
+
+func TestProbeSymlinkDetectsChangeDuringRead(t *testing.T) {
+	base := physicalTemp(t)
+	container := filepath.Join(base, "skills")
+	raw := filepath.Join(base, "store", "demo")
+	mustCreateLink(t, container, "demo", raw)
+	testAfterSymlinkStat = func() {
+		replaceSameRaw(t, filepath.Join(container, "demo"), raw)
+	}
+	t.Cleanup(func() { testAfterSymlinkStat = nil })
+	if _, err := ProbeSymlink(container, "demo"); !errors.Is(err, ErrEntryChanged) {
+		t.Fatalf("changed during read: %v", err)
 	}
 }

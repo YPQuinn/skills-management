@@ -10,16 +10,14 @@ func TestRemoveOccupiedIsolationSlot(t *testing.T) {
 	base := physicalTemp(t)
 	container := filepath.Join(base, "skills")
 	raw := filepath.Join(base, "store", "demo")
-	if err := CreateLink(container, "demo", raw); err != nil {
-		t.Fatal(err)
-	}
+	proof := mustCreateLink(t, container, "demo", raw)
 	slotName := mustIsolation(t)
 	slot := filepath.Join(container, slotName)
 	if err := os.WriteFile(slot, []byte("foreign-slot"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
-	rr, err := RemoveManagedLink(container, "demo", raw, slotName)
+	rr, err := RemoveManagedLink(container, "demo", proof, slotName)
 	if err == nil || rr != RemoveAbsent {
 		t.Fatalf("occupied slot must fail closed: %v, %v", rr, err)
 	}
@@ -47,9 +45,9 @@ func TestRemoveRestoreDoesNotOverwrite(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rr, err := RemoveManagedLink(container, "demo", raw, slotName)
-	if err == nil || rr != RemoveAbsent {
-		t.Fatalf("restore must not overwrite: %v, %v", rr, err)
+	rr, err := RemoveManagedLink(container, "demo", dummyProof(raw), slotName)
+	if err != nil || rr != RemoveMismatch {
+		t.Fatalf("foreign live entry: %v, %v", rr, err)
 	}
 	if data, err := os.ReadFile(filepath.Join(container, "demo")); err != nil || string(data) != "live-foreign" {
 		t.Fatalf("live entry overwritten: %q, %v", data, err)
@@ -77,7 +75,7 @@ func TestFinishIsolatedRemoveRestoreDoesNotOverwrite(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rr, err := FinishIsolatedRemove(container, "demo", raw, iso)
+	rr, err := FinishIsolatedRemove(container, "demo", dummyProof(raw), iso)
 	if err == nil || rr != RemoveAbsent {
 		t.Fatalf("restore must not overwrite: %v, %v", rr, err)
 	}
@@ -119,10 +117,10 @@ func TestPinnedHandleRejectsPrefixSymlink(t *testing.T) {
 	if _, err := Inspect(container, []Relation{{Slug: "demo", LedgerRaw: raw}}, store); err == nil {
 		t.Fatal("inspect must refuse a prefix symlink")
 	}
-	if err := CreateLink(container, "other", raw); err == nil {
+	if _, err := createTestLink(t, container, "other", raw); err == nil {
 		t.Fatal("create must refuse a prefix symlink")
 	}
-	if _, err := RemoveManagedLink(container, "demo", raw, mustIsolation(t)); err == nil {
+	if _, err := RemoveManagedLink(container, "demo", dummyProof(raw), mustIsolation(t)); err == nil {
 		t.Fatal("remove must refuse a prefix symlink")
 	}
 	if _, err := ProbeAdoption(container, "demo", raw); err == nil {

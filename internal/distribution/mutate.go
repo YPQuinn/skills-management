@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"golang.org/x/sys/unix"
-
 	"skillctl/internal/source"
 )
 
@@ -33,24 +31,6 @@ func EnsureContainer(containerPath string) error {
 		return err
 	}
 	return container.Close()
-}
-
-// CreateLink writes the Managed Link with symlinkat on the pinned Target
-// directory fd. The call is atomic and fails with ErrEntryExists instead
-// of overwriting. There is no visible temporary name.
-func CreateLink(containerPath, slug, rawTarget string) error {
-	container, err := openContainerHandle(containerPath, true)
-	if err != nil {
-		return err
-	}
-	defer container.Close()
-	if err := container.symlink(rawTarget, slug); err != nil {
-		if errors.Is(err, unix.EEXIST) {
-			return ErrEntryExists
-		}
-		return fmt.Errorf("creating the link: %v", err)
-	}
-	return nil
 }
 
 type RemoveResult int
@@ -144,9 +124,10 @@ func DiscardIsolation(containerPath, isolation string) error {
 }
 
 // FinishIsolatedRemove verifies IsolatedEntry through the pinned isolation
-// fd, then unlinks only that name. A mismatch restores onto the slug
-// without overwrite. Unproven isolation contents are never deleted.
-func FinishIsolatedRemove(containerPath, slug, rawTarget, isolation string) (RemoveResult, error) {
+// fd against the recorded identity, then unlinks only that name. A
+// mismatch restores onto the slug without overwrite. Unproven isolation
+// contents are never deleted.
+func FinishIsolatedRemove(containerPath, slug string, proof LinkProof, isolation string) (RemoveResult, error) {
 	parent, iso, err := openIsolation(containerPath, isolation)
 	if errors.Is(err, os.ErrNotExist) {
 		return RemoveAbsent, nil
@@ -156,17 +137,17 @@ func FinishIsolatedRemove(containerPath, slug, rawTarget, isolation string) (Rem
 	}
 	defer parent.Close()
 	defer iso.Close()
-	kind, raw, err := probeEntry(iso, IsolatedEntry)
+	got, err := iso.probeStableSymlink(IsolatedEntry)
 	if errors.Is(err, os.ErrNotExist) {
 		removeEmptyIsolation(parent, isolation)
 		return RemoveAbsent, nil
 	}
-	if err != nil {
+	if err != nil && !errors.Is(err, ErrEntryChanged) && !errors.Is(err, ErrNotSymlink) {
 		return RemoveAbsent, fmt.Errorf("verifying isolated %s: %v", slug, err)
 	}
-	if kind != KindSymlink || raw != rawTarget {
-		if err := iso.renameTo(IsolatedEntry, parent, slug); err != nil {
-			return RemoveAbsent, fmt.Errorf("restoring changed entry %s without overwrite: %v", slug, err)
+	if err != nil || !proof.Matches(got) {
+		if rerr := iso.renameTo(IsolatedEntry, parent, slug); rerr != nil {
+			return RemoveAbsent, fmt.Errorf("restoring changed entry %s without overwrite: %v", slug, rerr)
 		}
 		removeEmptyIsolation(parent, isolation)
 		return RemoveMismatch, nil
@@ -178,7 +159,16 @@ func FinishIsolatedRemove(containerPath, slug, rawTarget, isolation string) (Rem
 	return RemoveDone, nil
 }
 
-func RemoveManagedLink(containerPath, slug, rawTarget, isolation string) (RemoveResult, error) {
+func RemoveManagedLink(containerPath, slug string, proof LinkProof, isolation string) (RemoveResult, error) {
+	if err := VerifyLink(containerPath, slug, proof); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return RemoveAbsent, nil
+		}
+		if errors.Is(err, ErrLinkMismatch) || errors.Is(err, ErrEntryChanged) {
+			return RemoveMismatch, nil
+		}
+		return RemoveAbsent, err
+	}
 	if err := CreateIsolationDir(containerPath, isolation); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return RemoveAbsent, nil
@@ -192,7 +182,7 @@ func RemoveManagedLink(containerPath, slug, rawTarget, isolation string) (Remove
 		}
 		return RemoveAbsent, err
 	}
-	return FinishIsolatedRemove(containerPath, slug, rawTarget, isolation)
+	return FinishIsolatedRemove(containerPath, slug, proof, isolation)
 }
 
 func ProbeLink(containerPath, slug string) (kind, raw string, err error) {
@@ -204,27 +194,36 @@ func ProbeLink(containerPath, slug string) (kind, raw string, err error) {
 	return probeEntry(container, slug)
 }
 
-func ProbeAdoption(containerPath, slug, expectedPath string) (string, error) {
+// ProbeSymlink reads one Target symlink's raw target and physical identity
+// through the pinned container fd, refusing the sample when the entry
+// changes between the paired reads.
+func ProbeSymlink(containerPath, slug string) (LinkProof, error) {
 	container, err := openContainerHandle(containerPath, false)
 	if err != nil {
-		return "", fmt.Errorf("opening the Target container: %v", err)
+		return LinkProof{}, err
 	}
 	defer container.Close()
-	kind, raw, err := probeEntry(container, slug)
+	return container.probeStableSymlink(slug)
+}
+
+func ProbeAdoption(containerPath, slug, expectedPath string) (LinkProof, error) {
+	container, err := openContainerHandle(containerPath, false)
 	if err != nil {
-		return "", fmt.Errorf("inspecting the link: %v", err)
+		return LinkProof{}, fmt.Errorf("opening the Target container: %v", err)
 	}
-	if kind != KindSymlink {
-		return "", fmt.Errorf("the entry is not a symlink")
+	defer container.Close()
+	got, err := container.probeStableSymlink(slug)
+	if err != nil {
+		return LinkProof{}, fmt.Errorf("inspecting the link: %v", err)
 	}
-	matches, err := container.targetMatches(raw, expectedPath)
+	matches, err := container.targetMatches(got.Raw, expectedPath)
 	if err != nil || !matches {
-		return "", fmt.Errorf("the link does not point at the Store Skill %s", expectedPath)
+		return LinkProof{}, fmt.Errorf("the link does not point at the Store Skill %s", expectedPath)
 	}
 	if err := source.ValidateSkillDir(expectedPath); err != nil {
-		return "", fmt.Errorf("the link destination is not a Skill directory")
+		return LinkProof{}, fmt.Errorf("the link destination is not a Skill directory")
 	}
-	return raw, nil
+	return got, nil
 }
 
 func probeEntry(container *containerHandle, name string) (kind, raw string, err error) {

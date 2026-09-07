@@ -180,16 +180,7 @@ func TestPrepareRestoreReplaceConvergesAfterRecoveryMovedBack(t *testing.T) {
 	}
 	// the old digest alone never authorizes the resume: a live tree that
 	// does not carry the proof's recovery identity is preserved
-	if err := os.RemoveAll(liveDir(t, s, "alpha")); err != nil {
-		t.Fatal(err)
-	}
-	foreign := t.TempDir()
-	if err := copyTreeForTest(foreign, old.dir); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Rename(foreign, liveDir(t, s, "alpha")); err != nil {
-		t.Fatal(err)
-	}
+	replaceDirWithSiblingCopy(t, liveDir(t, s, "alpha"), old.dir)
 	_, err = New(s.Root).PrepareRestore(context.Background(), op)
 	if !errors.Is(err, ErrAmbiguous) {
 		t.Fatalf("digest-only resume: got %v, want ErrAmbiguous", err)

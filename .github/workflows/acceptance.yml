@@ -57,7 +57,7 @@ jobs:
   darwin-arm64-functional:
     name: darwin/arm64 functional
     needs: candidate
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - name: same candidate
@@ -105,7 +105,7 @@ jobs:
   darwin-amd64-archive-smoke:
     name: darwin/amd64 archive smoke
     needs: candidate
-    runs-on: macos-13
+    runs-on: macos-15-intel
     steps:
       - uses: actions/checkout@v4
       - name: same candidate
