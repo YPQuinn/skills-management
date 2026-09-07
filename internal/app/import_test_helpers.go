@@ -63,6 +63,14 @@ func (c countingObserver) Observe(ctx context.Context, loc source.Locator, workD
 	return c.Observer.Observe(ctx, loc, workDir)
 }
 
+func (c countingObserver) ObserveListing(ctx context.Context, loc source.Locator, workDir string) (source.Observation, error) {
+	*c.n++
+	if lo, ok := c.Observer.(listingObserver); ok {
+		return lo.ObserveListing(ctx, loc, workDir)
+	}
+	return c.Observer.Observe(ctx, loc, workDir)
+}
+
 // findEntry returns the Inventory entry at relDir.
 func findEntry(t *testing.T, src *source.Source, relDir string) source.Entry {
 	t.Helper()

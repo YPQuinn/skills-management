@@ -7,14 +7,19 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"skillctl/internal/lock"
 )
 
-// ensureCache clones or refreshes the bare partial clone for one normalized
-// location. The per-cache lock serializes checks across processes; a held
-// lock fails immediately as ErrLocked.
-func ensureCache(ctx context.Context, loc Locator, cache string) error {
+// ensureCommit makes commit reachable in the per-location bare cache.
+// If the cache already has that commit, it does not talk to the remote.
+// Otherwise it clones a single branch (no tags) or fetches only that
+// commit. It never fetches every branch and tag, and it does not use a
+// blobless partial clone: lazy promisor fetches open one HTTPS connection
+// per missing blob and fail under LibreSSL against GitHub.
+func ensureCommit(ctx context.Context, loc Locator, cache, commit string) error {
 	if err := os.MkdirAll(filepath.Dir(cache), 0o755); err != nil {
 		return err
 	}
@@ -24,37 +29,65 @@ func ensureCache(ctx context.Context, loc Locator, cache string) error {
 	}
 	defer held.Unlock()
 
-	if _, err := os.Stat(filepath.Join(cache, "HEAD")); err == nil {
-		_, err := runGitAuth(ctx, loc, "-C", cache, "fetch", "--prune", "origin",
-			"+refs/heads/*:refs/remotes/origin/*", "+refs/tags/*:refs/tags/*")
-		if err != nil {
+	if cacheExists(cache) {
+		if commitPresent(ctx, cache, commit) {
+			tracef("cache hit %s", commit[:min(12, len(commit))])
+			return nil
+		}
+		if err := fetchCommit(ctx, loc, cache, commit); err != nil {
 			return fmt.Errorf("refreshing %s: %v", loc.Location, err)
 		}
 		return nil
 	}
-	if err := os.MkdirAll(cache, 0o755); err != nil {
+	if err := cloneBare(ctx, loc, cache); err != nil {
 		return err
 	}
-	if _, err := runGitAuth(ctx, loc, "clone", "--bare", "--filter=blob:none", loc.Location, cache); err != nil {
-		os.RemoveAll(cache)
-		return fmt.Errorf("cloning %s: %v", loc.Location, err)
+	if commitPresent(ctx, cache, commit) {
+		return nil
+	}
+	if err := fetchCommit(ctx, loc, cache, commit); err != nil {
+		return fmt.Errorf("refreshing %s: %v", loc.Location, err)
 	}
 	return nil
 }
 
-// ensurePinnedCommit makes a pinned full-SHA ref reachable in the cache:
-// fetching by SHA works on GitHub and similar hosts; when the server cannot
-// serve it, the commit must already be present from the ref fetch.
-func ensurePinnedCommit(ctx context.Context, cache string, loc Locator) error {
-	ref := loc.Ref
-	if _, err := runGitAuth(ctx, loc, "-C", cache, "fetch", "origin", ref); err != nil {
-		if _, verifyErr := runGit(ctx, "-C", cache, "rev-parse", ref+"^{commit}"); verifyErr != nil {
-			return fmt.Errorf("commit %s is not reachable in the repository", ref)
-		}
+func cacheExists(cache string) bool {
+	_, err := os.Stat(filepath.Join(cache, "HEAD"))
+	return err == nil
+}
+
+func commitPresent(ctx context.Context, cache, commit string) bool {
+	_, err := runGit(ctx, "-C", cache, "rev-parse", "--verify", "--quiet", commit+"^{commit}")
+	return err == nil
+}
+
+func cloneBare(ctx context.Context, loc Locator, cache string) error {
+	if err := os.MkdirAll(cache, 0o755); err != nil {
+		return err
 	}
-	if _, err := runGit(ctx, "-C", cache, "rev-parse", ref+"^{commit}"); err != nil {
-		return fmt.Errorf("commit %s is not reachable in the repository", ref)
+	start := time.Now()
+	args := []string{"clone", "--bare", "--single-branch", "--no-tags"}
+	if ref := loc.Ref; ref != "" && !isFullSHA(ref) && !strings.Contains(ref, "/") {
+		args = append(args, "--branch", ref)
 	}
+	args = append(args, loc.Location, cache)
+	if _, err := runGitAuth(ctx, loc, args...); err != nil {
+		os.RemoveAll(cache)
+		return fmt.Errorf("cloning %s: %v", loc.Location, err)
+	}
+	tracef("clone %s", time.Since(start).Round(time.Millisecond))
+	return nil
+}
+
+func fetchCommit(ctx context.Context, loc Locator, cache, commit string) error {
+	start := time.Now()
+	if _, err := runGitAuth(ctx, loc, "-C", cache, "fetch", "--no-tags", "origin", commit); err != nil {
+		return err
+	}
+	if !commitPresent(ctx, cache, commit) {
+		return fmt.Errorf("commit %s is not reachable in the repository", commit)
+	}
+	tracef("fetch %s %s", commit[:min(12, len(commit))], time.Since(start).Round(time.Millisecond))
 	return nil
 }
 

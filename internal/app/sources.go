@@ -39,6 +39,18 @@ func (d dispatchObserver) Observe(ctx context.Context, loc source.Locator, workD
 	return source.Observation{}, fmt.Errorf("unsupported Source kind %q", loc.Kind)
 }
 
+// listingObserver is the optional Git registration scan: SKILL.md only.
+type listingObserver interface {
+	ObserveListing(ctx context.Context, loc source.Locator, workDir string) (source.Observation, error)
+}
+
+func (d dispatchObserver) ObserveListing(ctx context.Context, loc source.Locator, workDir string) (source.Observation, error) {
+	if loc.Kind == source.KindGit {
+		return d.git.ObserveListing(ctx, loc, workDir)
+	}
+	return d.Observe(ctx, loc, workDir)
+}
+
 // AddSource registers one Source: the locator is normalized, the Source is
 // reached and scanned, and the whole Inventory is persisted. A Source that
 // cannot be reached and scanned is not saved. Registration never imports.
@@ -59,7 +71,7 @@ func (a *App) AddSource(ctx context.Context, in source.AddInput) (*source.Source
 		return nil, err
 	}
 	started := time.Now().UTC()
-	obs, err := a.observer.Observe(ctx, loc, a.workDir())
+	obs, err := a.observeForAdd(ctx, loc)
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
 	}
@@ -152,6 +164,15 @@ func (a *App) ResolveSourceArg(arg string) (int64, error) {
 		return 0, Errorf(CodeInternal, "resolving Source %q: %v", arg, err)
 	}
 	return id, nil
+}
+
+func (a *App) observeForAdd(ctx context.Context, loc source.Locator) (source.Observation, error) {
+	if loc.Kind == source.KindGit {
+		if lo, ok := a.observer.(listingObserver); ok {
+			return lo.ObserveListing(ctx, loc, a.workDir())
+		}
+	}
+	return a.observer.Observe(ctx, loc, a.workDir())
 }
 
 // workDir is the writable directory for Git caches and their locks, beside

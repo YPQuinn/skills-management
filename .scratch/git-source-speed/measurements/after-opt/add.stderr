@@ -1,0 +1,8 @@
+skillctl-git: git ok 1.325s -c credential.helper=<redacted> ls-remote https://github.com/mattpocock/skills.git HEAD
+skillctl-git: resolve_commit 3cca18b368ae 1.325s
+skillctl-git: git ok 2.916s -c credential.helper=<redacted> clone --bare --single-branch --no-tags https://github.com/mattpocock/skills.git /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd
+skillctl-git: clone 2.917s
+skillctl-git: git ok 8ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd rev-parse --verify --quiet 3cca18b368ae95cdbdebbff572ccafa662551015^{commit}
+skillctl-git: ensure_commit 2.925s
+skillctl-git: git ok 7ms -C /private/tmp/skillctl-dev-home/.skillctl/git-cache/2fae9b6e6dac64fd ls-tree -z -r 3cca18b368ae95cdbdebbff572ccafa662551015
+skillctl-git: discover mode=listing entries=37 issues=0 16ms
