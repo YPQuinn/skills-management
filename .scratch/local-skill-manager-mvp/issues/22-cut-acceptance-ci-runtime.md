@@ -43,3 +43,7 @@ Both functional jobs drop the `Playwright` step and its failure-artifact upload,
 225 of the 230 `internal/app` tests now call `t.Parallel()`. The five in `targets_test.go` stay serial because `setTestHome` uses `t.Setenv`. Measured on the same machine, the package goes from 134.1s to 18.9s and CPU utilization from 14% to 81%; under `-race` it finishes in 32.2s with no race reported.
 
 `internal/skillstore` was deliberately left serial. Making it parallel needs the four package-level hooks reworked into per-test state first, which is a separate change.
+
+Verification is local only so far. Runs [34100751825](https://github.com/YPQuinn/skills-management/actions/runs/34100751825) on `main` and [34102203547](https://github.com/YPQuinn/skills-management/actions/runs/34102203547) on this branch both fail in `record candidate` before any step executes, with `The job was not started because recent account payments have failed or your spending limit needs to be increased`. The `main` failure predates this branch, so it is an account billing block rather than a workflow regression. This ticket stays claimed until a real run confirms the new step timings.
+
+The billing block also reframes the cost side. The repository is private, so Actions minutes are billed and the two macOS jobs carry a 10x multiplier: `darwin/arm64 functional` and `darwin/amd64 archive smoke` together account for most of the per-push spend even though `linux/amd64 functional` dominates wall clock. Of the 115s `darwin/amd64 archive smoke` job, 55s is `setup-go` alone.
