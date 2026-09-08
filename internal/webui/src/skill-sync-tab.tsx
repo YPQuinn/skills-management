@@ -19,7 +19,9 @@ import { SyncStatePanel } from './sync-state-panel'
 import { SyncActions } from './sync-actions'
 import type { SyncActionName, SyncDialogName } from './sync-action-policy'
 import { SyncDiff } from './sync-diff'
+import { isSuccessfulSyncResult } from './sync-status-policy'
 import { useLocale } from './locale-context'
+import { useNotifySuccess } from './notify-success'
 
 interface SkillSyncTabProps {
   skill: Skill
@@ -32,6 +34,7 @@ function isAbortError(err: unknown): boolean {
 
 export function SkillSyncTab({ skill, onSkillUpdated }: SkillSyncTabProps) {
   const { t, getErrorMessage } = useLocale()
+  const notifySuccess = useNotifySuccess()
   const [dialog, setDialog] = useState<SyncDialogName | null>(null)
   const [busy, setBusy] = useState<SyncActionName | null>(null)
   const [dialogError, setDialogError] = useState<unknown | null>(null)
@@ -90,6 +93,7 @@ export function SkillSyncTab({ skill, onSkillUpdated }: SkillSyncTabProps) {
                 ? await acceptSource(skill.id)
                 : await rollbackSkill(skill.id)
         setOutcome(item)
+        if (isSuccessfulSyncResult(item.result)) notifySuccess(t('toastSynced'))
         fetchSkill(skill.id)
           .then(onSkillUpdated)
           .catch(() => {})

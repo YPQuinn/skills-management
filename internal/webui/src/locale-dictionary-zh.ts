@@ -2,6 +2,7 @@ import type { translationsEn } from './locale-dictionary-en'
 import { translationsSyncZhCN } from './locale-dictionary-sync-zh'
 import { translationsDistributionZhCN } from './locale-dictionary-distribution-zh'
 import { translationsCleanupZhCN } from './locale-dictionary-cleanup-zh'
+import { translationsChromeZhCN } from './locale-dictionary-chrome-zh'
 
 export const translationsZhCN: Record<keyof typeof translationsEn, string> = {
   // Navigation & Header
@@ -187,7 +188,6 @@ export const translationsZhCN: Record<keyof typeof translationsEn, string> = {
   alertCouldNotLoadSkill: '无法加载技能',
   tabOverview: '概览',
   tabSynchronization: '同步',
-  tabDistribution: '分发',
   labelSlug: '标识 (Slug)',
   labelCreated: '创建时间',
   labelUpdated: '更新时间',
@@ -285,7 +285,6 @@ export const translationsZhCN: Record<keyof typeof translationsEn, string> = {
   slugOverrideDialogTitle: '标识覆盖',
   slugOverrideDialogDesc: '为 "{name}"（{dir}）设置自定义标识。留空则使用默认标识。',
   btnSave: '保存',
-  btnClose: '关闭',
   statusImported: '已导入',
   statusAlreadyImported: '已存在',
   statusReplaced: '已替换',
@@ -326,6 +325,7 @@ export const translationsZhCN: Record<keyof typeof translationsEn, string> = {
   errRegisteringTargetFailed: '注册目标失败',
   errAddingAssignmentFailed: '添加分配失败',
   errDeletingAssignmentFailed: '删除分配失败',
+  ...translationsChromeZhCN,
   ...translationsSyncZhCN,
   ...translationsDistributionZhCN,
   ...translationsCleanupZhCN,

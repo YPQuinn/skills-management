@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { lstatSync, readFileSync, readlinkSync, unlinkSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
-import { chooseSelect, expectImported, initializeStore, inspectTarget, navTo, skillLink, startUI, writeSkillFixture } from './helpers'
+import { chooseSelect, expectImported, initializeStore, inspectTarget, navTo, openCreateDialog, skillLink, startUI, writeSkillFixture } from './helpers'
 
 test.describe.configure({ mode: 'serial' })
 
@@ -16,7 +16,7 @@ test('Chromium WebUI core journey against embedded skillctl', async ({ page }) =
     const sourceRoot = path.join(ui.home, 'upstream')
     writeSkillFixture(sourceRoot, 'demo')
     await navTo(page, 'Sources')
-    await expect(page.getByRole('heading', { name: 'Add a Source' })).toBeVisible()
+    await openCreateDialog(page, 'Add Source')
     await page.getByLabel('Location').fill(sourceRoot)
     await page.getByLabel('Name (optional)').fill('e2e-local')
     await page.getByRole('button', { name: 'Register and scan' }).click()
@@ -29,8 +29,9 @@ test('Chromium WebUI core journey against embedded skillctl', async ({ page }) =
     await expect(skillLink(page, 'demo')).toBeVisible()
 
     await navTo(page, 'Groups')
+    await openCreateDialog(page, 'Create Group')
     await page.getByLabel('Group Name').fill('crew')
-    await page.getByRole('button', { name: 'Create Group' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'Create Group' }).click()
     await page.getByRole('table', { name: 'Managed Groups' }).getByRole('link', { name: 'crew' }).click()
     await expect(page.getByRole('heading', { name: 'crew' })).toBeVisible()
     await chooseSelect(page, 'Select a Skill to add', /demo/)
@@ -39,10 +40,11 @@ test('Chromium WebUI core journey against embedded skillctl', async ({ page }) =
 
     const targetDir = path.join(ui.home, 'agent-skills')
     await navTo(page, 'Targets')
+    await openCreateDialog(page, 'Register Target')
     await chooseSelect(page, 'Target Type', 'Custom Directory Path')
     await page.getByLabel('Target Name').fill('editor')
     await page.getByLabel('Directory Path').fill(targetDir)
-    await page.getByRole('button', { name: 'Register Target' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'Register Target' }).click()
     await page.getByRole('table', { name: 'Registered Targets' }).getByRole('link', { name: 'editor' }).click()
     await expect(page.getByRole('heading', { name: 'editor' })).toBeVisible()
     await chooseSelect(page, 'Assignment Type', 'Group')
@@ -87,7 +89,7 @@ test('Chromium WebUI core journey against embedded skillctl', async ({ page }) =
       expect(await response.text()).toContain('already checking Source')
     }
     await expect(changed).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'BaselineSource' })).toBeVisible()
+    await expect(page.getByText('SKILL.md')).toBeVisible()
     await page.waitForLoadState('networkidle')
     const inSync = page.getByText('In sync', { exact: true }).first()
     for (let attempt = 0; attempt < 5; attempt++) {
@@ -142,6 +144,7 @@ test('WebUI recover_store rebuilds unbound Skills', async ({ page }) => {
     const sourceRoot = path.join(ui.home, 'upstream')
     writeSkillFixture(sourceRoot, 'kept')
     await navTo(page, 'Sources')
+    await openCreateDialog(page, 'Add Source')
     await page.getByLabel('Location').fill(sourceRoot)
     await page.getByRole('button', { name: 'Register and scan' }).click()
     await page.getByRole('button', { name: 'Import all' }).click()

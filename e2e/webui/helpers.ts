@@ -96,6 +96,11 @@ export async function navTo(page: Page, name: 'Skills' | 'Sources' | 'Groups' | 
   await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name, exact: true }).click()
 }
 
+export async function openCreateDialog(page: Page, triggerName: string): Promise<void> {
+  await page.getByRole('button', { name: triggerName, exact: true }).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+}
+
 export function skillLink(page: Page, name: string): Locator {
   return page.getByRole('link', { name, exact: true })
 }
@@ -123,9 +128,16 @@ export async function initializeStore(page: Page): Promise<void> {
   await expect(page.getByRole('heading', { name: 'Skills' })).toBeVisible()
 }
 
-export async function chooseSelect(page: Page, label: string, option: string): Promise<void> {
-  await page.getByLabel(label).click()
-  await page.getByRole('option', { name: option }).click()
+export async function chooseSelect(page: Page, label: string, option: string | RegExp): Promise<void> {
+  const control = page.getByLabel(label)
+  await control.click()
+  const tag = await control.evaluate((el) => el.tagName)
+  if (tag === 'INPUT' && typeof option === 'string') {
+    await control.fill(option)
+  }
+  const item = page.getByRole('option', { name: option })
+  await expect(item).toBeVisible()
+  await item.click()
 }
 
 export async function expectNoHorizontalOverflow(page: Page): Promise<void> {
@@ -155,6 +167,14 @@ export async function tabTo(page: Page, target: Locator, max = 80): Promise<void
 export async function keyboardChooseSelect(page: Page, label: string, option: string): Promise<void> {
   const trigger = page.getByLabel(label)
   await tabTo(page, trigger)
+  const tag = await trigger.evaluate((el) => el.tagName)
+  if (tag === 'INPUT') {
+    await page.keyboard.type(option)
+    const item = page.getByRole('option', { name: option })
+    await expect(item).toBeVisible()
+    await item.click()
+    return
+  }
   await page.keyboard.press('Enter')
   const item = page.getByRole('option', { name: option })
   await expect(item).toBeVisible()

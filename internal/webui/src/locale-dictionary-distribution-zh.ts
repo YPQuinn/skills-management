@@ -48,6 +48,12 @@ export const translationsDistributionZhCN = {
   staleObservation: '观察已过期：{error}',
   inspectedAtLabel: '检查于 {time}',
   distributionLastOutcome: '最近结果：{outcome}',
+  distributionNever: '尚未分发',
+  distributionStale: '观察过期',
+  toastDistributed: '分发完成',
+  termManagedLink: 'Managed Link',
+  tipManagedLink: 'Skill Manager 在目标上创建或接管的符号链接。',
+  tipDesiredSkillSet: '分发后该目标应具备的技能，来自直接分配和分组。',
   // Dry-run / result presentation
   previewTitle: '分发计划',
   previewOutcome: '预期结果：{outcome}',

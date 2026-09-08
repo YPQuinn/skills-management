@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { Button } from '@appica/ui-react/button'
+import { useParams } from 'react-router-dom'
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
-import { Spinner } from '@appica/ui-react/spinner'
-import { ArrowLeft } from '@appica/icons-react'
-import { SourceStatusBadge } from './source-status'
 import type { SourceDetail, SourceSummary } from './source-api'
 import { fetchSkills } from './skill-api'
 import type { Skill } from './skill-api'
@@ -12,12 +8,13 @@ import { SourceInventory } from './source-inventory'
 import { SourceSyncSection } from './source-sync'
 import { SourceReplaceDialog } from './source-replace-dialog'
 import { SourceFacts } from './source-facts'
-import { SourceLocationIcon } from './source-location'
 import { SourceIssuesList } from './source-issues-list'
+import { SourceDetailHeader } from './source-detail-header'
 import { useSourceImport } from './use-source-import'
+import { ListPageSkeleton } from './list-page-skeleton'
 import { useLocale } from './locale-context'
 import { ApiError } from './locale-dictionary'
-import { SourceDeleteAction } from './source-delete-action'
+import { useNotifySuccess } from './notify-success'
 
 interface ErrorEnvelope {
   error?: { message?: string }
@@ -30,6 +27,7 @@ function isAbortError(err: unknown): boolean {
 export function SourceDetailPage() {
   const { name } = useParams()
   const { t, formatTime, getErrorMessage } = useLocale()
+  const notifySuccess = useNotifySuccess()
   const [source, setSource] = useState<SourceDetail | null>(null)
   const [sourceId, setSourceId] = useState<number | null>(null)
   const [skills, setSkills] = useState<Skill[]>([])
@@ -159,7 +157,7 @@ export function SourceDetailPage() {
     )
   }
   if (!source) {
-    return <Spinner className="text-3xl text-foreground-muted" aria-label={t('ariaLoadingSource')} />
+    return <ListPageSkeleton label={t('ariaLoadingSource')} />
   }
 
   const boundSkillMap = new Map<string, Skill>()
@@ -173,43 +171,7 @@ export function SourceDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <Link
-            to="/sources"
-            className="inline-flex items-center gap-1 text-sm text-foreground-muted underline decoration-border underline-offset-2 hover:decoration-foreground"
-          >
-            <ArrowLeft className="size-4" />
-            {t('linkAllSources')}
-          </Link>
-          <h1 className="text-2xl font-bold mt-1">{source.name}</h1>
-          <p className="mt-0.5 flex items-start gap-1.5 text-sm text-foreground-muted break-all">
-            <SourceLocationIcon source={source} />
-            {/^https?:\/\//i.test(source.location) ? (
-              <a
-                href={source.location}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="min-w-0 underline decoration-border underline-offset-2 hover:decoration-foreground"
-              >
-                {source.location}
-              </a>
-            ) : (
-              <span className="min-w-0">{source.location}</span>
-            )}
-          </p>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <SourceStatusBadge available={source.available} stale={source.stale} />
-          <div className="flex flex-wrap justify-end gap-2">
-            <Button onClick={check} disabled={checking} focusableWhenDisabled>
-              {checking && <Spinner data-icon="start" currentColor className="text-[1.2em]" />}
-              {checking ? t('btnChecking') : t('btnCheckAgain')}
-            </Button>
-            {sourceId !== null && <SourceDeleteAction sourceId={sourceId} name={source.name} />}
-          </div>
-        </div>
-      </div>
+      <SourceDetailHeader source={source} sourceId={sourceId} checking={checking} onCheck={check} />
 
       {error !== null && (
         <Alert variant="error">
@@ -251,7 +213,12 @@ export function SourceDetailPage() {
         setAllowLarge={setAllowLarge}
         importing={importing}
         importResult={importResult}
-        onImport={handleImport}
+        onImport={async (options) => {
+          const res = await handleImport(options)
+          if (res !== null && res.summary.failed === 0 && res.summary.skipped_conflict === 0) {
+            notifySuccess(t('toastImported'))
+          }
+        }}
       />
 
       {sourceId !== null && <SourceSyncSection sourceId={sourceId} onSynced={loadSkills} />}

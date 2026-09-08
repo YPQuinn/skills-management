@@ -78,9 +78,12 @@ describe('Localized Accessibility Labels & TableCaptions (English & Chinese)', (
     expect(await screen.findByRole('navigation', { name: 'Main navigation' })).toBeTruthy()
     expect(await screen.findByRole('table', { name: 'Registered Sources' })).toBeTruthy()
 
+    await user.click(screen.getByRole('button', { name: 'Add Source' }))
     const combo = await screen.findByRole('combobox', { name: 'Kind' })
+    expect(combo.textContent).toContain('Local directory')
+    expect(combo.textContent).not.toMatch(/^\s*local\s*$/)
     await user.click(combo)
-    expect(await screen.findByText('Local directory')).toBeTruthy()
+    expect(await screen.findByRole('option', { name: 'Local directory' })).toBeTruthy()
   })
 
   it('renders Sources Index TableCaption and Add Source Select placeholder in Chinese', async () => {
@@ -120,9 +123,12 @@ describe('Localized Accessibility Labels & TableCaptions (English & Chinese)', (
     expect(await screen.findByRole('navigation', { name: '主导航' })).toBeTruthy()
     expect(await screen.findByRole('table', { name: '已注册来源' })).toBeTruthy()
 
+    await user.click(screen.getByRole('button', { name: '添加来源' }))
     const combo = await screen.findByRole('combobox', { name: '类型' })
+    expect(combo.textContent).toContain('本地目录')
+    expect(combo.textContent).not.toMatch(/^\s*local\s*$/)
     await user.click(combo)
-    expect(await screen.findByText('本地目录')).toBeTruthy()
+    expect(await screen.findByRole('option', { name: '本地目录' })).toBeTruthy()
   })
 
   it('renders Source Inventory TableCaption in Chinese', async () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, cleanup, waitFor } from '@testing-library/react'
+import { render, screen, cleanup, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { GroupsIndex, GroupExplorer } from './groups'
@@ -126,9 +126,10 @@ describe('Groups UI', () => {
       return mockResponse({ items: [], total: 0 })
     })
 
+    await user.click(screen.getByRole('button', { name: 'Create Group' }))
     const input = screen.getByPlaceholderText('e.g. backend-dev-tools')
     await user.type(input, 'frontend-tools')
-    await user.click(screen.getByRole('button', { name: 'Create Group' }))
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Create Group' }))
 
     await waitFor(() => expect(postCall).toHaveBeenCalled())
     const [, init] = postCall.mock.calls[0]
@@ -141,6 +142,19 @@ describe('Groups UI', () => {
     expect(screen.getByRole('link', { name: 'Go Linter' })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'SQL Checker' })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Dev Server' })).toBeTruthy()
+  })
+
+  it('shows the Skill name in the add-member trigger after selection', async () => {
+    const user = userEvent.setup()
+    renderGroups('/groups/backend-tools')
+    expect(await screen.findByRole('heading', { name: 'backend-tools' })).toBeTruthy()
+
+    const skillSelect = screen.getByRole('combobox', { name: 'Select a Skill to add' })
+    await user.click(skillSelect)
+    await user.click(await screen.findByRole('option', { name: 'Docker Formatter (docker-fmt)' }))
+
+    expect(skillSelect.textContent).toContain('Docker Formatter')
+    expect(skillSelect.textContent).not.toMatch(/^\s*12\s*$/)
   })
 
   it('removes member when remove button is clicked and sends Content-Type application/json', async () => {

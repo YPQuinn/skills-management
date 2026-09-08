@@ -81,7 +81,11 @@ export function RebindDialog({
         <AlertDialogBody className="space-y-4">
           <Field name="source">
             <FieldLabel>{t('rebindSelectSource')}</FieldLabel>
-            <Select value={sourceId} onValueChange={(v) => setSourceId(String(v))}>
+            <Select
+              value={sourceId}
+              onValueChange={(v) => setSourceId(String(v))}
+              items={Object.fromEntries(sources.map((s) => [String(s.id), s.name]))}
+            >
               <SelectTrigger aria-label={t('rebindSelectSource')}>
                 <SelectValue placeholder={t('phSelectSource')} />
               </SelectTrigger>
@@ -96,7 +100,14 @@ export function RebindDialog({
           </Field>
           <Field name="entry">
             <FieldLabel>{t('rebindSelectEntry')}</FieldLabel>
-            <Select value={entry} onValueChange={(v) => setEntry(String(v))} disabled={!detail}>
+            <Select
+              value={entry}
+              onValueChange={(v) => setEntry(String(v))}
+              disabled={!detail}
+              items={Object.fromEntries(
+                (detail?.inventory || []).map((e) => [e.relative_dir, `${e.name} (${e.relative_dir})`]),
+              )}
+            >
               <SelectTrigger aria-label={t('rebindSelectEntry')}>
                 <SelectValue placeholder={t('phSelectEntry')} />
               </SelectTrigger>

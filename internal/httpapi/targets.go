@@ -22,6 +22,8 @@ type targetJSON struct {
 	ProjectRoot string `json:"project_root,omitempty"`
 	CreatedAt   string `json:"created_at"`
 	UpdatedAt   string `json:"updated_at"`
+	LastResult  string `json:"last_result,omitempty"`
+	Stale       bool   `json:"stale,omitempty"`
 }
 
 // assignmentJSON is one Target Assignment with its resolved subject.
@@ -106,6 +108,8 @@ func newTargetJSON(t app.Target) targetJSON {
 		ProjectRoot: t.ProjectRoot,
 		CreatedAt:   t.CreatedAt.UTC().Format(time.RFC3339Nano),
 		UpdatedAt:   t.UpdatedAt.UTC().Format(time.RFC3339Nano),
+		LastResult:  t.LastResult,
+		Stale:       t.Stale,
 	}
 }
 

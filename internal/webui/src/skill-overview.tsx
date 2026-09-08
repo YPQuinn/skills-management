@@ -3,6 +3,8 @@
 import { Link } from 'react-router-dom'
 import type { Skill } from './skill-api'
 import { useLocale } from './locale-context'
+import { TermTooltip } from './term-tooltip'
+import { CopyableField, CopyablePath } from './copyable-path'
 
 export function SkillOverview({ skill }: { skill: Skill }) {
   const { t, formatTime } = useLocale()
@@ -23,12 +25,13 @@ export function SkillOverview({ skill }: { skill: Skill }) {
           <div className="font-medium mt-0.5">{formatTime(skill.updated_at)}</div>
         </div>
         <div className="border border-border rounded-xl p-4 bg-background">
-          <div className="text-foreground-muted">{t('labelStoreDigest')}</div>
-          <div className="font-mono text-xs break-all mt-0.5">{skill.store_digest || '—'}</div>
+          <CopyableField label={t('labelStoreDigest')} value={skill.store_digest} />
         </div>
         <div className="border border-border rounded-xl p-4 bg-background">
-          <div className="text-foreground-muted">{t('labelBaselineDigest')}</div>
-          <div className="font-mono text-xs break-all mt-0.5">{skill.baseline_digest || '—'}</div>
+          <CopyableField
+            label={<TermTooltip term={t('labelBaselineDigest')} tip={t('tipBaseline')} />}
+            value={skill.baseline_digest}
+          />
         </div>
       </div>
 
@@ -49,7 +52,7 @@ export function SkillOverview({ skill }: { skill: Skill }) {
             </div>
             <div>
               <div className="text-foreground-muted">{t('labelRelativeDir')}</div>
-              <div className="font-mono font-medium mt-0.5">{skill.binding.relative_dir}</div>
+              <CopyablePath value={skill.binding.relative_dir} className="mt-0.5 font-medium text-sm" />
             </div>
             <div>
               <div className="text-foreground-muted">{t('labelSourceCommit')}</div>
@@ -60,8 +63,7 @@ export function SkillOverview({ skill }: { skill: Skill }) {
               <div className="font-medium mt-0.5">{formatTime(skill.binding.imported_at)}</div>
             </div>
             <div className="sm:col-span-2">
-              <div className="text-foreground-muted">{t('labelBindingDigest')}</div>
-              <div className="font-mono text-xs break-all mt-0.5">{skill.binding.digest}</div>
+              <CopyableField label={t('labelBindingDigest')} value={skill.binding.digest} />
             </div>
           </div>
         ) : (

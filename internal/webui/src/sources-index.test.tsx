@@ -66,6 +66,7 @@ describe('SourcesIndex', () => {
 
     expect(screen.queryByText('Subpath (optional)')).toBeNull()
 
+    await user.click(screen.getByRole('button', { name: 'Add Source' }))
     const location = screen.getByPlaceholderText('/absolute/path/to/skills')
     await user.type(location, '/tmp/new-skills')
     await user.click(screen.getByRole('button', { name: /Register and scan/ }))
@@ -88,8 +89,13 @@ describe('SourcesIndex', () => {
     expect(screen.queryByText('Ref (optional)')).toBeNull()
     expect(screen.queryByRole('button', { name: 'Advanced options' })).toBeNull()
 
-    await user.click(screen.getByRole('combobox', { name: 'Kind' }))
+    await user.click(screen.getByRole('button', { name: 'Add Source' }))
+    const kindSelect = screen.getByRole('combobox', { name: 'Kind' })
+    expect(kindSelect.textContent).toContain('Local directory')
+    await user.click(kindSelect)
     await user.click(await screen.findByRole('option', { name: 'Git repository' }))
+    expect(kindSelect.textContent).toContain('Git repository')
+    expect(kindSelect.textContent).not.toMatch(/^\s*git\s*$/)
 
     expect(screen.getByRole('button', { name: 'Advanced options' })).toBeTruthy()
     expect(screen.queryByText('Subpath (optional)')).toBeNull()
@@ -130,6 +136,7 @@ describe('SourcesIndex', () => {
       return mockResponse({ items: [summary], total: 1 })
     })
 
+    await user.click(screen.getByRole('button', { name: 'Add Source' }))
     await user.type(screen.getByPlaceholderText('/absolute/path/to/skills'), '/tmp/x')
     await user.click(screen.getByRole('button', { name: /Register and scan/ }))
 
@@ -149,6 +156,7 @@ describe('SourcesIndex', () => {
       return mockResponse(detail)
     })
 
+    await user.click(screen.getByRole('button', { name: 'Add Source' }))
     const location = screen.getByPlaceholderText('/absolute/path/to/skills')
     await user.type(location, '/tmp/new')
     await user.click(screen.getByRole('button', { name: /Register and scan/ }))
@@ -156,11 +164,7 @@ describe('SourcesIndex', () => {
     await waitFor(() => expect(post).toHaveBeenCalled())
     const init = post.mock.calls[0][1] as RequestInit
 
-    // Navigate away to unmount SourcesIndex but keep MemoryRouter alive
-    await user.click(screen.getByRole('link', { name: 'local-one' }))
-
-    // Wait for the new route to render
-    expect(await screen.findByRole('heading', { name: 'local-one' })).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: 'Close' }))
     expect(init.signal?.aborted).toBe(true)
 
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -168,9 +172,9 @@ describe('SourcesIndex', () => {
     postResolve(mockResponse(created, true, 201))
     await new Promise((r) => setTimeout(r, 10)) // wait for microtasks
 
-    // Assert that we did NOT navigate to the new Source detail
     expect(screen.queryByRole('heading', { name: 'new' })).toBeNull()
-    expect(screen.getByRole('heading', { name: 'local-one' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Sources' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'local-one' })).toBeTruthy()
 
     expect(consoleError).not.toHaveBeenCalled()
     consoleError.mockRestore()

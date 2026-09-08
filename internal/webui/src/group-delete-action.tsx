@@ -18,7 +18,8 @@ export function GroupDeleteAction({ groupId, name }: { groupId: number; name: st
   return (
     <>
       <Button
-        variant="destructive"
+        variant="outline"
+        className="text-error-emphasis"
         onClick={() => {
           setError(null)
           setPreview(null)

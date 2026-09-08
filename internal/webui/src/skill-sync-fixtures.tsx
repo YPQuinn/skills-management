@@ -111,7 +111,10 @@ export const diffResult: DiffResult = {
     {
       from: 'source',
       to: 'store',
-      entries: [{ path: 'kind-change', changes: ['node_type'], from: { kind: 'file', size: 2, digest: 'ff66' }, to: { kind: 'dir' } }],
+      entries: [
+        { path: 'kind-change', changes: ['node_type'], from: { kind: 'file', size: 2, digest: 'ff66' }, to: { kind: 'dir' } },
+        { path: 'notes.md', changes: ['delete'], from: { kind: 'file', size: 9, digest: 'aa11' } },
+      ],
     },
   ],
 }

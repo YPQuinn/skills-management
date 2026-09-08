@@ -39,7 +39,7 @@ describe('Sync status badge policy', () => {
 
 describe('Sync action policy', () => {
   it('offers only the legal actions for the current status', () => {
-    expect(syncActionsFor(conflictSkill)).toEqual(['check', 'sync', 'keep_store', 'accept_source', 'rollback'])
+    expect(syncActionsFor(conflictSkill)).toEqual(['check', 'keep_store', 'accept_source', 'rollback'])
     expect(syncActionsFor({ ...conflictSkill, sync_status: 'in_sync' })).toEqual(['check', 'sync', 'rollback'])
     expect(syncActionsFor({ ...conflictSkill, sync_status: 'source_missing' })).toEqual(['check', 'sync', 'rollback'])
     expect(syncActionsFor(skillAlpha)).not.toContain('accept_source')
@@ -49,7 +49,7 @@ describe('Sync action policy', () => {
   it('never offers rollback without a previous snapshot', () => {
     const noSnapshot = { ...conflictSkill, has_previous_snapshot: false }
     expect(syncActionsFor(noSnapshot)).not.toContain('rollback')
-    expect(syncActionsFor(noSnapshot)).toEqual(['check', 'sync', 'keep_store', 'accept_source'])
+    expect(syncActionsFor(noSnapshot)).toEqual(['check', 'keep_store', 'accept_source'])
     // A Skill without a snapshot still offers the non-rollback actions.
     expect(syncActionsFor({ ...noSnapshot, sync_status: 'in_sync' })).toEqual(['check', 'sync'])
   })

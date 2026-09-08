@@ -95,12 +95,7 @@ export function RegisterTargetForm({ adapters, initialAdapter, onRegistered }: R
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 border border-border rounded-xl p-6 bg-background shadow-sm">
-      <div>
-        <h2 className="text-lg font-semibold">{t('registerTargetTitle')}</h2>
-        <p className="text-sm text-foreground-muted">{t('registerTargetSubtitle')}</p>
-      </div>
-
+    <form onSubmit={handleSubmit} className="space-y-4">
       {error !== null && (
         <Alert variant="error">
           <AlertTitle>{t('alertRegisterTargetFailed')}</AlertTitle>
@@ -111,7 +106,11 @@ export function RegisterTargetForm({ adapters, initialAdapter, onRegistered }: R
       <div className="grid gap-4 sm:grid-cols-2">
         <Field name="mode">
           <FieldLabel>{t('labelTargetKind')}</FieldLabel>
-          <Select value={mode} onValueChange={(v) => setMode(v as 'builtin' | 'custom')}>
+          <Select
+            value={mode}
+            onValueChange={(v) => setMode(v as 'builtin' | 'custom')}
+            items={{ builtin: t('optBuiltinAdapter'), custom: t('optCustomTarget') }}
+          >
             <SelectTrigger aria-label={t('labelTargetKind')}>
               <SelectValue placeholder={t('optBuiltinAdapter')} />
             </SelectTrigger>
@@ -139,7 +138,11 @@ export function RegisterTargetForm({ adapters, initialAdapter, onRegistered }: R
           <>
             <Field name="adapter">
               <FieldLabel>{t('labelSelectAdapter')}</FieldLabel>
-              <Select value={adapter} onValueChange={(val) => setAdapter(val as string)}>
+              <Select
+                value={adapter}
+                onValueChange={(val) => setAdapter(val as string)}
+                items={Object.fromEntries(adapters.map((a) => [a.key, `${a.name} (${a.key})`]))}
+              >
                 <SelectTrigger aria-label={t('labelSelectAdapter')}>
                   <SelectValue placeholder={t('labelSelectAdapter')} />
                 </SelectTrigger>
@@ -156,7 +159,11 @@ export function RegisterTargetForm({ adapters, initialAdapter, onRegistered }: R
 
             <Field name="scope">
               <FieldLabel>{t('labelScope')}</FieldLabel>
-              <Select value={scope} onValueChange={(v) => setScope(v as 'user' | 'project')}>
+              <Select
+                value={scope}
+                onValueChange={(v) => setScope(v as 'user' | 'project')}
+                items={{ user: t('optScopeUser'), project: t('optScopeProject') }}
+              >
                 <SelectTrigger aria-label={t('labelScope')}>
                   <SelectValue placeholder={t('optScopeUser')} />
                 </SelectTrigger>

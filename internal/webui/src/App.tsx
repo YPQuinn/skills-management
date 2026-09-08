@@ -11,6 +11,9 @@ import { useLocale } from './locale-context'
 import { LocaleProvider } from './locale-provider'
 import { ApiError } from './locale-dictionary'
 import { Setup, type StatusResponse } from './setup'
+import { ToastProvider, Toaster } from '@appica/ui-react/toast'
+import { TooltipProvider } from '@appica/ui-react/tooltip'
+import { NotifySuccessBridge } from './notify-success'
 
 function Skills() {
   return (
@@ -131,7 +134,14 @@ function AppRoutes() {
 export default function App() {
   return (
     <LocaleProvider>
-      <AppRoutes />
+      <TooltipProvider>
+        <ToastProvider>
+          <NotifySuccessBridge>
+            <AppRoutes />
+          </NotifySuccessBridge>
+          <Toaster />
+        </ToastProvider>
+      </TooltipProvider>
     </LocaleProvider>
   )
 }

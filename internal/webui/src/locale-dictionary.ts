@@ -80,3 +80,20 @@ export function formatLocaleTime(locale: Locale, value?: string): string {
     ? value
     : d.toLocaleString(locale === 'zh-CN' ? 'zh-CN' : 'en-US')
 }
+
+const DAY_MS = 86_400_000
+
+export function formatRelativeTime(locale: Locale, value?: string, nowMs = Date.now()): string {
+  if (!value) return translate(locale, 'timeNever')
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return value
+  const diffMs = d.getTime() - nowMs
+  if (Math.abs(diffMs) >= 30 * DAY_MS) return formatLocaleTime(locale, value)
+  const tag = locale === 'zh-CN' ? 'zh-CN' : 'en'
+  const rtf = new Intl.RelativeTimeFormat(tag, { numeric: 'auto' })
+  const abs = Math.abs(diffMs)
+  if (abs < 60_000) return rtf.format(Math.round(diffMs / 1000), 'second')
+  if (abs < 3_600_000) return rtf.format(Math.round(diffMs / 60_000), 'minute')
+  if (abs < DAY_MS) return rtf.format(Math.round(diffMs / 3_600_000), 'hour')
+  return rtf.format(Math.round(diffMs / DAY_MS), 'day')
+}

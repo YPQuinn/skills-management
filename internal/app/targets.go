@@ -25,6 +25,8 @@ type Target struct {
 	ProjectRoot string    `json:"project_root,omitempty"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
+	LastResult  string    `json:"last_result,omitempty"`
+	Stale       bool      `json:"stale,omitempty"`
 }
 
 // TargetView is the Target detail: identity, compatible adapters derived
@@ -168,6 +170,14 @@ func (a *App) RegisterTarget(in TargetInput) (*TargetView, error) {
 	return a.ShowTarget(id)
 }
 
+func targetFromState(t *state.Target) Target {
+	return Target{
+		ID: t.ID, Name: t.Name, Path: t.Path, Adapter: t.Adapter,
+		Scope: t.Scope, ProjectRoot: t.ProjectRoot,
+		CreatedAt: t.CreatedAt, UpdatedAt: t.UpdatedAt,
+	}
+}
+
 // ListTargets returns all registered Targets in name order.
 func (a *App) ListTargets() ([]Target, error) {
 	rows, err := state.ListTargets(a.db)
@@ -176,11 +186,11 @@ func (a *App) ListTargets() ([]Target, error) {
 	}
 	out := make([]Target, 0, len(rows))
 	for _, t := range rows {
-		out = append(out, Target{
-			ID: t.ID, Name: t.Name, Path: t.Path, Adapter: t.Adapter,
-			Scope: t.Scope, ProjectRoot: t.ProjectRoot,
-			CreatedAt: t.CreatedAt, UpdatedAt: t.UpdatedAt,
-		})
+		item := targetFromState(&t)
+		// List-scan health; ShowTarget serves the same facts via Distribution Status.
+		item.LastResult = t.LastDistResult
+		item.Stale = t.LastInspectedStale
+		out = append(out, item)
 	}
 	return out, nil
 }
@@ -195,11 +205,7 @@ func (a *App) ShowTarget(id int64) (*TargetView, error) {
 		return nil, Errorf(CodeInternal, "reading Target %d: %v", id, err)
 	}
 	view := &TargetView{
-		Target: Target{
-			ID: t.ID, Name: t.Name, Path: t.Path, Adapter: t.Adapter,
-			Scope: t.Scope, ProjectRoot: t.ProjectRoot,
-			CreatedAt: t.CreatedAt, UpdatedAt: t.UpdatedAt,
-		},
+		Target:       targetFromState(t),
 		DirectSkills: []AssignmentView{},
 		Groups:       []AssignmentView{},
 	}

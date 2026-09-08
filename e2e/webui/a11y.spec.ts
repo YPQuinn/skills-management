@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 import path from 'node:path'
-import { expectImported, initializeStore, navTo, skillLink, startUI, writeSkillFixture } from './helpers'
+import { expectImported, initializeStore, navTo, openCreateDialog, skillLink, startUI, writeSkillFixture } from './helpers'
 
 async function expectAxeClean(page: Page): Promise<void> {
   const results = await new AxeBuilder({ page }).analyze()
@@ -23,6 +23,7 @@ test('axe has no critical or serious violations on setup and resource pages', as
     writeSkillFixture(sourceRoot, 'a11y')
     await navTo(page, 'Sources')
     await expectAxeClean(page)
+    await openCreateDialog(page, 'Add Source')
     await page.getByLabel('Location').fill(sourceRoot)
     await page.getByRole('button', { name: 'Register and scan' }).click()
     await expect(page.getByRole('heading', { name: /a11y|skills/i }).first()).toBeVisible()

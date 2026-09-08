@@ -1,17 +1,23 @@
-// The three-way path diff of decision 05: baseline→source,
-// baseline→store, and source→store, with add/delete/content/exec/node-type
-// entries, unified text rendering, binary/size metadata, and a path filter
-// that re-requests the diff through the REST path query.
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
 import { Badge } from '@appica/ui-react/badge'
+import { Chip } from '@appica/ui-react/chip'
+import { CopyButton } from '@appica/ui-react/copy-button'
 import { Input } from '@appica/ui-react/input'
-import { Spinner } from '@appica/ui-react/spinner'
-import { ArrowRight, GitCompare, Search } from '@appica/icons-react'
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@appica/ui-react/accordion'
+import { GitCompare, Search } from '@appica/icons-react'
+import { ListPageSkeleton } from './list-page-skeleton'
 import { useLocale } from './locale-context'
 import type { DictionaryKey } from './locale-dictionary'
 import type { DiffEntry, DiffNode, DiffResult } from './sync-api'
+import {
+  aggregatePathDiffs,
+  comparisonsAreEmpty,
+  expandedDiffEntries,
+  type SideState,
+} from './sync-diff-paths'
 
 type ChangeVariant = 'success' | 'error' | 'info' | 'warning'
+type ChipVariant = 'outline' | 'primary' | 'destructive' | 'secondary'
 
 const CHANGE_BADGES: Record<string, { key: DictionaryKey; variant: ChangeVariant }> = {
   add: { key: 'changeAdd', variant: 'success' },
@@ -32,17 +38,24 @@ const NODE_KIND_KEYS: Record<string, DictionaryKey> = {
   other: 'nodeKindOther',
 }
 
-function sideLabel(side: string, t: (key: DictionaryKey) => string): string {
-  switch (side) {
-    case 'baseline':
-      return t('sideBaseline')
-    case 'source':
-      return t('sideSource')
-    case 'store':
-      return t('sideStore')
-    default:
-      return side
-  }
+const SIDE_STATE_KEY: Record<SideState, DictionaryKey> = {
+  unchanged: 'chipUnchanged',
+  added: 'chipAdded',
+  removed: 'chipRemoved',
+  changed: 'chipChanged',
+}
+
+const SIDE_STATE_VARIANT: Record<SideState, ChipVariant> = {
+  unchanged: 'outline',
+  added: 'primary',
+  removed: 'destructive',
+  changed: 'secondary',
+}
+
+const DIFF_SIDE_KEY: Record<'upstream' | 'store' | 'source_store', DictionaryKey> = {
+  upstream: 'chipUpstream',
+  store: 'chipStore',
+  source_store: 'diffSideSourceStore',
 }
 
 function UnifiedDiff({ text }: { text: string }) {
@@ -66,7 +79,15 @@ function UnifiedDiff({ text }: { text: string }) {
   )
 }
 
-function DiffNodeMeta({ side, node, t }: { side: 'from' | 'to'; node: DiffNode; t: (key: DictionaryKey, params?: Record<string, string | number>) => string }) {
+function DiffNodeMeta({
+  side,
+  node,
+  t,
+}: {
+  side: 'from' | 'to'
+  node: DiffNode
+  t: (key: DictionaryKey, params?: Record<string, string | number>) => string
+}) {
   const kindKey = NODE_KIND_KEYS[node.kind]
   const parts = [kindKey ? t(kindKey) : node.kind]
   if (node.exec) parts.push(t('diffExecutable'))
@@ -80,12 +101,20 @@ function DiffNodeMeta({ side, node, t }: { side: 'from' | 'to'; node: DiffNode; 
   )
 }
 
-function DiffEntryView({ entry, t }: { entry: DiffEntry; t: (key: DictionaryKey, params?: Record<string, string | number>) => string }) {
+function DiffEntryView({
+  entry,
+  heading,
+  t,
+}: {
+  entry: DiffEntry
+  heading: string
+  t: (key: DictionaryKey, params?: Record<string, string | number>) => string
+}) {
   const hasText = entry.text !== undefined && entry.text.unified !== ''
   return (
     <div className="border border-border rounded-lg p-3">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="font-mono text-sm break-all">{entry.path}</span>
+        <span className="text-sm font-medium">{heading}</span>
         {entry.changes.map((change) => {
           const def = CHANGE_BADGES[change]
           if (!def) {
@@ -134,6 +163,8 @@ interface SyncDiffProps {
 
 export function SyncDiff({ diff, loading, error, pathFilter, onPathFilterChange }: SyncDiffProps) {
   const { t, getErrorMessage } = useLocale()
+  const rows = diff ? aggregatePathDiffs(diff.comparisons) : []
+  const empty = diff !== null && comparisonsAreEmpty(diff.comparisons)
 
   return (
     <section aria-labelledby="sync-diff-heading" className="space-y-4">
@@ -163,26 +194,43 @@ export function SyncDiff({ diff, loading, error, pathFilter, onPathFilterChange 
 
       {diff === null ? (
         loading ? (
-          <Spinner className="text-3xl text-foreground-muted" aria-label={t('ariaLoadingDiff')} />
+          <ListPageSkeleton label={t('ariaLoadingDiff')} />
         ) : null
+      ) : empty ? (
+        <p className="text-sm text-foreground-muted">{t('diffEmptyAll')}</p>
       ) : (
-        diff.comparisons.map((comparison) => (
-          <div
-            key={`${comparison.from}-${comparison.to}`}
-            className="border border-border rounded-xl p-4 bg-background space-y-3"
-          >
-            <h3 className="font-medium text-sm">
-              {sideLabel(comparison.from, t)}
-              <ArrowRight className="size-3.5 inline mx-1 text-foreground-muted" />
-              {sideLabel(comparison.to, t)}
-            </h3>
-            {comparison.entries.length === 0 ? (
-              <p className="text-sm text-foreground-muted">{t('diffEmpty')}</p>
-            ) : (
-              comparison.entries.map((entry) => <DiffEntryView key={entry.path} entry={entry} t={t} />)
-            )}
-          </div>
-        ))
+        <Accordion multiple variant="flush">
+          {rows.map((row) => (
+            <AccordionItem key={row.path} value={row.path}>
+              <div className="flex items-center gap-1">
+                <AccordionTrigger className="min-w-0 flex-1">
+                  <span className="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-start">
+                    <span className="font-mono text-sm break-all">{row.path}</span>
+                    <Chip render={<span />} variant={SIDE_STATE_VARIANT[row.upstream]} size="sm">
+                      {t('chipUpstream')}: {t(SIDE_STATE_KEY[row.upstream])}
+                    </Chip>
+                    <Chip render={<span />} variant={SIDE_STATE_VARIANT[row.store]} size="sm">
+                      {t('chipStore')}: {t(SIDE_STATE_KEY[row.store])}
+                    </Chip>
+                  </span>
+                </AccordionTrigger>
+                <CopyButton value={row.path} label={t('btnCopy')} />
+              </div>
+              <AccordionContent>
+                <div className="space-y-3">
+                  {expandedDiffEntries(row).map((item) => (
+                    <DiffEntryView
+                      key={`${item.side}:${item.entry.path}:${item.entry.changes.join(',')}`}
+                      entry={item.entry}
+                      heading={t(DIFF_SIDE_KEY[item.side])}
+                      t={t}
+                    />
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
       )}
     </section>
   )

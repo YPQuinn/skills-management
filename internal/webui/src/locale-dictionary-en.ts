@@ -1,6 +1,7 @@
 import { translationsSyncEn } from './locale-dictionary-sync-en'
 import { translationsDistributionEn } from './locale-dictionary-distribution-en'
 import { translationsCleanupEn } from './locale-dictionary-cleanup-en'
+import { translationsChromeEn } from './locale-dictionary-chrome-en'
 
 export const translationsEn = {
   // Navigation & Header
@@ -186,7 +187,6 @@ export const translationsEn = {
   alertCouldNotLoadSkill: 'Could not load Skill',
   tabOverview: 'Overview',
   tabSynchronization: 'Synchronization',
-  tabDistribution: 'Distribution',
   labelSlug: 'Slug',
   labelCreated: 'Created',
   labelUpdated: 'Updated',
@@ -284,7 +284,6 @@ export const translationsEn = {
   slugOverrideDialogTitle: 'Slug override',
   slugOverrideDialogDesc: 'Set a custom slug for "{name}" ({dir}). Leave empty to use the default.',
   btnSave: 'Save',
-  btnClose: 'Close',
   statusImported: 'Imported',
   statusAlreadyImported: 'Already imported',
   statusReplaced: 'Replaced',
@@ -325,6 +324,7 @@ export const translationsEn = {
   errRegisteringTargetFailed: 'Registering Target failed',
   errAddingAssignmentFailed: 'Adding assignment failed',
   errDeletingAssignmentFailed: 'Deleting assignment failed',
+  ...translationsChromeEn,
   ...translationsSyncEn,
   ...translationsDistributionEn,
   ...translationsCleanupEn,

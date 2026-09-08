@@ -13,8 +13,10 @@ import {
   type DistributionResult,
 } from './distribution-api'
 import { useLocale } from './locale-context'
+import { useNotifySuccess } from './notify-success'
 import { TargetDistributionDialogs } from './target-distribution-dialogs'
 import { stateKey } from './target-distribution-labels'
+import { TermTooltip } from './term-tooltip'
 import { TargetDistributionTable, type DistributionBusy } from './target-distribution-table'
 
 interface TargetDistributionSectionProps {
@@ -25,6 +27,7 @@ interface TargetDistributionSectionProps {
 
 export function TargetDistributionSection({ targetId, initial, onChanged }: TargetDistributionSectionProps) {
   const { t, formatTime, getErrorMessage } = useLocale()
+  const notifySuccess = useNotifySuccess()
   const [status, setStatus] = useState<DistributionStatus | null>(initial)
   const [busy, setBusy] = useState<DistributionBusy>(null)
   const [actionError, setActionError] = useState<unknown | null>(null)
@@ -77,6 +80,7 @@ export function TargetDistributionSection({ targetId, initial, onChanged }: Targ
       setStatus(st)
       onChanged(st)
       setResult(res)
+      if (res.outcome === 'succeeded') notifySuccess(t('toastDistributed'))
     })
 
   const handleAdopt = (item: DistributionItemView) =>
@@ -96,7 +100,10 @@ export function TargetDistributionSection({ targetId, initial, onChanged }: Targ
     <div className="space-y-4 border border-border rounded-xl p-6 bg-background shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold">{t('distributionHeading')}</h2>
+          <h2 className="text-lg font-semibold flex flex-wrap items-center gap-2">
+            {t('distributionHeading')}
+            <TermTooltip term={t('termManagedLink')} tip={t('tipManagedLink')} />
+          </h2>
           <p className="text-sm text-foreground-muted">{t('distributionSubtitle')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

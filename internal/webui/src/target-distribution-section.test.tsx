@@ -26,6 +26,7 @@ const statusLinked: DistributionStatus = {
       adoptable: false,
       stale: false,
       last_result: 'created',
+      expected_path: '/tmp/skills/demo',
     },
   ],
   last_result: 'succeeded',

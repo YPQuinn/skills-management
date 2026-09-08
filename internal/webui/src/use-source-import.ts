@@ -72,10 +72,10 @@ export function useSourceImport(
     setSlugOverrides((prev) => ({ ...prev, [dir]: value }))
   }
 
-  const handleImport = async (options: { all?: boolean }) => {
-    if (sourceId === null) return
+  const handleImport = async (options: { all?: boolean }): Promise<ImportResponse | null> => {
+    if (sourceId === null) return null
     const dirsToImport = options.all ? source?.inventory.map((e) => e.relative_dir) || [] : selectedDirs
-    if (!options.all && dirsToImport.length === 0) return
+    if (!options.all && dirsToImport.length === 0) return null
 
     cancelOperation()
     const controller = new AbortController()
@@ -96,7 +96,7 @@ export function useSourceImport(
           }
 
       const res = await importSkills(body, controller.signal)
-      if (operationInflight.current !== controller) return
+      if (operationInflight.current !== controller) return null
 
       setImportResult(res)
 
@@ -105,11 +105,13 @@ export function useSourceImport(
       setReplaceError(null)
 
       loadSkills()
+      return res
     } catch (err: unknown) {
-      if (isAbortError(err)) return
+      if (isAbortError(err)) return null
       if (operationInflight.current === controller) {
         setImportError(err)
       }
+      return null
     } finally {
       if (operationInflight.current === controller) {
         setImporting(false)

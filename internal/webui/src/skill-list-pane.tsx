@@ -2,9 +2,11 @@ import { useEffect, useState, useRef } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
 import { Badge } from '@appica/ui-react/badge'
-import { Spinner } from '@appica/ui-react/spinner'
+import { ListPageSkeleton } from './list-page-skeleton'
 import { fetchSkills } from './skill-api'
 import type { Skill } from './skill-api'
+import { SyncStatusBadge } from './sync-status'
+import { SkillIdentity } from './skill-identity'
 import { useLocale } from './locale-context'
 
 export function SkillListPane({ refreshCounter = 0 }: { refreshCounter?: number }) {
@@ -52,9 +54,7 @@ export function SkillListPane({ refreshCounter = 0 }: { refreshCounter?: number 
       )}
 
       {loading && skills === null ? (
-        <div className="flex justify-center py-8">
-          <Spinner className="text-2xl text-foreground-muted" aria-label={t('ariaLoadingSkills')} />
-        </div>
+        <ListPageSkeleton label={t('ariaLoadingSkills')} />
       ) : skills === null ? null : skills.length === 0 ? (
         <div className="space-y-2">
           <p className="text-sm text-foreground-muted">{t('emptySkillsListPane')}</p>
@@ -79,7 +79,7 @@ export function SkillListPane({ refreshCounter = 0 }: { refreshCounter?: number 
                   }`}
                 >
                   <span className="flex items-center justify-between gap-2">
-                    <span className="truncate text-sm font-medium text-foreground-strong">{s.name}</span>
+                    <SkillIdentity name={s.name} slug={s.slug} />
                     {s.binding ? (
                       <Badge variant="soft" className="shrink-0 text-xs">
                         {s.binding.source_name}
@@ -90,8 +90,8 @@ export function SkillListPane({ refreshCounter = 0 }: { refreshCounter?: number 
                       </Badge>
                     )}
                   </span>
-                  <span className="mt-0.5 flex items-center justify-between gap-2">
-                    <span className="truncate text-xs font-mono text-foreground-muted">{s.slug}</span>
+                  <span className="mt-0.5 flex justify-end">
+                    <SyncStatusBadge status={s.sync_status} />
                   </span>
                 </Link>
               </li>

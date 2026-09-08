@@ -67,7 +67,8 @@ export function SkillCleanupActions({
         {t('btnRebind')}
       </Button>
       <Button
-        variant="destructive"
+        variant="outline"
+        className="text-error-emphasis"
         onClick={() => {
           setError(null)
           setPreview(null)

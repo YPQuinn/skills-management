@@ -103,10 +103,34 @@ func TestDistributionRESTLifecycle(t *testing.T) {
 		t.Fatalf("link: %q, %v", raw, err)
 	}
 
-	// the Target detail carries the stored Distribution Status
+	resp = ts.do(t, "GET", "/api/v1/targets", "", "", "", "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("list targets: got %d", resp.StatusCode)
+	}
+	var listed struct {
+		Items []targetJSON `json:"items"`
+	}
+	if err := json.Unmarshal([]byte(readBody(t, resp)), &listed); err != nil {
+		t.Fatal(err)
+	}
+	var listedTarget *targetJSON
+	for i := range listed.Items {
+		if listed.Items[i].ID == targetID {
+			listedTarget = &listed.Items[i]
+			break
+		}
+	}
+	if listedTarget == nil || listedTarget.LastResult != "succeeded" {
+		t.Fatalf("list last_result after distribute: %+v", listed)
+	}
+
+	// the Target detail carries stored Distribution Status, not list health fields
 	resp = ts.do(t, "GET", fmt.Sprintf("/api/v1/targets/%d", targetID), "", "application/json", "", "")
 	view := decodeTargetView(t, readBody(t, resp))
 	resp.Body.Close()
+	if view.LastResult != "" || view.Stale {
+		t.Fatalf("detail identity must omit list health fields: %+v", view)
+	}
 	if view.Distribution == nil || len(view.Distribution.Items) != 1 || view.Distribution.Items[0].Observed != "linked" {
 		t.Fatalf("stored distribution: %+v", view.Distribution)
 	}

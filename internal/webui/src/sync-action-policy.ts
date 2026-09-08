@@ -23,7 +23,8 @@ const ACCEPT_SOURCE_STATUSES: SyncStatus[] = [
 export function syncActionsFor(skill: Skill): SyncActionName[] {
   if (!skill.binding) return ['check']
   const status = skill.sync_status
-  const actions: SyncActionName[] = ['check', 'sync']
+  const actions: SyncActionName[] = ['check']
+  if (status !== 'conflict') actions.push('sync')
   if (KEEP_STORE_STATUSES.includes(status as SyncStatus)) actions.push('keep_store')
   if (ACCEPT_SOURCE_STATUSES.includes(status as SyncStatus)) actions.push('accept_source')
   // Rollback needs a previous snapshot to restore: never offer it for a
