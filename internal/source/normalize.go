@@ -53,6 +53,9 @@ func normalizeLocal(location, ref, subpath string) (Locator, error) {
 	if ref != "" {
 		return Locator{}, fmt.Errorf("Local Sources cannot have a ref")
 	}
+	if strings.TrimSpace(subpath) != "" {
+		return Locator{}, fmt.Errorf("Local Sources cannot have a subpath")
+	}
 	if location == "~" || strings.HasPrefix(location, "~/") || strings.HasPrefix(location, `~\`) {
 		home, err := os.UserHomeDir()
 		if err != nil {
@@ -67,11 +70,7 @@ func normalizeLocal(location, ref, subpath string) (Locator, error) {
 	if real, err := filepath.EvalSymlinks(abs); err == nil {
 		abs = real
 	}
-	sub, err := normalizeSubpath(subpath)
-	if err != nil {
-		return Locator{}, err
-	}
-	return Locator{Kind: KindLocal, Location: abs, Subpath: sub}, nil
+	return Locator{Kind: KindLocal, Location: abs}, nil
 }
 
 func normalizeGit(location, ref, subpath string) (Locator, error) {

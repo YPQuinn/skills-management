@@ -231,6 +231,7 @@ export const translationsZhCN: Record<keyof typeof translationsEn, string> = {
   phRef: '分支、标签或 commit SHA',
   labelSubpathOptional: 'Subpath（可选）',
   phSubpath: 'skills',
+  addSourceAdvanced: '高级配置',
   btnRegisterAndScan: '注册并扫描',
   btnScanning: '正在扫描…',
 

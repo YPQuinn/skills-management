@@ -69,8 +69,9 @@ func buildRepo(t *testing.T, files map[string]treeFile, branch string) (bare, wo
 // assertSameDigests observes one equivalent tree through the Git and Local
 // observers and requires identical entries, entry digests, and aggregate
 // Inventory digests. The trees include an executable file and a symlink,
-// and file names with spaces, tabs, newlines, and Unicode.
-func assertSameDigests(t *testing.T, bare, work, gitSubpath, localSubpath string) {
+// and file names with spaces, tabs, newlines, and Unicode. localRoot is the
+// Local scan directory (the nested catalog path when Git uses a subpath).
+func assertSameDigests(t *testing.T, bare, localRoot, gitSubpath string) {
 	t.Helper()
 	var g Git
 	gitObs, err := g.Observe(context.Background(), gitLoc(t, bare, "", gitSubpath), t.TempDir())
@@ -78,7 +79,7 @@ func assertSameDigests(t *testing.T, bare, work, gitSubpath, localSubpath string
 		t.Fatal(err)
 	}
 	localObs, err := (Local{stabilityInterval: time.Millisecond}).Observe(
-		context.Background(), Locator{Kind: KindLocal, Location: work, Subpath: localSubpath}, "")
+		context.Background(), Locator{Kind: KindLocal, Location: localRoot}, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -115,13 +116,13 @@ func TestLocalAndGitRootSkillDigestsMatch(t *testing.T) {
 		"refs/deep/nested/x": {content: "deep", mode: 0o644},
 	}
 	bare, work := buildRepo(t, files, "main")
-	assertSameDigests(t, bare, work, "", "")
+	assertSameDigests(t, bare, work, "")
 }
 
-// TestLocalAndGitNestedSkillDigestsMatch covers the subpath shape: the same
-// Skill observed through a configured Git subpath and a configured Local
-// subpath must yield identical digests, with entry paths relative to the
-// subpath root.
+// TestLocalAndGitNestedSkillDigestsMatch covers the nested catalog shape:
+// the same Skill observed through a Git subpath and a Local Source whose
+// location is that subdirectory must yield identical digests, with entry
+// paths relative to the scan root.
 func TestLocalAndGitNestedSkillDigestsMatch(t *testing.T) {
 	files := map[string]treeFile{
 		"catalog/skills/alpha/SKILL.md":     {content: "---\nname: Alpha\ndescription: one\n---\n", mode: 0o644},
@@ -130,7 +131,7 @@ func TestLocalAndGitNestedSkillDigestsMatch(t *testing.T) {
 		"catalog/other/not-a-skill.txt":     {content: "ignore", mode: 0o644},
 	}
 	bare, work := buildRepo(t, files, "main")
-	assertSameDigests(t, bare, work, "catalog/skills", "catalog/skills")
+	assertSameDigests(t, bare, filepath.Join(work, "catalog", "skills"), "catalog/skills")
 }
 
 // TestGitUnusualPathsParsedByPlumbing proves the NUL-safe ls-tree parsing

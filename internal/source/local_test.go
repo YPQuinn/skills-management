@@ -37,6 +37,8 @@ func TestLocalObserveStableTree(t *testing.T) {
 }
 
 func TestLocalObserveAppliesSubpath(t *testing.T) {
+	// Registration no longer accepts a Local subpath, but a stored locator
+	// that still has one is observed below that directory.
 	root := realTempDir(t)
 	writeSkill(t, filepath.Join(root, "skills", "alpha"), "Alpha", "one")
 	writeSkill(t, filepath.Join(root, "other", "beta"), "Beta", "two")

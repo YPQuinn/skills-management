@@ -48,6 +48,14 @@ func TestNormalizeLocal(t *testing.T) {
 	if _, err := Normalize(KindLocal, dir, "main", ""); err == nil {
 		t.Fatal("Local Source with a ref: want error")
 	}
+	// Local Sources cannot have a subpath; point location at the scan root
+	if _, err := Normalize(KindLocal, dir, "", "skills"); err == nil {
+		t.Fatal("Local Source with a subpath: want error")
+	}
+	loc, err = Normalize(KindLocal, dir, "", "  ")
+	if err != nil || loc.Subpath != "" {
+		t.Fatalf("whitespace-only subpath: got %+v, %v", loc, err)
+	}
 }
 
 func TestNormalizeLocalSymlinks(t *testing.T) {
@@ -169,28 +177,28 @@ func TestNormalizeKindInference(t *testing.T) {
 }
 
 func TestNormalizeSubpath(t *testing.T) {
-	dir := t.TempDir()
-	loc, err := Normalize(KindLocal, dir, "", "skills/alpha")
+	const gitLoc = "https://github.com/owner/repo.git"
+	loc, err := Normalize(KindGit, gitLoc, "", "skills/alpha")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if loc.Subpath != "skills/alpha" {
 		t.Fatalf("subpath: got %q", loc.Subpath)
 	}
-	loc, err = Normalize(KindLocal, dir, "", "/skills//alpha/")
+	loc, err = Normalize(KindGit, gitLoc, "", "/skills//alpha/")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if loc.Subpath != "skills/alpha" {
 		t.Fatalf("cleaned subpath: got %q", loc.Subpath)
 	}
-	if _, err := Normalize(KindLocal, dir, "", "../escape"); err == nil {
+	if _, err := Normalize(KindGit, gitLoc, "", "../escape"); err == nil {
 		t.Fatal("traversing subpath: want error")
 	}
-	if _, err := Normalize(KindLocal, dir, "", "a/../../b"); err == nil {
+	if _, err := Normalize(KindGit, gitLoc, "", "a/../../b"); err == nil {
 		t.Fatal("escaped subpath: want error")
 	}
-	loc, err = Normalize(KindLocal, dir, "", `skills\alpha`)
+	loc, err = Normalize(KindGit, gitLoc, "", `skills\alpha`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -200,7 +208,7 @@ func TestNormalizeSubpath(t *testing.T) {
 	// root-equivalent subpaths canonicalize to the empty subpath so the
 	// unique tuple cannot be bypassed with equivalent spellings
 	for _, sp := range []string{".", "./", "skills/."} {
-		loc, err = Normalize(KindLocal, dir, "", sp)
+		loc, err = Normalize(KindGit, gitLoc, "", sp)
 		if err != nil {
 			t.Fatalf("subpath %q: %v", sp, err)
 		}

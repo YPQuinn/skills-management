@@ -110,7 +110,7 @@ describe('SourceDetailPage', () => {
     await user.click(screen.getByRole('button', { name: 'Details' }))
 
     expect(screen.getByText(/Ref:/)).toBeTruthy()
-    expect(screen.getByText(/Subpath:/)).toBeTruthy()
+    expect(screen.queryByText(/Subpath:/)).toBeNull()
     expect(screen.getAllByText(/Kind: local/).length).toBeGreaterThan(0)
     expect(screen.getAllByText(/Last checked:/).length).toBeGreaterThan(0)
   })
@@ -128,6 +128,7 @@ describe('SourceDetailPage', () => {
     expect(screen.queryByText(/Resolved commit:/)).toBeNull()
     await user.click(screen.getByRole('button', { name: 'Details' }))
 
+    expect(screen.getByText(/Subpath:/)).toBeTruthy()
     expect(screen.getByText(/Resolved commit:/)).toBeTruthy()
     expect(screen.getByText('a'.repeat(40))).toBeTruthy()
   })

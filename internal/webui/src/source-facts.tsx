@@ -33,7 +33,9 @@ export function SourceFacts({ source }: { source: SourceDetail }) {
           <div className="space-y-1 pt-2">
             <FactLine label={t('colKind')} value={source.kind} />
             <FactLine label={t('labelRef')} value={source.ref || t('factRefDefault')} />
-            <FactLine label={t('labelSubpath')} value={source.subpath || t('factSubpathDefault')} />
+            {(source.kind === 'git' || Boolean(source.subpath)) && (
+              <FactLine label={t('labelSubpath')} value={source.subpath || t('factSubpathDefault')} />
+            )}
             {source.kind === 'git' && (
               <FactLine
                 label={t('labelResolvedCommit')}

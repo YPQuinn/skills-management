@@ -64,6 +64,8 @@ describe('SourcesIndex', () => {
       return mockResponse({ items: [summary, created], total: 2 })
     })
 
+    expect(screen.queryByText('Subpath (optional)')).toBeNull()
+
     const location = screen.getByPlaceholderText('/absolute/path/to/skills')
     await user.type(location, '/tmp/new-skills')
     await user.click(screen.getByRole('button', { name: /Register and scan/ }))
@@ -75,6 +77,28 @@ describe('SourcesIndex', () => {
     // the created Source detail opens instead of only refreshing the list
     expect(await screen.findByRole('heading', { name: 'new-skills' })).toBeTruthy()
     expect((await screen.findAllByText('/tmp/new-skills')).length).toBeGreaterThan(0)
+  })
+
+  it('keeps Git ref and subpath collapsed under Advanced options', async () => {
+    const user = userEvent.setup()
+    renderIndex()
+    await screen.findByRole('link', { name: 'local-one' })
+
+    expect(screen.queryByText('Subpath (optional)')).toBeNull()
+    expect(screen.queryByText('Ref (optional)')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Advanced options' })).toBeNull()
+
+    await user.click(screen.getByRole('combobox', { name: 'Kind' }))
+    await user.click(await screen.findByRole('option', { name: 'Git repository' }))
+
+    expect(screen.getByRole('button', { name: 'Advanced options' })).toBeTruthy()
+    expect(screen.queryByText('Subpath (optional)')).toBeNull()
+    expect(screen.queryByText('Ref (optional)')).toBeNull()
+
+    await user.click(screen.getByRole('button', { name: 'Advanced options' }))
+
+    expect(screen.getByText('Subpath (optional)')).toBeTruthy()
+    expect(screen.getByText('Ref (optional)')).toBeTruthy()
   })
 
   it('shows a spinner while loading and replaces it with content', async () => {

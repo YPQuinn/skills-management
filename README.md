@@ -73,7 +73,7 @@ skillctl target distribute demo-target --dry-run
 skillctl target distribute demo-target
 ```
 
-`source add` accepts a local directory, an HTTPS/SSH Git URL, or GitHub `owner/repo` shorthand. Git refs use `--ref`; a subdirectory uses `--subpath`. `skill import` also accepts `--skill <name>` or `--all`.
+`source add` accepts a local directory, an HTTPS/SSH Git URL, or GitHub `owner/repo` shorthand. Git refs use `--ref`; a subdirectory of a Git Source uses `--subpath`. `skill import` also accepts `--skill <name>` or `--all`.
 
 Built-in Target adapters: `universal`, `claude-code`, `codex`, `cursor`, `gemini-cli`, `opencode`, `pi`, `github-copilot`. Example: `skillctl target add --adapter claude-code --scope user`.
 

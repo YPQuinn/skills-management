@@ -24,7 +24,8 @@ const (
 
 // Locator is the normalized identity of a Source: kind + location + ref +
 // subpath. The tuple is unique, so the same repository may be registered
-// more than once only when its ref or subpath differs.
+// more than once only when its ref or subpath differs. Local Sources cannot
+// have a ref or subpath at registration; point location at the scan root.
 type Locator struct {
 	Kind     Kind   `json:"kind"`
 	Location string `json:"location"`

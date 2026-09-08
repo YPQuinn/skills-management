@@ -44,7 +44,7 @@ separate explicit step.
 A Local Source is a directory path (absolute, or relative to the current
 directory). A Git Source is an HTTPS/SSH URL, or GitHub owner/repo shorthand.
 Omitted --kind is inferred: URLs and owner/repo shorthand are Git, existing
-directories are Local.`,
+directories are Local. --ref and --subpath apply only to Git Sources.`,
 		Args: exactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			a, err := bm.App()
@@ -75,7 +75,7 @@ directories are Local.`,
 	cmd.Flags().StringVar(&kind, "kind", "", "Source kind: local or git (inferred when omitted)")
 	cmd.Flags().StringVar(&name, "name", "", "display name (defaults to the location base name)")
 	cmd.Flags().StringVar(&ref, "ref", "", "Git branch, tag, or pinned commit SHA (default branch when omitted)")
-	cmd.Flags().StringVar(&subpath, "subpath", "", "directory below the Source root to scan")
+	cmd.Flags().StringVar(&subpath, "subpath", "", "Git only: directory below the repository root to scan")
 	cmd.Flags().BoolVar(&jsonRequested, "json", false, "print one JSON value on stdout")
 	return cmd
 }
