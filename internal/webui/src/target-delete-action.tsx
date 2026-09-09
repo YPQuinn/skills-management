@@ -23,7 +23,8 @@ export function TargetDeleteAction({ targetId, name }: { targetId: number; name:
   return (
     <>
       <Button
-        variant="destructive"
+        variant="outline"
+        className="text-error-emphasis"
         onClick={() => {
           setError(null)
           setPreview(null)

@@ -2,6 +2,7 @@ import type { translationsEn } from './locale-dictionary-en'
 import { translationsSyncZhCN } from './locale-dictionary-sync-zh'
 import { translationsDistributionZhCN } from './locale-dictionary-distribution-zh'
 import { translationsCleanupZhCN } from './locale-dictionary-cleanup-zh'
+import { translationsChromeZhCN } from './locale-dictionary-chrome-zh'
 
 export const translationsZhCN: Record<keyof typeof translationsEn, string> = {
   // Navigation & Header
@@ -187,7 +188,6 @@ export const translationsZhCN: Record<keyof typeof translationsEn, string> = {
   alertCouldNotLoadSkill: '无法加载技能',
   tabOverview: '概览',
   tabSynchronization: '同步',
-  tabDistribution: '分发',
   labelSlug: '标识 (Slug)',
   labelCreated: '创建时间',
   labelUpdated: '更新时间',
@@ -203,7 +203,7 @@ export const translationsZhCN: Record<keyof typeof translationsEn, string> = {
 
   // Sources Index & Explorer & List
   sourcesTitle: '来源',
-  sourcesSubtitle: '导入和检查技能的上游位置。',
+  sourcesSubtitle: '导入技能的上游位置，可扫描其变化。',
   alertCouldNotLoadSources: '无法加载来源',
   ariaLoadingSources: '正在加载来源',
   emptySourcesIndex: '尚未注册任何来源。',
@@ -212,7 +212,7 @@ export const translationsZhCN: Record<keyof typeof translationsEn, string> = {
   colLocation: '位置',
   colStatus: '状态',
   colSkills: '技能数',
-  colLastChecked: '最后检查',
+  colLastScanned: '上次扫描',
 
   // Add Source Form
   addSourceTitle: '添加来源',
@@ -237,14 +237,13 @@ export const translationsZhCN: Record<keyof typeof translationsEn, string> = {
 
   // Source Detail Page
   linkAllSources: '所有来源',
-  btnCheckAgain: '重新检查',
-  btnChecking: '正在检查…',
+  btnRescan: '重新扫描',
   ariaLoadingSource: '正在加载来源',
   alertCouldNotLoadSource: '无法加载来源',
-  alertCheckFailed: '检查失败',
+  alertRescanFailed: '扫描失败',
   alertImportFailed: '导入失败',
   alertSourceUnavailable: '来源不可用',
-  descSourceUnavailable: '{error}。上次成功检查时间为 {time}；下方清单已过期。',
+  descSourceUnavailable: '{error}。上次成功扫描时间为 {time}；下方清单已过期。',
   alertSkippedEntriesTitle: '已跳过 {count} 个无效条目',
   entrySingular: '条目',
   entryPlural: '条目',
@@ -265,6 +264,7 @@ export const translationsZhCN: Record<keyof typeof translationsEn, string> = {
 
   // Source Inventory
   inventoryHeading: '清单 ({count})',
+  inventoryScopeNote: '该来源上游可用的技能。重新扫描只刷新这份清单，不会改动已导入 Store 的技能。',
   labelAllowLarge: '允许大型技能 (>100MB / >10k 文件)',
   btnImportSelected: '导入选定技能 ({count})',
   btnImportAll: '导入全部',
@@ -285,7 +285,6 @@ export const translationsZhCN: Record<keyof typeof translationsEn, string> = {
   slugOverrideDialogTitle: '标识覆盖',
   slugOverrideDialogDesc: '为 "{name}"（{dir}）设置自定义标识。留空则使用默认标识。',
   btnSave: '保存',
-  btnClose: '关闭',
   statusImported: '已导入',
   statusAlreadyImported: '已存在',
   statusReplaced: '已替换',
@@ -317,7 +316,7 @@ export const translationsZhCN: Record<keyof typeof translationsEn, string> = {
   errSourceNotFound: '未找到来源',
   errImportingSkillsFailed: '导入技能失败',
   errRegisteringSourceFailed: '注册来源失败',
-  errCheckingSourceFailed: '检查来源失败',
+  errRescanningSourceFailed: '重新扫描来源失败',
   errGroupNotFound: '未找到分组',
   errTargetNotFound: '未找到目标',
   errCreatingGroupFailed: '创建分组失败',
@@ -326,6 +325,7 @@ export const translationsZhCN: Record<keyof typeof translationsEn, string> = {
   errRegisteringTargetFailed: '注册目标失败',
   errAddingAssignmentFailed: '添加分配失败',
   errDeletingAssignmentFailed: '删除分配失败',
+  ...translationsChromeZhCN,
   ...translationsSyncZhCN,
   ...translationsDistributionZhCN,
   ...translationsCleanupZhCN,

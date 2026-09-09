@@ -4,6 +4,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { SkillsIndex, SkillDetailPage, SkillExplorer } from './skills'
 import { setupMatchMedia, mockResponse } from './source-fixtures'
 import { skillAlpha, skillBeta } from './skill-fixtures'
+import { conflictSkill } from './skill-sync-fixtures'
 import type { Skill } from './skill-api'
 
 setupMatchMedia()
@@ -64,9 +65,32 @@ describe('Skills Components', () => {
     expect(screen.getByText('Alpha Skill')).toBeTruthy()
     expect(screen.getByText('Beta Skill')).toBeTruthy()
     expect(screen.getByText('local-one')).toBeTruthy()
+    expect(screen.getByText('In sync')).toBeTruthy()
+    expect(screen.getByText('Unbound')).toBeTruthy()
   })
 
-  it('renders SkillDetailPage with enabled Sync tab and disabled Distribution tab', async () => {
+  it('hides the slug when it matches the Skill name', async () => {
+    renderSkillsIndex([{ ...skillAlpha, name: 'alpha', slug: 'alpha' }])
+    const link = await screen.findByRole('link', { name: 'alpha' })
+    expect(link.textContent).toBe('alpha')
+  })
+
+  it('keeps skill names on one line and clamps descriptions to two lines', async () => {
+    const longName = 'codebase-design-and-architecture-review'
+    const longDescription =
+      'Ask which skill or flow fits your situation. A router over the skills in this repo, with enough extra detail that the cell must wrap beyond two lines and then ellipsize.'
+    renderSkillsIndex([{ ...skillAlpha, name: longName, slug: longName, description: longDescription }])
+
+    const nameLink = await screen.findByRole('link', { name: longName })
+    expect(nameLink.className).toMatch(/whitespace-nowrap/)
+    expect(nameLink.closest('td')?.className).toMatch(/whitespace-nowrap/)
+
+    const description = screen.getByText(longDescription)
+    expect(description.className).toMatch(/line-clamp-2/)
+    expect(description.closest('td')?.className).toMatch(/max-w-0/)
+  })
+
+  it('renders SkillDetailPage with Overview and Synchronization tabs', async () => {
     render(
       <MemoryRouter initialEntries={['/skills/alpha']}>
         <Routes>
@@ -78,16 +102,13 @@ describe('Skills Components', () => {
     expect(await screen.findByRole('heading', { name: 'Alpha Skill' })).toBeTruthy()
     expect(screen.getByText('First test skill in local store')).toBeTruthy()
 
-    // Tabs
     const overviewTab = screen.getByRole('tab', { name: 'Overview' })
-    const syncTab = screen.getByRole('tab', { name: /Synchronization/ })
-    const distTab = screen.getByRole('tab', { name: /Distribution/ })
-
+    const syncTab = screen.getByRole('tab', { name: 'Synchronization' })
     expect(overviewTab.getAttribute('aria-selected')).toBe('true')
-    expect(syncTab.hasAttribute('data-disabled') || syncTab.hasAttribute('disabled') || syncTab.getAttribute('aria-disabled') === 'true').toBe(false)
-    expect(distTab.hasAttribute('data-disabled') || distTab.hasAttribute('disabled') || distTab.getAttribute('aria-disabled') === 'true').toBe(true)
+    expect(overviewTab.className).not.toMatch(/!text-black/)
+    expect(syncTab.className).not.toMatch(/!text-black/)
+    expect(screen.queryByRole('tab', { name: 'Distribution' })).toBeNull()
 
-    // Binding info
     expect(screen.getByText('Source Binding')).toBeTruthy()
     expect(screen.getByText('local-one')).toBeTruthy()
     expect(screen.getByText('skills/alpha')).toBeTruthy()
@@ -117,6 +138,7 @@ describe('Skills Components', () => {
 
     expect(await screen.findByRole('heading', { name: 'Alpha Skill' })).toBeTruthy()
     expect(screen.getByRole('navigation', { name: 'Skill list' })).toBeTruthy()
+    expect(screen.getAllByText('In sync').length).toBeGreaterThan(0)
   })
 
   it('shows error state when fetching skill fails', async () => {
@@ -173,6 +195,23 @@ function currentPageNumber(): string {
 
 describe('SkillsIndex pagination and search', () => {
   afterEach(() => cleanup())
+
+  it('filters the table by Sync Status chip', async () => {
+    renderSkillsIndex([skillAlpha, skillBeta, conflictSkill])
+    expect(await screen.findByText('Alpha Skill')).toBeTruthy()
+    expect(screen.getByText('Beta Skill')).toBeTruthy()
+    expect(screen.getByText('Conflict Skill')).toBeTruthy()
+    expect(screen.getByRole('button', { name: '1 conflict' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: '0 Source changed' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: '1 unbound' })).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: '1 conflict' }))
+
+    expect(screen.getByText('Conflict Skill')).toBeTruthy()
+    expect(screen.queryByText('Alpha Skill')).toBeNull()
+    expect(screen.queryByText('Beta Skill')).toBeNull()
+    expect(screen.getByRole('button', { name: '1 conflict' }).getAttribute('aria-pressed')).toBe('true')
+  })
 
   it('paginates 10 skills per page and switches pages', async () => {
     renderSkillsIndex(makeSkills(12))

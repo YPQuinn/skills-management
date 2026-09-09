@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { screen, cleanup, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { mockResponse } from './source-fixtures'
 import {
   defaultHandler,
+  diffResult,
   installFetch,
   renderDetail,
   setupMatchMedia,
@@ -22,33 +24,34 @@ describe('Skill Synchronization Diff', () => {
     renderDetail('/skills/conflict-skill?tab=synchronization')
 
     expect(await screen.findByText('Three-Way Diff')).toBeTruthy()
-    // The comparison headings render once the diff fetch resolves; wait for
-    // the first one instead of racing the in-flight request.
-    expect(await screen.findByRole('heading', { name: /Baseline.*Source/i })).toBeTruthy()
-    expect(screen.getByRole('heading', { name: /Baseline.*Store/i })).toBeTruthy()
-    expect(screen.getByRole('heading', { name: /Source.*Store/i })).toBeTruthy()
+    expect(await screen.findByText('notes.md')).toBeTruthy()
+    expect(screen.getByText('logo.png')).toBeTruthy()
+    expect(screen.getByText('run.sh')).toBeTruthy()
+    expect(screen.getByText('old.md')).toBeTruthy()
+    expect(screen.getByText('kind-change')).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: /Baseline.*Source/i })).toBeNull()
 
-    // add with unified text
-    expect(screen.getByText('notes.md')).toBeTruthy()
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: /notes\.md/ }))
     expect(screen.getByText('added')).toBeTruthy()
     expect(screen.getByText('+upstream', { exact: false })).toBeTruthy()
+    expect(screen.queryByText('deleted')).toBeNull()
 
-    // binary content change: sizes and digests instead of text
-    expect(screen.getByText('logo.png')).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: /logo\.png/ }))
     expect(screen.getByText('content changed')).toBeTruthy()
     expect(screen.getByText('300000 bytes', { exact: false })).toBeTruthy()
     expect(screen.getByText('301000 bytes', { exact: false })).toBeTruthy()
     expect(screen.getByText('bb22')).toBeTruthy()
     expect(screen.getByText('cc33')).toBeTruthy()
 
-    // exec bit and node type
-    expect(screen.getByText('run.sh')).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: /run\.sh/ }))
     expect(screen.getByText('executable bit')).toBeTruthy()
-    expect(screen.getByText('kind-change')).toBeTruthy()
+
+    await user.click(screen.getByRole('button', { name: /kind-change/ }))
+    expect(screen.getByText('Source vs Store')).toBeTruthy()
     expect(screen.getByText('node type')).toBeTruthy()
 
-    // delete on the baseline→source side
-    expect(screen.getByText('old.md')).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: /old\.md/ }))
     expect(screen.getByText('deleted')).toBeTruthy()
   })
 
@@ -65,12 +68,21 @@ describe('Skill Synchronization Diff', () => {
     })
   })
 
-  it('shows the empty state for comparisons without differences', async () => {
-    installFetch(defaultHandler)
+  it('shows a single empty state when every comparison has no differences', async () => {
+    installFetch((url, init) => {
+      if (String(url) === '/api/v1/skills/103/diff') {
+        return mockResponse({
+          ...diffResult,
+          comparisons: diffResult.comparisons.map((c) => ({ ...c, entries: [] })),
+        })
+      }
+      return defaultHandler(url, init)
+    })
     renderDetail('/skills/conflict-skill?tab=synchronization')
 
     await screen.findByText('Three-Way Diff')
-    expect(await screen.findByText('No differences between these two sides.')).toBeTruthy()
+    expect(await screen.findByText('No differences.')).toBeTruthy()
+    expect(screen.queryByText('No differences between these two sides.')).toBeNull()
   })
 
   it('surfaces diff failures with the server message', async () => {

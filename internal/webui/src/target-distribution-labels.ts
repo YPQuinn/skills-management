@@ -67,3 +67,9 @@ export function outcomeKey(outcome: string | undefined): DictionaryKey {
       return 'outcomeSucceeded'
   }
 }
+
+export function outcomeBadgeVariant(outcome: string): 'success' | 'error' | 'warning' {
+  if (outcome === 'succeeded') return 'success'
+  if (outcome === 'failed') return 'error'
+  return 'warning'
+}

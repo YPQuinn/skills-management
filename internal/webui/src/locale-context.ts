@@ -2,6 +2,7 @@ import { createContext, useContext } from 'react'
 import {
   translate,
   formatLocaleTime,
+  formatRelativeTime,
   getErrorMessage as getErrMsg,
   type Locale,
   type DictionaryKey,
@@ -12,6 +13,7 @@ export interface LocaleContextType {
   setLocale: (locale: Locale) => void
   t: (key: DictionaryKey, params?: Record<string, string | number>) => string
   formatTime: (value?: string) => string
+  formatRelativeTime: (value?: string) => string
   getErrorMessage: (err: unknown, fallbackKey?: DictionaryKey) => string
 }
 
@@ -20,6 +22,7 @@ export const defaultContext: LocaleContextType = {
   setLocale: () => {},
   t: (key, params) => translate('en', key, params),
   formatTime: (value) => formatLocaleTime('en', value),
+  formatRelativeTime: (value) => formatRelativeTime('en', value),
   getErrorMessage: (err, fallbackKey) => getErrMsg(err, (k, p) => translate('en', k, p), fallbackKey),
 }
 

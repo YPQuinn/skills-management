@@ -1,57 +1,51 @@
-import { useEffect, useState, useRef } from 'react'
+import { lazy, Suspense, useEffect, useState, useRef, type ReactNode } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
 import { Spinner } from '@appica/ui-react/spinner'
-import { SourcesIndex, SourceExplorer } from './sources'
-import { SkillsIndex, SkillExplorer } from './skills'
-import { GroupsIndex, GroupExplorer } from './groups'
-import { TargetsIndex, TargetExplorer } from './targets'
 import { Layout } from './layout'
 import { useLocale } from './locale-context'
 import { LocaleProvider } from './locale-provider'
-import { ApiError } from './locale-dictionary'
-import { Setup, type StatusResponse } from './setup'
+import { ApiError, type DictionaryKey } from './locale-dictionary'
+import type { StatusResponse } from './setup'
+import { ToastProvider, Toaster } from '@appica/ui-react/toast'
+import { TooltipProvider } from '@appica/ui-react/tooltip'
+import { NotifySuccessBridge } from './notify-success'
 
-function Skills() {
+const SkillsPages = lazy(() => import('./skills'))
+const SourcesPages = lazy(() => import('./sources'))
+const GroupsPages = lazy(() => import('./groups'))
+const TargetsPages = lazy(() => import('./targets'))
+const Setup = lazy(() => import('./setup'))
+
+function FullPageSpinner({ label }: { label: string }) {
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<SkillsIndex />} />
-        <Route path="/:slug" element={<SkillExplorer />} />
-      </Routes>
-    </Layout>
+    <div className="min-h-dvh flex flex-col items-center justify-center p-4 bg-background text-foreground">
+      <Spinner className="text-3xl text-foreground-muted" aria-label={label} />
+    </div>
   )
 }
 
-function Sources() {
+function PageSpinner({ label }: { label: string }) {
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<SourcesIndex />} />
-        <Route path="/:name" element={<SourceExplorer />} />
-      </Routes>
-    </Layout>
+    <div className="flex items-center justify-center py-16">
+      <Spinner className="text-3xl text-foreground-muted" aria-label={label} />
+    </div>
   )
 }
 
-function Groups() {
+function LazySection({
+  fallbackKey,
+  children,
+}: {
+  fallbackKey: DictionaryKey
+  children: ReactNode
+}) {
+  const { t } = useLocale()
   return (
     <Layout>
-      <Routes>
-        <Route path="/" element={<GroupsIndex />} />
-        <Route path="/:name" element={<GroupExplorer />} />
-      </Routes>
-    </Layout>
-  )
-}
-
-function Targets() {
-  return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<TargetsIndex />} />
-        <Route path="/:name" element={<TargetExplorer />} />
-      </Routes>
+      <Suspense fallback={<PageSpinner label={t(fallbackKey)} />}>
+        {children}
+      </Suspense>
     </Layout>
   )
 }
@@ -94,11 +88,7 @@ function AppRoutes() {
   }, [navigate, location.pathname])
 
   if (checking) {
-    return (
-      <div className="min-h-dvh flex flex-col items-center justify-center p-4 bg-background text-foreground">
-        <Spinner className="text-3xl text-foreground-muted" aria-label={t('ariaCheckingStatus')} />
-      </div>
-    )
+    return <FullPageSpinner label={t('ariaCheckingStatus')} />
   }
 
   if (fetchError !== null) {
@@ -118,11 +108,18 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/setup" element={<Setup status={status} />} />
-      <Route path="/skills/*" element={<Skills />} />
-      <Route path="/sources/*" element={<Sources />} />
-      <Route path="/groups/*" element={<Groups />} />
-      <Route path="/targets/*" element={<Targets />} />
+      <Route
+        path="/setup"
+        element={
+          <Suspense fallback={<FullPageSpinner label={t('ariaCheckingStatus')} />}>
+            <Setup status={status} />
+          </Suspense>
+        }
+      />
+      <Route path="/skills/*" element={<LazySection fallbackKey="ariaLoadingSkills"><SkillsPages /></LazySection>} />
+      <Route path="/sources/*" element={<LazySection fallbackKey="ariaLoadingSources"><SourcesPages /></LazySection>} />
+      <Route path="/groups/*" element={<LazySection fallbackKey="ariaLoadingGroups"><GroupsPages /></LazySection>} />
+      <Route path="/targets/*" element={<LazySection fallbackKey="ariaLoadingTargets"><TargetsPages /></LazySection>} />
       <Route path="*" element={<div className="p-4 bg-background text-foreground min-h-dvh">{t('notFound')}</div>} />
     </Routes>
   )
@@ -131,7 +128,14 @@ function AppRoutes() {
 export default function App() {
   return (
     <LocaleProvider>
-      <AppRoutes />
+      <TooltipProvider>
+        <ToastProvider>
+          <NotifySuccessBridge>
+            <AppRoutes />
+          </NotifySuccessBridge>
+          <Toaster />
+        </ToastProvider>
+      </TooltipProvider>
     </LocaleProvider>
   )
 }

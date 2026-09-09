@@ -35,6 +35,8 @@ function InventoryHarness({ inventory }: { inventory: SourceEntry[] }) {
     <SourceInventory
       inventory={inventory}
       available
+      rescanning={false}
+      onRescan={() => {}}
       boundSkillMap={new Map()}
       selectedDirs={selectedDirs}
       setSelectedDirs={setSelectedDirs}

@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useState, useRef } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, Routes, Route, useParams } from 'react-router-dom'
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
 import { Badge } from '@appica/ui-react/badge'
 import { Table, TableCaption, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@appica/ui-react/table'
 import { ScrollArea } from '@appica/ui-react/scroll-area'
-import { Spinner } from '@appica/ui-react/spinner'
+import { ListPageSkeleton } from './list-page-skeleton'
 import { fetchSources } from './source-api'
 import type { SourceSummary } from './source-api'
 import { SourceStatusBadge } from './source-status'
 import { AddSourceForm } from './add-source-form'
 import { SourceDetailPage } from './source-detail'
+import { ResourceCreateDialog } from './resource-create-dialog'
 import { useLocale } from './locale-context'
 
 export { SourceStatusBadge } from './source-status'
@@ -24,7 +25,7 @@ export function SourcesIndex() {
   const [sources, setSources] = useState<SourceSummary[] | null>(null)
   const [error, setError] = useState<unknown | null>(null)
   const [loading, setLoading] = useState(true)
-
+  const [createOpen, setCreateOpen] = useState(false)
   const inflight = useRef<AbortController | null>(null)
 
   const load = useCallback(() => {
@@ -62,9 +63,16 @@ export function SourcesIndex() {
           <h1 className="text-2xl font-bold">{t('sourcesTitle')}</h1>
           <p className="text-foreground-muted text-sm">{t('sourcesSubtitle')}</p>
         </div>
+        <ResourceCreateDialog
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          title={t('addSourceTitle')}
+          description={t('addSourceSubtitle')}
+          triggerLabel={t('btnAddSource')}
+        >
+          <AddSourceForm onCreated={() => setCreateOpen(false)} />
+        </ResourceCreateDialog>
       </div>
-
-      <AddSourceForm />
 
       {error !== null && (
         <Alert variant="error">
@@ -74,9 +82,7 @@ export function SourcesIndex() {
       )}
 
       {loading && sources === null ? (
-        <div className="flex justify-center py-12">
-          <Spinner className="text-3xl text-foreground-muted" aria-label={t('ariaLoadingSources')} />
-        </div>
+        <ListPageSkeleton label={t('ariaLoadingSources')} />
       ) : sources === null ? null : sources.length === 0 ? (
         <p className="text-foreground-muted">{t('emptySourcesIndex')}</p>
       ) : (
@@ -91,7 +97,7 @@ export function SourcesIndex() {
                   <TableHead>{t('colLocation')}</TableHead>
                   <TableHead>{t('colStatus')}</TableHead>
                   <TableHead className="text-end">{t('colSkills')}</TableHead>
-                  <TableHead>{t('colLastChecked')}</TableHead>
+                  <TableHead>{t('colLastScanned')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -125,4 +131,13 @@ export function SourcesIndex() {
 export function SourceExplorer() {
   const { name } = useParams()
   return <SourceDetailPage key={name} />
+}
+
+export default function Sources() {
+  return (
+    <Routes>
+      <Route path="/" element={<SourcesIndex />} />
+      <Route path="/:name" element={<SourceExplorer />} />
+    </Routes>
+  )
 }

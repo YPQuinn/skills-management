@@ -4,6 +4,7 @@ import {
   translate,
   getInitialLocale,
   formatLocaleTime,
+  formatRelativeTime as formatRelativeTimeValue,
   getErrorMessage as getErrMsg,
   type Locale,
   type DictionaryKey,
@@ -25,11 +26,12 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     translate(locale, key, params)
 
   const formatTime = (value?: string) => formatLocaleTime(locale, value)
+  const formatRelativeTime = (value?: string) => formatRelativeTimeValue(locale, value)
 
   const getErrorMessage = (err: unknown, fallbackKey?: DictionaryKey) => getErrMsg(err, t, fallbackKey)
 
   return (
-    <LocaleContext.Provider value={{ locale, setLocale, t, formatTime, getErrorMessage }}>
+    <LocaleContext.Provider value={{ locale, setLocale, t, formatTime, formatRelativeTime, getErrorMessage }}>
       {children}
     </LocaleContext.Provider>
   )

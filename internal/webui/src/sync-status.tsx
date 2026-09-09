@@ -11,18 +11,44 @@ import {
   syncStatusVariant,
 } from './sync-status-policy'
 
-export function SyncStatusBadge({ status }: { status: string }) {
+type BadgeSize = 'xs' | 'sm' | 'md' | 'lg'
+
+// count turns the badge into a tally ("2 in sync"); both dictionaries put
+// the number first, as the Skills index filter chips already do.
+export function SyncStatusBadge({
+  status,
+  count,
+  size,
+}: {
+  status: string
+  count?: number
+  size?: BadgeSize
+}) {
   const { t } = useLocale()
-  if (!isSyncStatus(status)) {
-    return <Badge variant="outline">{status}</Badge>
-  }
-  return <Badge variant={syncStatusVariant[status]}>{t(syncStatusKey[status])}</Badge>
+  const known = isSyncStatus(status)
+  const label = known ? t(syncStatusKey[status]) : status
+  return (
+    <Badge variant={known ? syncStatusVariant[status] : 'outline'} size={size}>
+      {count === undefined ? label : `${count} ${label}`}
+    </Badge>
+  )
 }
 
-export function SyncResultBadge({ result }: { result: string }) {
+export function SyncResultBadge({
+  result,
+  count,
+  size,
+}: {
+  result: string
+  count?: number
+  size?: BadgeSize
+}) {
   const { t } = useLocale()
-  if (!isSyncActionResult(result)) {
-    return <Badge variant="outline">{result}</Badge>
-  }
-  return <Badge variant={syncResultVariant[result]}>{t(syncResultKey[result])}</Badge>
+  const known = isSyncActionResult(result)
+  const label = known ? t(syncResultKey[result]) : result
+  return (
+    <Badge variant={known ? syncResultVariant[result] : 'outline'} size={size}>
+      {count === undefined ? label : `${count} ${label}`}
+    </Badge>
+  )
 }

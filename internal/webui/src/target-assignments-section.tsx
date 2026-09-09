@@ -6,11 +6,62 @@ import { Table, TableCaption, TableHeader, TableBody, TableRow, TableHead, Table
 import { ScrollArea } from '@appica/ui-react/scroll-area'
 import { Spinner } from '@appica/ui-react/spinner'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@appica/ui-react/select'
+import {
+  Combobox,
+  ComboboxInput,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxList,
+  ComboboxItem,
+} from '@appica/ui-react/combobox'
 import { Plus, Trash, Folder, Sparkles } from '@appica/icons-react'
 import type { Assignment } from './target-api'
 import type { Skill } from './skill-api'
 import type { GroupSummary } from './group-api'
 import { useLocale } from './locale-context'
+import { skillLabel } from './skill-identity'
+import { RelativeTime } from './relative-time'
+
+function AssignmentCombobox<T extends { id: number }>({
+  items,
+  selectedId,
+  onSelectId,
+  labelFor,
+  placeholder,
+  ariaLabel,
+}: {
+  items: T[]
+  selectedId: string
+  onSelectId: (id: string) => void
+  labelFor: (item: T) => string
+  placeholder: string
+  ariaLabel: string
+}) {
+  const { t } = useLocale()
+  const selected = items.find((item) => String(item.id) === selectedId) ?? null
+  return (
+    <Combobox
+      items={items}
+      value={selected}
+      onValueChange={(v) => onSelectId(v ? String((v as T).id) : '')}
+      itemToStringLabel={(item) => labelFor(item as T)}
+      itemToStringValue={(item) => String((item as T).id)}
+      autoHighlight
+    >
+      <ComboboxInput className="w-56" placeholder={placeholder} aria-label={ariaLabel} />
+      <ComboboxContent>
+        <ComboboxEmpty>{t('emptyCombobox')}</ComboboxEmpty>
+        <ComboboxList>
+          {(item: T) => (
+            <ComboboxItem key={item.id} value={item}>
+              {labelFor(item)}
+            </ComboboxItem>
+          )}
+        </ComboboxList>
+      </ComboboxContent>
+    </Combobox>
+  )
+}
 
 interface TargetAssignmentsSectionProps {
   directSkills: Assignment[]
@@ -31,7 +82,7 @@ export function TargetAssignmentsSection({
   onAddAssignment,
   onDeleteAssignment,
 }: TargetAssignmentsSectionProps) {
-  const { t, formatTime } = useLocale()
+  const { t } = useLocale()
   const [assignKind, setAssignKind] = useState<'skill' | 'group'>('skill')
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('')
 
@@ -61,6 +112,7 @@ export function TargetAssignmentsSection({
               setAssignKind(v as 'skill' | 'group')
               setSelectedSubjectId('')
             }}
+            items={{ skill: t('optAssignSkill'), group: t('optAssignGroup') }}
           >
             <SelectTrigger className="w-36" aria-label={t('labelAssignmentKind')}>
               <SelectValue placeholder={t('optAssignSkill')} />
@@ -72,31 +124,23 @@ export function TargetAssignmentsSection({
           </Select>
 
           {assignKind === 'skill' ? (
-            <Select value={selectedSubjectId} onValueChange={(val) => setSelectedSubjectId(val as string)}>
-              <SelectTrigger className="w-56" aria-label={t('optAssignSkill')}>
-                <SelectValue placeholder={t('phSelectSkill')} />
-              </SelectTrigger>
-              <SelectContent>
-                {availableSkills.map((s) => (
-                  <SelectItem key={s.id} value={String(s.id)}>
-                    {s.name} ({s.slug})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <AssignmentCombobox
+              items={availableSkills}
+              selectedId={selectedSubjectId}
+              onSelectId={setSelectedSubjectId}
+              labelFor={(s) => skillLabel(s.name, s.slug)}
+              placeholder={t('phSelectSkill')}
+              ariaLabel={t('optAssignSkill')}
+            />
           ) : (
-            <Select value={selectedSubjectId} onValueChange={(val) => setSelectedSubjectId(val as string)}>
-              <SelectTrigger className="w-56" aria-label={t('optAssignGroup')}>
-                <SelectValue placeholder={t('phSelectGroup')} />
-              </SelectTrigger>
-              <SelectContent>
-                {availableGroups.map((g) => (
-                  <SelectItem key={g.id} value={String(g.id)}>
-                    {g.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <AssignmentCombobox
+              items={availableGroups}
+              selectedId={selectedSubjectId}
+              onSelectId={setSelectedSubjectId}
+              labelFor={(g) => g.name}
+              placeholder={t('phSelectGroup')}
+              ariaLabel={t('optAssignGroup')}
+            />
           )}
 
           <Button type="submit" disabled={submitting || !selectedSubjectId} size="sm" focusableWhenDisabled>
@@ -154,7 +198,9 @@ export function TargetAssignmentsSection({
                           {name}
                         </Link>
                       </TableCell>
-                      <TableCell className="text-foreground-muted text-xs">{formatTime(as.created_at)}</TableCell>
+                      <TableCell className="text-foreground-muted text-xs">
+                        <RelativeTime value={as.created_at} />
+                      </TableCell>
                       <TableCell className="text-end">
                         <Button
                           variant="ghost"

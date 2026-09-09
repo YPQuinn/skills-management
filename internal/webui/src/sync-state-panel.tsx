@@ -2,11 +2,15 @@
 // action-error, and outcome alerts of the Skill Synchronization tab.
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
 import { Badge } from '@appica/ui-react/badge'
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@appica/ui-react/collapsible'
+import { ChevronRight } from '@appica/icons-react'
+import { CopyableField } from './copyable-path'
 import { SyncStatusBadge, SyncResultBadge } from './sync-status'
-import { syncActionKey } from './sync-status-policy'
+import { isSuccessfulSyncResult, isSyncStatus, syncActionKey, syncConclusionKey } from './sync-status-policy'
 import type { Skill } from './skill-api'
 import type { SyncItemResult } from './sync-api'
 import { useLocale } from './locale-context'
+import { TermTooltip } from './term-tooltip'
 
 interface SyncStatePanelProps {
   skill: Skill
@@ -15,28 +19,30 @@ interface SyncStatePanelProps {
 }
 
 function outcomeVariant(result: string): 'success' | 'warning' | 'error' {
-  switch (result) {
-    case 'updated':
-    case 'kept_store':
-    case 'accepted_source':
-    case 'rolled_back':
-      return 'success'
-    case 'no_op':
-    case 'skipped':
-    case 'blocked':
-      return 'warning'
-    default:
-      return 'error'
-  }
+  if (isSuccessfulSyncResult(result)) return 'success'
+  if (result === 'failed') return 'error'
+  return 'warning'
 }
 
 export function SyncStatePanel({ skill, outcome, actionError }: SyncStatePanelProps) {
   const { t, formatTime, getErrorMessage } = useLocale()
   const last = skill.last_sync
   const actionLabel = last && syncActionKey[last.action] ? t(syncActionKey[last.action]) : (last?.action ?? '')
+  const status = skill.sync_status
+  const conclusionKey = isSyncStatus(status) ? syncConclusionKey[status] : undefined
+  const isConflict = status === 'conflict'
 
   return (
     <div className="space-y-4">
+      {isConflict ? (
+        <Alert variant="error">
+          <AlertTitle>{t('alertSyncConflict')}</AlertTitle>
+          <AlertDescription>{t('syncConclusionConflict')}</AlertDescription>
+        </Alert>
+      ) : (
+        conclusionKey && <p className="text-sm text-foreground">{t(conclusionKey)}</p>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 text-sm">
         <div className="border border-border rounded-xl p-4 bg-background space-y-3">
           <div className="flex flex-wrap items-center gap-2">
@@ -47,14 +53,6 @@ export function SyncStatePanel({ skill, outcome, actionError }: SyncStatePanelPr
           <div>
             <div className="text-foreground-muted">{t('labelSyncCheckedAt')}</div>
             <div className="font-medium mt-0.5">{formatTime(skill.sync_checked_at)}</div>
-          </div>
-          <div>
-            <div className="text-foreground-muted">{t('labelStoreDigest')}</div>
-            <div className="font-mono text-xs break-all mt-0.5">{skill.store_digest || '—'}</div>
-          </div>
-          <div>
-            <div className="text-foreground-muted">{t('labelBaselineDigest')}</div>
-            <div className="font-mono text-xs break-all mt-0.5">{skill.baseline_digest || '—'}</div>
           </div>
         </div>
 
@@ -75,18 +73,6 @@ export function SyncStatePanel({ skill, outcome, actionError }: SyncStatePanelPr
                   <div className="text-foreground-muted">{t('labelSyncCompleted')}</div>
                   <div className="font-medium mt-0.5">{formatTime(last.completed_at)}</div>
                 </div>
-                <div>
-                  <div className="text-foreground-muted">{t('labelSyncBeforeDigest')}</div>
-                  <div className="font-mono text-xs break-all mt-0.5">{last.before_digest || '—'}</div>
-                </div>
-                <div>
-                  <div className="text-foreground-muted">{t('labelSyncAfterDigest')}</div>
-                  <div className="font-mono text-xs break-all mt-0.5">{last.after_digest || '—'}</div>
-                </div>
-                <div>
-                  <div className="text-foreground-muted">{t('labelSyncRevision')}</div>
-                  <div className="font-mono text-xs break-all mt-0.5">{last.revision || '—'}</div>
-                </div>
               </div>
               {last.error && (
                 <Alert variant="error">
@@ -100,6 +86,32 @@ export function SyncStatePanel({ skill, outcome, actionError }: SyncStatePanelPr
           )}
         </div>
       </div>
+
+      <Collapsible>
+        <CollapsibleTrigger
+          type="button"
+          className="group text-foreground-muted inline-flex items-center gap-1.5 text-sm font-medium hover:text-foreground"
+        >
+          <ChevronRight className="size-4 shrink-0 stroke-2 transition-transform duration-200 group-data-panel-open:rotate-90 motion-reduce:transition-none" />
+          {t('digestDetails')}
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 text-sm">
+            <CopyableField label={t('labelStoreDigest')} value={skill.store_digest} />
+            <CopyableField
+              label={<TermTooltip term={t('labelBaselineDigest')} tip={t('tipBaseline')} />}
+              value={skill.baseline_digest}
+            />
+            {last && (
+              <>
+                <CopyableField label={t('labelSyncBeforeDigest')} value={last.before_digest} />
+                <CopyableField label={t('labelSyncAfterDigest')} value={last.after_digest} />
+                <CopyableField label={t('labelSyncRevision')} value={last.revision} />
+              </>
+            )}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
 
       {skill.sync_stale && (
         <Alert variant="warning">

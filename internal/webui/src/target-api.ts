@@ -28,6 +28,8 @@ export interface TargetSummary {
   project_root?: string
   created_at: string
   updated_at: string
+  last_result?: string
+  stale?: boolean
 }
 
 export interface TargetListResponse {

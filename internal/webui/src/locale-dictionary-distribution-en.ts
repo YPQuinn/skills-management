@@ -49,6 +49,12 @@ export const translationsDistributionEn = {
   staleObservation: 'Stale observation: {error}',
   inspectedAtLabel: 'Inspected {time}',
   distributionLastOutcome: 'Latest outcome: {outcome}',
+  distributionNever: 'Never distributed',
+  distributionStale: 'stale observation',
+  toastDistributed: 'Distribution finished',
+  termManagedLink: 'Managed Link',
+  tipManagedLink: 'A symlink Skill Manager created or adopted on a Target.',
+  tipDesiredSkillSet: 'Skills this Target should have after Distribution, from assignments and Groups.',
   // Dry-run / result presentation
   previewTitle: 'Distribution plan',
   previewOutcome: 'Predicted outcome: {outcome}',

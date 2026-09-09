@@ -1,13 +1,15 @@
-import { useMemo, useState, type ChangeEvent, type MouseEvent } from 'react'
+import { useMemo, useState, type ChangeEvent, type MouseEvent, type ReactNode } from 'react'
 import { Button } from '@appica/ui-react/button'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@appica/ui-react/tooltip'
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
 import { Checkbox } from '@appica/ui-react/checkbox'
 import { Input } from '@appica/ui-react/input'
 import { Pagination, PaginationList, PaginationItem, PaginationLink, PaginationEllipsis } from '@appica/ui-react/pagination'
 import { Spinner } from '@appica/ui-react/spinner'
-import { ChevronLeft, ChevronRight, Search } from '@appica/icons-react'
+import { ChevronLeft, ChevronRight, Refresh, Search } from '@appica/icons-react'
 import { SourceInventoryTable } from './source-inventory-table'
 import { paginationItems } from './pagination-items'
+import { RelativeTime } from './relative-time'
 import type { SourceEntry } from './source-api'
 import type { Skill, ImportResponse } from './skill-api'
 import { useLocale } from './locale-context'
@@ -17,6 +19,9 @@ const PAGE_SIZE = 10
 interface SourceInventoryProps {
   inventory: SourceEntry[]
   available: boolean
+  lastScannedAt?: string
+  rescanning: boolean
+  onRescan: () => void
   boundSkillMap: Map<string, Skill>
   selectedDirs: string[]
   setSelectedDirs: (dirs: string[]) => void
@@ -27,11 +32,18 @@ interface SourceInventoryProps {
   importing: boolean
   importResult: ImportResponse | null
   onImport: (options: { all?: boolean }) => void
+  // Synchronization is a Source action, not an Inventory one, so the page
+  // hands its button and its status in rather than this module owning them.
+  syncAction?: ReactNode
+  syncStatus?: ReactNode
 }
 
 export function SourceInventory({
   inventory,
   available,
+  lastScannedAt,
+  rescanning,
+  onRescan,
   boundSkillMap,
   selectedDirs,
   setSelectedDirs,
@@ -42,6 +54,8 @@ export function SourceInventory({
   importing,
   importResult,
   onImport,
+  syncAction,
+  syncStatus,
 }: SourceInventoryProps) {
   const { t } = useLocale()
   const [query, setQuery] = useState('')
@@ -80,12 +94,47 @@ export function SourceInventory({
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
+      {/* One toolbar for everything you can do to this Source: refresh what
+          it offers, pull its changes into the Store, or import from it. What
+          each button does, and how old its reading is, lives on hover so the
+          row stays a row. */}
+      <div className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h2 className="text-lg font-semibold">{t('inventoryHeading', { count: inventory.length })}</h2>
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="text-lg font-semibold">{t('inventoryHeading', { count: inventory.length })}</h2>
+
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onRescan}
+                    disabled={rescanning}
+                    focusableWhenDisabled
+                  >
+                    {rescanning ? (
+                      <Spinner data-icon="start" currentColor className="text-[1.2em]" />
+                    ) : (
+                      <Refresh data-icon="start" />
+                    )}
+                    {rescanning ? t('btnScanning') : t('btnRescan')}
+                  </Button>
+                }
+              />
+              <TooltipContent className="max-w-xs">
+                {t('inventoryScopeNote')}
+                <div className="mt-1 opacity-80">
+                  {t('colLastScanned')}: <RelativeTime value={lastScannedAt} />
+                </div>
+              </TooltipContent>
+            </Tooltip>
+
+            {syncAction}
+          </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <label className="flex items-center gap-2 text-sm select-none cursor-pointer">
+            <label className="flex items-center gap-2 text-xs select-none cursor-pointer">
               <Checkbox
                 checked={allowLarge}
                 onCheckedChange={(checked) => setAllowLarge(!!checked)}
@@ -94,33 +143,45 @@ export function SourceInventory({
               <span className="text-foreground-muted">{t('labelAllowLarge')}</span>
             </label>
 
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={importing || selectedDirs.length === 0 || !available}
-              onClick={() => onImport({ all: false })}
-              focusableWhenDisabled
-            >
-              {importing && <Spinner data-icon="start" currentColor className="text-[1.2em]" />}
-              {t('btnImportSelected', { count: selectedDirs.length })}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={importing || selectedDirs.length === 0 || !available}
+                    onClick={() => onImport({ all: false })}
+                    focusableWhenDisabled
+                  >
+                    {importing && <Spinner data-icon="start" currentColor className="text-[1.2em]" />}
+                    {t('btnImportSelected', { count: selectedDirs.length })}
+                  </Button>
+                }
+              />
+              <TooltipContent className="max-w-xs">{t('inventoryNote')}</TooltipContent>
+            </Tooltip>
 
-            <Button
-              variant="primary"
-              size="sm"
-              disabled={importing || inventory.length === 0 || !available}
-              onClick={() => onImport({ all: true })}
-              focusableWhenDisabled
-            >
-              {importing && <Spinner data-icon="start" currentColor className="text-[1.2em]" />}
-              {t('btnImportAll')}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    disabled={importing || inventory.length === 0 || !available}
+                    onClick={() => onImport({ all: true })}
+                    focusableWhenDisabled
+                  >
+                    {importing && <Spinner data-icon="start" currentColor className="text-[1.2em]" />}
+                    {t('btnImportAll')}
+                  </Button>
+                }
+              />
+              <TooltipContent className="max-w-xs">{t('inventoryNote')}</TooltipContent>
+            </Tooltip>
           </div>
         </div>
 
-        <p className="text-xs text-foreground-muted">
-          {t('inventoryNote')}
-        </p>
+        {syncStatus}
       </div>
 
       {summary && (

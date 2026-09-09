@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, cleanup, waitFor } from '@testing-library/react'
+import { render, screen, cleanup, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { TargetsIndex, TargetExplorer } from './targets'
@@ -125,17 +125,48 @@ describe('Targets UI', () => {
   afterEach(() => cleanup())
 
   it('renders target adapters with detection evidence and registered targets', async () => {
+    const user = userEvent.setup()
     renderTargets()
+    expect(await screen.findByRole('link', { name: 'Claude User Config' })).toBeTruthy()
+    expect(screen.getByText('Never distributed')).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: 'Register Target' }))
     expect(await screen.findByText('Claude Code')).toBeTruthy()
     expect(screen.getByText('Detected')).toBeTruthy()
     expect(screen.getByText('found /usr/local/bin/claude')).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'Claude User Config' })).toBeTruthy()
+  })
+
+  it('shows last Distribution outcome and stale on registered Targets', async () => {
+    window.fetch = vi.fn().mockImplementation(async (url: RequestInfo | URL) => {
+      const u = String(url)
+      if (u === '/api/v1/targets/adapters') {
+        return mockResponse({ items: mockAdapters, total: 1 })
+      }
+      if (u === '/api/v1/targets') {
+        return mockResponse({
+          items: [{ ...mockTargetSummary, last_result: 'blocked', stale: true }],
+          total: 1,
+        })
+      }
+      return mockResponse({ error: { message: 'not found' } }, false, 404)
+    })
+    renderTargets()
+    expect(await screen.findByText('Blocked')).toBeTruthy()
+    expect(screen.getByText('stale observation')).toBeTruthy()
   })
 
   it('registers a custom target via POST /api/v1/targets without adapter/scope/project_root', async () => {
     const user = userEvent.setup()
     renderTargets()
-    await screen.findByText('Claude Code')
+    await screen.findByRole('link', { name: 'Claude User Config' })
+    await user.click(screen.getByRole('button', { name: 'Register Target' }))
+
+    const modeSelect = screen.getByRole('combobox', { name: 'Target Type' })
+    expect(modeSelect.textContent).toContain('Built-in Adapter')
+    expect(modeSelect.textContent).not.toMatch(/^\s*builtin\s*$/)
+    const adapterSelect = screen.getByRole('combobox', { name: 'Adapter' })
+    expect(adapterSelect.textContent).toContain('Claude Code')
+    expect(adapterSelect.textContent).not.toMatch(/^\s*claude\s*$/)
+    expect(screen.getByRole('combobox', { name: 'Scope' }).textContent).toContain('User (global)')
 
     const postCall = vi.fn().mockResolvedValue(
       mockResponse({
@@ -161,10 +192,11 @@ describe('Targets UI', () => {
       return mockResponse({ error: { message: 'not found' } }, false, 404)
     })
 
-    const modeSelect = screen.getByRole('combobox', { name: 'Target Type' })
     await user.click(modeSelect)
     const customOption = await screen.findByRole('option', { name: 'Custom Directory Path' })
     await user.click(customOption)
+    expect(modeSelect.textContent).toContain('Custom Directory Path')
+    expect(modeSelect.textContent).not.toMatch(/^\s*custom\s*$/)
 
     const nameInput = screen.getByPlaceholderText('e.g. Claude User Config')
     await user.type(nameInput, 'Custom Agent Skills')
@@ -172,7 +204,7 @@ describe('Targets UI', () => {
     const pathInput = screen.getByPlaceholderText('/path/to/target/skills')
     await user.type(pathInput, '/tmp/agent-skills')
 
-    await user.click(screen.getByRole('button', { name: 'Register Target' }))
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Register Target' }))
 
     await waitFor(() => expect(postCall).toHaveBeenCalled())
     const [, init] = postCall.mock.calls[0]
@@ -192,6 +224,55 @@ describe('Targets UI', () => {
     expect(screen.getByText('Desired Skill Set (2)')).toBeTruthy()
     expect(screen.getByText('Directly assigned (Assignment #101)')).toBeTruthy()
     expect(screen.getByText('Assigned via Group "backend-tools" (Group #1, Assignment #102)')).toBeTruthy()
+  })
+
+  it('assigns a Group through the searchable picker', async () => {
+    const user = userEvent.setup()
+    const postCall = vi.fn().mockResolvedValue(
+      mockResponse({
+        id: 103,
+        kind: 'group',
+        group: { id: 2, name: 'crew' },
+        created_at: '2026-01-01T00:00:00Z',
+      }),
+    )
+    vi.mocked(window.fetch).mockImplementation(async (url: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === 'POST' && String(url) === '/api/v1/targets/1/assignments') {
+        return postCall(url, init)
+      }
+      if (String(url) === '/api/v1/targets') return mockResponse({ items: [mockTargetSummary], total: 1 })
+      if (String(url) === '/api/v1/targets/1') return mockResponse(mockTargetView)
+      if (String(url) === '/api/v1/skills') {
+        return mockResponse({ items: [{ id: 10, slug: 'go-lint', name: 'Go Linter' }], total: 1 })
+      }
+      if (String(url) === '/api/v1/groups') {
+        return mockResponse({
+          items: [
+            { id: 1, name: 'backend-tools', member_count: 2 },
+            { id: 2, name: 'crew', member_count: 1 },
+          ],
+          total: 2,
+        })
+      }
+      return mockResponse({ error: { message: 'not found' } }, false, 404)
+    })
+
+    renderTargets('/targets/Claude%20User%20Config')
+    await screen.findByRole('heading', { name: 'Claude User Config' })
+    await user.click(screen.getByRole('combobox', { name: 'Assignment Type' }))
+    await user.click(await screen.findByRole('option', { name: 'Group' }))
+    expect(screen.getByRole('combobox', { name: 'Assignment Type' }).textContent).toContain('Group')
+    expect(screen.getByRole('combobox', { name: 'Assignment Type' }).textContent).not.toMatch(/^\s*group\s*$/)
+    const picker = screen.getByLabelText('Group')
+    await user.click(picker)
+    await user.type(picker, 'crew')
+    await user.click(await screen.findByRole('option', { name: 'crew' }))
+    await user.click(screen.getByRole('button', { name: 'Assign' }))
+    await waitFor(() => expect(postCall).toHaveBeenCalled())
+    expect(JSON.parse((postCall.mock.calls[0][1] as RequestInit).body as string)).toEqual({
+      kind: 'group',
+      group_id: 2,
+    })
   })
 
   it('deletes assignment via DELETE /api/v1/targets/1/assignments/:id with Content-Type application/json', async () => {
@@ -246,6 +327,7 @@ describe('Targets UI', () => {
     })
 
     renderTargets('/targets')
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Register Target' }))
     expect(await screen.findByText('Detected')).toBeTruthy()
     expect(screen.getByText('Not Detected')).toBeTruthy()
     expect(screen.getByText('Unknown')).toBeTruthy()

@@ -47,7 +47,13 @@ export function GroupMembersSection({
 
         {availableSkills.length > 0 && (
           <form onSubmit={handleAddSubmit} className="flex items-center gap-2">
-            <Select value={selectedSkillId} onValueChange={(val) => setSelectedSkillId(val as string)}>
+            <Select
+              value={selectedSkillId}
+              onValueChange={(val) => setSelectedSkillId(val as string)}
+              items={Object.fromEntries(
+                availableSkills.map((skill) => [String(skill.id), `${skill.name} (${skill.slug})`]),
+              )}
+            >
               <SelectTrigger className="w-56" aria-label={t('selectSkillToAdd')}>
                 <SelectValue placeholder={t('phSelectSkill')} />
               </SelectTrigger>

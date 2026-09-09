@@ -3,6 +3,8 @@ import { Badge } from '@appica/ui-react/badge'
 import { Table, TableCaption, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@appica/ui-react/table'
 import { ScrollArea } from '@appica/ui-react/scroll-area'
 import type { DesiredSkill } from './target-api'
+import { SkillIdentity } from './skill-identity'
+import { TermTooltip } from './term-tooltip'
 import { useLocale } from './locale-context'
 
 interface TargetDesiredSetSectionProps {
@@ -16,7 +18,7 @@ export function TargetDesiredSetSection({ desiredSkills }: TargetDesiredSetSecti
     <div className="space-y-4 border border-border rounded-xl p-6 bg-background shadow-sm">
       <div>
         <h2 className="text-lg font-semibold">
-          {t('desiredSetHeading', { count: desiredSkills.length })}
+          <TermTooltip term={t('desiredSetHeading', { count: desiredSkills.length })} tip={t('tipDesiredSkillSet')} />
         </h2>
         <p className="text-sm text-foreground-muted">{t('desiredSetSubtitle')}</p>
       </div>
@@ -25,28 +27,32 @@ export function TargetDesiredSetSection({ desiredSkills }: TargetDesiredSetSecti
         <p className="text-foreground-muted text-sm py-4">{t('emptyDesiredSet')}</p>
       ) : (
         <ScrollArea className="w-full" orientation="horizontal">
-          <div className="min-w-[650px]">
+          <div className="min-w-[520px]">
             <Table aria-label={t('captionDesiredSetTable')}>
               <TableCaption className="sr-only">{t('captionDesiredSetTable')}</TableCaption>
               <TableHeader>
                 <TableRow>
                   <TableHead>{t('colName')}</TableHead>
-                  <TableHead>{t('colSlug')}</TableHead>
                   <TableHead>{t('colReasons')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {desiredSkills.map((ds) => (
                   <TableRow key={ds.id}>
-                    <TableCell className="font-medium text-foreground-strong">
-                      <Link
-                        to={`/skills/${encodeURIComponent(ds.slug)}`}
-                        className="underline decoration-border underline-offset-2 hover:decoration-foreground"
-                      >
-                        {ds.name}
-                      </Link>
+                    <TableCell>
+                      <SkillIdentity
+                        name={ds.name}
+                        slug={ds.slug}
+                        nameNode={
+                          <Link
+                            to={`/skills/${encodeURIComponent(ds.slug)}`}
+                            className="underline decoration-border underline-offset-2 hover:decoration-foreground"
+                          >
+                            {ds.name}
+                          </Link>
+                        }
+                      />
                     </TableCell>
-                    <TableCell className="font-mono text-foreground-muted">{ds.slug}</TableCell>
                     <TableCell>
                       <div className="space-y-1">
                         {ds.reasons.map((r, idx) => (

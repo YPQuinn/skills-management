@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import path from 'node:path'
-import { expectImported, expectNoHorizontalOverflow, initializeStore, navTo, openSettings, startUI, writeSkillFixture } from './helpers'
+import { expectImported, expectNoHorizontalOverflow, initializeStore, navTo, openCreateDialog, openSettings, startUI, writeSkillFixture } from './helpers'
 
 test('desktop master-detail, narrow list/detail split, no overflow', async ({ page }) => {
   const ui = await startUI()
@@ -10,6 +10,7 @@ test('desktop master-detail, narrow list/detail split, no overflow', async ({ pa
     const sourceRoot = path.join(ui.home, 'upstream')
     writeSkillFixture(sourceRoot, 'wide')
     await navTo(page, 'Sources')
+    await openCreateDialog(page, 'Add Source')
     await page.getByLabel('Location').fill(sourceRoot)
     await page.getByRole('button', { name: 'Register and scan' }).click()
     await page.getByRole('button', { name: 'Import all' }).click()
@@ -24,11 +25,17 @@ test('desktop master-detail, narrow list/detail split, no overflow', async ({ pa
     await expect(background).toHaveCSS('overflow-x', 'visible')
     await expect(background).toHaveCSS('overflow-y', 'visible')
     await expectNoHorizontalOverflow(page)
+    const mainNavList = page.getByRole('navigation', { name: 'Main navigation' }).locator('[data-slot="navigation-list"]')
+    await expect(mainNavList).toHaveCSS('overflow-x', 'visible')
+    await expect(mainNavList).toHaveCSS('overflow-y', 'visible')
+    expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollbarGutter)).toContain('stable')
 
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto(`${ui.url}/skills`)
     await expect(page.getByRole('heading', { name: 'Skills' })).toBeVisible()
     await expect(page.getByRole('navigation', { name: 'Skill list' })).toHaveCount(0)
+    await expect(mainNavList).toHaveCSS('overflow-x', 'auto')
+    await expect(mainNavList).toHaveCSS('overflow-y', 'hidden')
     await expectNoHorizontalOverflow(page)
     await page.getByRole('link', { name: 'wide', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'wide' })).toBeVisible()

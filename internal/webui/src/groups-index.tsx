@@ -3,17 +3,19 @@ import { Link } from 'react-router-dom'
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
 import { Table, TableCaption, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@appica/ui-react/table'
 import { ScrollArea } from '@appica/ui-react/scroll-area'
-import { Spinner } from '@appica/ui-react/spinner'
+import { ListPageSkeleton } from './list-page-skeleton'
 import { fetchGroups, type GroupSummary } from './group-api'
 import { CreateGroupForm } from './create-group-form'
+import { ResourceCreateDialog } from './resource-create-dialog'
 import { useLocale } from './locale-context'
+import { RelativeTime } from './relative-time'
 
 export function GroupsIndex() {
-  const { t, formatTime, getErrorMessage } = useLocale()
+  const { t, getErrorMessage } = useLocale()
   const [groups, setGroups] = useState<GroupSummary[] | null>(null)
   const [error, setError] = useState<unknown | null>(null)
   const [loading, setLoading] = useState(true)
-
+  const [createOpen, setCreateOpen] = useState(false)
   const inflight = useRef<AbortController | null>(null)
 
   const load = useCallback(() => {
@@ -51,9 +53,16 @@ export function GroupsIndex() {
           <h1 className="text-2xl font-bold">{t('groupsTitle')}</h1>
           <p className="text-foreground-muted text-sm">{t('groupsSubtitle')}</p>
         </div>
+        <ResourceCreateDialog
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          title={t('createGroupTitle')}
+          description={t('createGroupSubtitle')}
+          triggerLabel={t('btnCreateGroup')}
+        >
+          <CreateGroupForm onCreated={() => { setCreateOpen(false); load() }} />
+        </ResourceCreateDialog>
       </div>
-
-      <CreateGroupForm onCreated={load} />
 
       {error !== null && (
         <Alert variant="error">
@@ -63,21 +72,18 @@ export function GroupsIndex() {
       )}
 
       {loading && groups === null ? (
-        <div className="flex justify-center py-12">
-          <Spinner className="text-3xl text-foreground-muted" aria-label={t('ariaLoadingGroups')} />
-        </div>
+        <ListPageSkeleton label={t('ariaLoadingGroups')} />
       ) : groups === null ? null : groups.length === 0 ? (
         <p className="text-foreground-muted text-center py-8">{t('emptyGroupsIndex')}</p>
       ) : (
         <ScrollArea className="w-full" orientation="horizontal">
-          <div className="min-w-[600px]">
+          <div className="min-w-[420px]">
             <Table aria-label={t('captionGroupsIndex')}>
               <TableCaption className="sr-only">{t('captionGroupsIndex')}</TableCaption>
               <TableHeader>
                 <TableRow>
                   <TableHead>{t('colName')}</TableHead>
                   <TableHead className="text-end">{t('colMemberCount')}</TableHead>
-                  <TableHead>{t('labelCreated')}</TableHead>
                   <TableHead>{t('labelUpdated')}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -93,8 +99,9 @@ export function GroupsIndex() {
                       </Link>
                     </TableCell>
                     <TableCell className="text-end tabular-nums">{g.member_count}</TableCell>
-                    <TableCell className="text-foreground-muted">{formatTime(g.created_at)}</TableCell>
-                    <TableCell className="text-foreground-muted">{formatTime(g.updated_at)}</TableCell>
+                    <TableCell className="text-foreground-muted">
+                      <RelativeTime value={g.updated_at} />
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

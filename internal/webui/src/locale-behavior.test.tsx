@@ -127,7 +127,7 @@ describe('WebUI Localization Behavior - No Extra Fetch / Delayed Status', () => 
     await user.click(optionZh)
 
     await waitFor(() => {
-      expect(screen.getByText('重新检查')).toBeTruthy()
+      expect(screen.getByText('重新扫描')).toBeTruthy()
     })
 
     // Ensure no extra fetch was issued and page did not blank out

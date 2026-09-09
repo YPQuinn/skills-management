@@ -1,6 +1,6 @@
-// The Skill detail page: header plus the Overview / Synchronization /
-// Distribution tabs. The active tab lives in the ?tab= query parameter so
-// views are deep-linkable and follow browser back/forward.
+// The Skill detail page: header plus the Overview / Synchronization tabs.
+// The active tab lives in the ?tab= query parameter so views are
+// deep-linkable and follow browser back/forward.
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
@@ -105,15 +105,8 @@ export function SkillDetailPage() {
 
       <Tabs value={tab} onValueChange={handleTabChange} variant="line">
         <TabsList>
-          <TabsTrigger value="overview" className="!text-black">
-            {t('tabOverview')}
-          </TabsTrigger>
-          <TabsTrigger value="synchronization" className="!text-black">
-            {t('tabSynchronization')}
-          </TabsTrigger>
-          <TabsTrigger value="distribution" disabled className="!text-black">
-            {t('tabDistribution')}
-          </TabsTrigger>
+          <TabsTrigger value="overview">{t('tabOverview')}</TabsTrigger>
+          <TabsTrigger value="synchronization">{t('tabSynchronization')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="pt-4">

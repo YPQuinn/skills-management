@@ -73,6 +73,18 @@ describe('Layout background pattern', () => {
     }
   })
 
+  it('keeps the centered nav from becoming a vertical scroll container', () => {
+    renderLayout()
+
+    const nav = screen.getByRole('navigation', { name: 'Main navigation' })
+    const list = nav.querySelector('[data-slot="navigation-list"]')
+    expect(list).toBeTruthy()
+    const classes = (list?.className ?? '').split(/\s+/)
+    expect(classes).toContain('max-md:overflow-x-auto')
+    expect(classes).toContain('max-md:overflow-y-hidden')
+    expect(classes).not.toContain('overflow-x-auto')
+  })
+
   it('renders a sticky shell wrapping the translucent header and visual frame layer', () => {
     renderLayout()
 

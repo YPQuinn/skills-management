@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { SkillDetailPage } from './skill-detail'
 import { TargetDeleteAction } from './target-delete-action'
-import { setupMatchMedia, mockResponse } from './source-fixtures'
+import { setupMatchMedia, mockResponse, detail } from './source-fixtures'
 import { skillAlpha } from './skill-fixtures'
 import { LocaleProvider } from './locale-provider'
 
@@ -61,6 +61,9 @@ describe('Skill cleanup dialogs', () => {
       }
       if (urlStr === '/api/v1/sources') {
         return mockResponse({ items: [{ id: 1, name: 'local-one', kind: 'local', location: '/tmp' }], total: 1 })
+      }
+      if (urlStr === '/api/v1/sources/1') {
+        return mockResponse(detail)
       }
       return mockResponse({ error: { message: 'Not found' } }, false, 404)
     })
@@ -128,6 +131,31 @@ describe('Skill cleanup dialogs', () => {
       const calls = (window.fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls
       expect(calls.some((c) => String(c[0]).includes('/detach'))).toBe(true)
     })
+  })
+
+  it('shows the Source name in the rebind trigger after selection', async () => {
+    const user = userEvent.setup()
+    render(
+      <LocaleProvider>
+        <MemoryRouter initialEntries={['/skills/alpha']}>
+          <Routes>
+            <Route path="/skills/:slug" element={<SkillDetailPage />} />
+          </Routes>
+        </MemoryRouter>
+      </LocaleProvider>,
+    )
+
+    releasePreview()
+    expect(await screen.findByRole('heading', { name: 'Alpha Skill' })).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: 'Rebind' }))
+    expect(await screen.findByRole('heading', { name: 'Rebind Skill Alpha Skill' })).toBeTruthy()
+
+    const sourceSelect = screen.getByRole('combobox', { name: 'Source' })
+    await user.click(sourceSelect)
+    await user.click(await screen.findByRole('option', { name: 'local-one' }))
+
+    expect(sourceSelect.textContent).toContain('local-one')
+    expect(sourceSelect.textContent).not.toMatch(/^\s*1\s*$/)
   })
 
   it('does not allow confirm when the preview fails to load', async () => {

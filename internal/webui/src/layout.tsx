@@ -49,7 +49,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             activeLink={currentPath}
             className="flex-1 min-w-0 md:flex-initial md:absolute md:left-1/2 md:-translate-x-1/2"
           >
-            <NavigationList className="scrollbar-none overflow-x-auto [&::-webkit-scrollbar]:hidden">
+            <NavigationList className="max-md:overflow-x-auto max-md:overflow-y-hidden">
               <NavigationItem>
                 <NavigationLink value="skills" render={<Link to="/skills" />}>
                   {t('navSkills')}

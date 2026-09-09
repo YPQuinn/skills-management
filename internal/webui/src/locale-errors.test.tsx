@@ -46,10 +46,10 @@ describe('WebUI Client Fallbacks vs Server Verbatim Errors', () => {
     expect(getErrorMessage(nativeNetErr, tZh, 'errSetupFailed')).toBe('初始化失败')
     expect(getErrorMessage(serverApiErr, tZh, 'errSetupFailed')).toBe('Server raw error: DB write lock failed')
 
-    // Source register / check
+    // Source register / rescan
     expect(getErrorMessage(nativeNetErr, tZh, 'errRegisteringSourceFailed')).toBe('注册来源失败')
-    expect(getErrorMessage(nativeNetErr, tZh, 'errCheckingSourceFailed')).toBe('检查来源失败')
-    expect(getErrorMessage(serverApiErr, tZh, 'errCheckingSourceFailed')).toBe(
+    expect(getErrorMessage(nativeNetErr, tZh, 'errRescanningSourceFailed')).toBe('重新扫描来源失败')
+    expect(getErrorMessage(serverApiErr, tZh, 'errRescanningSourceFailed')).toBe(
       'Server raw error: DB write lock failed',
     )
 

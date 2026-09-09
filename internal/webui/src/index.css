@@ -2,6 +2,11 @@
 @import "@appica/ui-react/styles.css";
 @source "../node_modules/@appica/ui-react/dist";
 
+/* Keep the centered header nav from jumping when a page scrollbar appears. */
+html {
+  scrollbar-gutter: stable;
+}
+
 /* Clip only Appica's decorative layers; clipping their content host causes Chrome repaint artifacts. */
 [data-slot="background-pattern"] > [data-slot="background-pattern-layer"],
 [data-slot="background-pattern"] > [data-slot="background-pattern-highlight"] {

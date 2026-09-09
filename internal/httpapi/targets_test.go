@@ -92,6 +92,11 @@ func TestTargetsRESTLifecycle(t *testing.T) {
 	if list.Total != 2 {
 		t.Fatalf("targets list: %+v", list)
 	}
+	for _, item := range list.Items {
+		if item.LastResult != "" || item.Stale {
+			t.Fatalf("fresh Target list must omit distribution health: %+v", item)
+		}
+	}
 
 	// assign a Skill and then the same Skill again (idempotent)
 	resp = ts.do(t, "POST", fmt.Sprintf("/api/v1/targets/%d/assignments", targetID),

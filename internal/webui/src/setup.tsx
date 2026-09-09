@@ -161,3 +161,5 @@ export function Setup({ status }: { status: StatusResponse }) {
     </div>
   )
 }
+
+export default Setup

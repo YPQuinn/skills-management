@@ -65,18 +65,23 @@ describe('Skill Synchronization Tab', () => {
 
   it('presents the conflict state, digests, and the latest skipped outcome with times', async () => {
     installFetch(defaultHandler)
+    const user = userEvent.setup()
     renderDetail('/skills/conflict-skill?tab=synchronization')
 
-    expect(await screen.findByText('Sync conflict')).toBeTruthy()
+    expect(await screen.findAllByText('Sync conflict')).toHaveLength(2)
+    expect(screen.getByText(/Synchronization cannot proceed until you Keep Store or Accept Source/)).toBeTruthy()
     expect(screen.getByText('Sync Status')).toBeTruthy()
     expect(screen.getByText('Last checked')).toBeTruthy()
-    expect(screen.getAllByText('sha256:store').length).toBeGreaterThan(0)
-    expect(screen.getByText('sha256:base')).toBeTruthy()
     expect(screen.getByText('Latest Sync Action')).toBeTruthy()
     expect(screen.getByText('Skipped')).toBeTruthy()
+    expect(screen.queryByText('Before Digest')).toBeNull()
+    await user.click(screen.getByRole('button', { name: 'Digests' }))
+    expect(screen.getAllByText('sha256:store').length).toBeGreaterThan(0)
+    expect(screen.getByText('sha256:base')).toBeTruthy()
     expect(screen.getByText('Before Digest')).toBeTruthy()
     expect(screen.getByText('Source Revision')).toBeTruthy()
     expect(screen.getByText('abc1234')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Sync' })).toBeNull()
   })
 
   it('presents the latest action error when the outcome failed', async () => {
@@ -175,23 +180,17 @@ describe('Skill Synchronization Tab', () => {
     expect(await screen.findByText('Rolled back')).toBeTruthy()
   })
 
-  it('runs the safe check and sync without confirmation dialogs', async () => {
+  it('runs the safe check without offering Sync during conflict', async () => {
     const fetchMock = installFetch(defaultHandler)
     const user = userEvent.setup()
     renderDetail('/skills/conflict-skill?tab=synchronization')
 
     await screen.findByText('Three-Way Diff')
+    expect(screen.queryByRole('button', { name: 'Sync' })).toBeNull()
     await user.click(screen.getByRole('button', { name: 'Check' }))
     await waitFor(() => {
       expect(fetchMock.mock.calls.some(([u]) => String(u) === '/api/v1/skills/103/check')).toBe(true)
     })
-
-    await user.click(screen.getByRole('button', { name: 'Sync' }))
-    await waitFor(() => {
-      expect(fetchMock.mock.calls.some(([u]) => String(u) === '/api/v1/skills/103/sync')).toBe(true)
-    })
-    // The skipped outcome alert appears without any dialog.
-    expect(await screen.findByText('Synchronization result')).toBeTruthy()
     expect(screen.queryByRole('alertdialog')).toBeNull()
   })
 })
@@ -218,7 +217,7 @@ describe('Skill Synchronization Locale', () => {
     )
 
     expect(await screen.findByText('同步状态')).toBeTruthy()
-    expect(screen.getByText('同步冲突')).toBeTruthy()
+    expect(screen.getAllByText('同步冲突').length).toBeGreaterThan(0)
     expect(screen.getByText('最近同步操作')).toBeTruthy()
     expect(screen.getByText('三向差异')).toBeTruthy()
     expect(screen.getByRole('button', { name: '接受来源' })).toBeTruthy()

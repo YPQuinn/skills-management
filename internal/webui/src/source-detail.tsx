@@ -1,23 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { Button } from '@appica/ui-react/button'
+import { useParams } from 'react-router-dom'
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
-import { Spinner } from '@appica/ui-react/spinner'
-import { ArrowLeft } from '@appica/icons-react'
-import { SourceStatusBadge } from './source-status'
 import type { SourceDetail, SourceSummary } from './source-api'
 import { fetchSkills } from './skill-api'
 import type { Skill } from './skill-api'
 import { SourceInventory } from './source-inventory'
-import { SourceSyncSection } from './source-sync'
+import { useSourceSync, SourceSyncButton, SourceSyncStatus } from './source-sync'
+import { summarizeBoundSync } from './source-sync-summary'
 import { SourceReplaceDialog } from './source-replace-dialog'
 import { SourceFacts } from './source-facts'
-import { SourceLocationIcon } from './source-location'
 import { SourceIssuesList } from './source-issues-list'
+import { SourceDetailHeader } from './source-detail-header'
+import { diffInventory, inventoryUnchanged } from './source-inventory-diff'
 import { useSourceImport } from './use-source-import'
+import { ListPageSkeleton } from './list-page-skeleton'
 import { useLocale } from './locale-context'
 import { ApiError } from './locale-dictionary'
-import { SourceDeleteAction } from './source-delete-action'
+import { useNotifySuccess } from './notify-success'
 
 interface ErrorEnvelope {
   error?: { message?: string }
@@ -30,11 +29,12 @@ function isAbortError(err: unknown): boolean {
 export function SourceDetailPage() {
   const { name } = useParams()
   const { t, formatTime, getErrorMessage } = useLocale()
+  const notifySuccess = useNotifySuccess()
   const [source, setSource] = useState<SourceDetail | null>(null)
   const [sourceId, setSourceId] = useState<number | null>(null)
   const [skills, setSkills] = useState<Skill[]>([])
   const [error, setError] = useState<unknown | null>(null)
-  const [checking, setChecking] = useState(false)
+  const [rescanning, setRescanning] = useState(false)
 
   const inflight = useRef<AbortController | null>(null)
   const skillsInflight = useRef<AbortController | null>(null)
@@ -69,6 +69,8 @@ export function SourceDetailPage() {
     handleConfirmReplace,
     handleDeclineReplace,
   } = useSourceImport(source, sourceId, loadSkills)
+
+  const sync = useSourceSync(sourceId, loadSkills)
 
   const load = useCallback(() => {
     inflight.current?.abort()
@@ -121,13 +123,17 @@ export function SourceDetailPage() {
     }
   }, [load, resetImportState])
 
-  const check = async () => {
+  // A rescan replaces the Inventory and nothing else, so its only visible
+  // outcome is the list below plus this tally. It reports Inventory entries
+  // only: a Source check does not re-evaluate per-Skill Sync Status.
+  const rescan = async () => {
     if (sourceId === null) return
+    const before = source?.inventory ?? []
     resetImportState()
     inflight.current?.abort()
     const controller = new AbortController()
     inflight.current = controller
-    setChecking(true)
+    setRescanning(true)
     setError(null)
     try {
       const res = await fetch(`/api/v1/sources/${sourceId}/check`, {
@@ -138,15 +144,22 @@ export function SourceDetailPage() {
       })
       if (!res.ok) {
         const data = (await res.json()) as ErrorEnvelope
-        throw new ApiError(data?.error?.message, 'errCheckingSourceFailed')
+        throw new ApiError(data?.error?.message, 'errRescanningSourceFailed')
       }
       const data = (await res.json()) as SourceDetail
-      if (inflight.current === controller) setSource(data)
+      if (inflight.current !== controller) return
+      setSource(data)
+      const change = diffInventory(before, data.inventory)
+      notifySuccess(
+        inventoryUnchanged(change)
+          ? t('toastInventoryUnchanged')
+          : t('toastInventoryChanged', { ...change }),
+      )
     } catch (err: unknown) {
       if (isAbortError(err)) return
       if (inflight.current === controller) setError(err)
     } finally {
-      if (inflight.current === controller) setChecking(false)
+      if (inflight.current === controller) setRescanning(false)
     }
   }
 
@@ -159,62 +172,23 @@ export function SourceDetailPage() {
     )
   }
   if (!source) {
-    return <Spinner className="text-3xl text-foreground-muted" aria-label={t('ariaLoadingSource')} />
+    return <ListPageSkeleton label={t('ariaLoadingSource')} />
   }
 
-  const boundSkillMap = new Map<string, Skill>()
-  if (sourceId !== null && skills.length > 0) {
-    for (const sk of skills) {
-      if (sk.binding && sk.binding.source_id === sourceId) {
-        boundSkillMap.set(sk.binding.relative_dir, sk)
-      }
-    }
-  }
+  const boundSkills =
+    sourceId === null ? [] : skills.filter((sk) => sk.binding?.source_id === sourceId)
+  const boundSkillMap = new Map<string, Skill>(
+    boundSkills.map((sk) => [sk.binding!.relative_dir, sk]),
+  )
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <Link
-            to="/sources"
-            className="inline-flex items-center gap-1 text-sm text-foreground-muted underline decoration-border underline-offset-2 hover:decoration-foreground"
-          >
-            <ArrowLeft className="size-4" />
-            {t('linkAllSources')}
-          </Link>
-          <h1 className="text-2xl font-bold mt-1">{source.name}</h1>
-          <p className="mt-0.5 flex items-start gap-1.5 text-sm text-foreground-muted break-all">
-            <SourceLocationIcon source={source} />
-            {/^https?:\/\//i.test(source.location) ? (
-              <a
-                href={source.location}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="min-w-0 underline decoration-border underline-offset-2 hover:decoration-foreground"
-              >
-                {source.location}
-              </a>
-            ) : (
-              <span className="min-w-0">{source.location}</span>
-            )}
-          </p>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <SourceStatusBadge available={source.available} stale={source.stale} />
-          <div className="flex flex-wrap justify-end gap-2">
-            <Button onClick={check} disabled={checking} focusableWhenDisabled>
-              {checking && <Spinner data-icon="start" currentColor className="text-[1.2em]" />}
-              {checking ? t('btnChecking') : t('btnCheckAgain')}
-            </Button>
-            {sourceId !== null && <SourceDeleteAction sourceId={sourceId} name={source.name} />}
-          </div>
-        </div>
-      </div>
+      <SourceDetailHeader source={source} sourceId={sourceId} />
 
       {error !== null && (
         <Alert variant="error">
-          <AlertTitle>{t('alertCheckFailed')}</AlertTitle>
-          <AlertDescription>{getErrorMessage(error, 'errCheckingSourceFailed')}</AlertDescription>
+          <AlertTitle>{t('alertRescanFailed')}</AlertTitle>
+          <AlertDescription>{getErrorMessage(error, 'errRescanningSourceFailed')}</AlertDescription>
         </Alert>
       )}
 
@@ -242,6 +216,9 @@ export function SourceDetailPage() {
       <SourceInventory
         inventory={source.inventory}
         available={source.available}
+        lastScannedAt={source.last_checked_at}
+        rescanning={rescanning}
+        onRescan={() => void rescan()}
         boundSkillMap={boundSkillMap}
         selectedDirs={selectedDirs}
         setSelectedDirs={setSelectedDirs}
@@ -251,10 +228,23 @@ export function SourceDetailPage() {
         setAllowLarge={setAllowLarge}
         importing={importing}
         importResult={importResult}
-        onImport={handleImport}
+        onImport={async (options) => {
+          const res = await handleImport(options)
+          if (res !== null && res.summary.failed === 0 && res.summary.skipped_conflict === 0) {
+            notifySuccess(t('toastImported'))
+          }
+        }}
+        syncAction={
+          boundSkills.length > 0 ? (
+            <SourceSyncButton
+              syncing={sync.syncing}
+              onRun={sync.run}
+              lastEvaluatedAt={summarizeBoundSync(boundSkills).lastEvaluatedAt}
+            />
+          ) : null
+        }
+        syncStatus={<SourceSyncStatus boundSkills={boundSkills} error={sync.error} />}
       />
-
-      {sourceId !== null && <SourceSyncSection sourceId={sourceId} onSynced={loadSkills} />}
 
       <SourceIssuesList issues={source.issues} />
 

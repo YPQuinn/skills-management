@@ -1,6 +1,7 @@
 import { translationsSyncEn } from './locale-dictionary-sync-en'
 import { translationsDistributionEn } from './locale-dictionary-distribution-en'
 import { translationsCleanupEn } from './locale-dictionary-cleanup-en'
+import { translationsChromeEn } from './locale-dictionary-chrome-en'
 
 export const translationsEn = {
   // Navigation & Header
@@ -186,7 +187,6 @@ export const translationsEn = {
   alertCouldNotLoadSkill: 'Could not load Skill',
   tabOverview: 'Overview',
   tabSynchronization: 'Synchronization',
-  tabDistribution: 'Distribution',
   labelSlug: 'Slug',
   labelCreated: 'Created',
   labelUpdated: 'Updated',
@@ -202,7 +202,7 @@ export const translationsEn = {
 
   // Sources Index & Explorer & List
   sourcesTitle: 'Sources',
-  sourcesSubtitle: 'Upstream locations Skills are imported and checked from.',
+  sourcesSubtitle: 'Upstream locations Skills are imported from and scanned for changes.',
   alertCouldNotLoadSources: 'Could not load Sources',
   ariaLoadingSources: 'Loading sources',
   emptySourcesIndex: 'No Sources registered yet.',
@@ -211,7 +211,7 @@ export const translationsEn = {
   colLocation: 'Location',
   colStatus: 'Status',
   colSkills: 'Skills',
-  colLastChecked: 'Last checked',
+  colLastScanned: 'Last scanned',
 
   // Add Source Form
   addSourceTitle: 'Add a Source',
@@ -236,14 +236,13 @@ export const translationsEn = {
 
   // Source Detail Page
   linkAllSources: 'All Sources',
-  btnCheckAgain: 'Check again',
-  btnChecking: 'Checking…',
+  btnRescan: 'Rescan',
   ariaLoadingSource: 'Loading source',
   alertCouldNotLoadSource: 'Could not load Source',
-  alertCheckFailed: 'Check failed',
+  alertRescanFailed: 'Rescan failed',
   alertImportFailed: 'Import failed',
   alertSourceUnavailable: 'Source unavailable',
-  descSourceUnavailable: '{error}. The last successful check was {time}; the Inventory below is stale.',
+  descSourceUnavailable: '{error}. The last successful scan was {time}; the Inventory below is stale.',
   alertSkippedEntriesTitle: '{count} invalid {entries} skipped',
   entrySingular: 'entry',
   entryPlural: 'entries',
@@ -264,6 +263,7 @@ export const translationsEn = {
 
   // Source Inventory
   inventoryHeading: 'Inventory ({count})',
+  inventoryScopeNote: 'Skills available upstream. A rescan only refreshes this list; it never changes Skills already imported into the Store.',
   labelAllowLarge: 'Allow large skills (>100MB / >10k files)',
   btnImportSelected: 'Import selected ({count})',
   btnImportAll: 'Import all',
@@ -284,7 +284,6 @@ export const translationsEn = {
   slugOverrideDialogTitle: 'Slug override',
   slugOverrideDialogDesc: 'Set a custom slug for "{name}" ({dir}). Leave empty to use the default.',
   btnSave: 'Save',
-  btnClose: 'Close',
   statusImported: 'Imported',
   statusAlreadyImported: 'Already imported',
   statusReplaced: 'Replaced',
@@ -316,7 +315,7 @@ export const translationsEn = {
   errSourceNotFound: 'Source not found',
   errImportingSkillsFailed: 'Importing skills failed',
   errRegisteringSourceFailed: 'Registering the Source failed',
-  errCheckingSourceFailed: 'Checking the Source failed',
+  errRescanningSourceFailed: 'Rescanning the Source failed',
   errGroupNotFound: 'Group not found',
   errTargetNotFound: 'Target not found',
   errCreatingGroupFailed: 'Creating Group failed',
@@ -325,6 +324,7 @@ export const translationsEn = {
   errRegisteringTargetFailed: 'Registering Target failed',
   errAddingAssignmentFailed: 'Adding assignment failed',
   errDeletingAssignmentFailed: 'Deleting assignment failed',
+  ...translationsChromeEn,
   ...translationsSyncEn,
   ...translationsDistributionEn,
   ...translationsCleanupEn,

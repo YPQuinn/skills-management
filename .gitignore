@@ -10,3 +10,4 @@ internal/webui/node_modules
 /e2e/webui/blob-report
 /.pi-subagents
 .DS_Store
+/node_modules

@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { useLocale } from './locale-context'
 import { LocaleProvider } from './locale-provider'
-import { getInitialLocale, translate, formatLocaleTime } from './locale-dictionary'
+import { getInitialLocale, translate, formatLocaleTime, formatRelativeTime } from './locale-dictionary'
 
 // Mock matchMedia for Appica
 if (typeof window !== 'undefined') {
@@ -108,6 +108,15 @@ describe('WebUI Localization Core', () => {
 
       expect(enTime).not.toBe(zhTime)
       expect(zhTime).toMatch(/2026/)
+    })
+
+    it('formats recent list timestamps relatively and falls back after ~30 days', () => {
+      const now = Date.parse('2026-09-08T10:00:00Z')
+      expect(formatRelativeTime('en', '2026-09-08T09:00:00Z', now)).toBe('1 hour ago')
+      expect(formatRelativeTime('zh-CN', '2026-09-08T09:00:00Z', now)).toMatch(/小时/)
+      expect(formatRelativeTime('en', undefined, now)).toBe('never')
+      const old = '2026-01-01T00:00:00Z'
+      expect(formatRelativeTime('en', old, now)).toBe(formatLocaleTime('en', old))
     })
   })
 
