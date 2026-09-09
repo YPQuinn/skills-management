@@ -8,13 +8,14 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { Trash, UserPlus } from '@appica/icons-react'
 import type { SkillRef } from './group-api'
 import type { Skill } from './skill-api'
+import { skillLabel } from './skill-identity'
 import { useLocale } from './locale-context'
 
 interface GroupMembersSectionProps {
   members: SkillRef[]
   availableSkills: Skill[]
   submitting: boolean
-  onAddMember: (skillId: number) => void
+  onAddMember: (skillIds: number[]) => void
   onRemoveMember: (skillId: number) => void
 }
 
@@ -26,15 +27,18 @@ export function GroupMembersSection({
   onRemoveMember,
 }: GroupMembersSectionProps) {
   const { t } = useLocale()
-  const [selectedSkillId, setSelectedSkillId] = useState<string>('')
+  const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([])
+
+  const skillLabels = Object.fromEntries(
+    availableSkills.map((skill) => [String(skill.id), skillLabel(skill.name, skill.slug)]),
+  )
 
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedSkillId) return
-    const idNum = Number(selectedSkillId)
-    if (Number.isNaN(idNum)) return
-    onAddMember(idNum)
-    setSelectedSkillId('')
+    const ids = selectedSkillIds.map(Number).filter((id) => !Number.isNaN(id))
+    if (ids.length === 0) return
+    onAddMember(ids)
+    setSelectedSkillIds([])
   }
 
   return (
@@ -48,24 +52,32 @@ export function GroupMembersSection({
         {availableSkills.length > 0 && (
           <form onSubmit={handleAddSubmit} className="flex items-center gap-2">
             <Select
-              value={selectedSkillId}
-              onValueChange={(val) => setSelectedSkillId(val as string)}
-              items={Object.fromEntries(
-                availableSkills.map((skill) => [String(skill.id), `${skill.name} (${skill.slug})`]),
-              )}
+              multiple
+              alignItemWithTrigger={false}
+              value={selectedSkillIds}
+              onValueChange={(val) => setSelectedSkillIds(val as string[])}
+              items={skillLabels}
             >
               <SelectTrigger className="w-56" aria-label={t('selectSkillToAdd')}>
-                <SelectValue placeholder={t('phSelectSkill')} />
+                <SelectValue placeholder={t('phSelectSkill')}>
+                  {(selected: string[]) =>
+                    selected.length === 0
+                      ? t('phSelectSkill')
+                      : selected.length === 1
+                        ? (skillLabels[selected[0]] ?? selected[0])
+                        : t('selectedCount', { count: selected.length })
+                  }
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {availableSkills.map((skill) => (
                   <SelectItem key={skill.id} value={String(skill.id)}>
-                    {skill.name} ({skill.slug})
+                    {skillLabel(skill.name, skill.slug)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Button type="submit" disabled={submitting || !selectedSkillId} size="sm">
+            <Button type="submit" disabled={submitting || selectedSkillIds.length === 0} size="sm">
               {submitting && <Spinner data-icon="start" currentColor className="text-[1.2em]" />}
               {submitting ? t('btnAddingMember') : t('btnAddMember')}
             </Button>
@@ -108,7 +120,7 @@ export function GroupMembersSection({
                         disabled={submitting}
                         aria-label={t('ariaRemoveMemberFor', { name: member.name })}
                         onClick={() => onRemoveMember(member.id)}
-                        className="text-error hover:text-error"
+                        className="text-error-emphasis hover:text-error-emphasis"
                       >
                         <Trash className="size-4" />
                         {t('btnRemoveMember')}

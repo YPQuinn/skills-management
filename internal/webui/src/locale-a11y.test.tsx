@@ -179,7 +179,7 @@ describe('Localized Accessibility Labels & TableCaptions (English & Chinese)', (
     )
 
     expect(await screen.findByRole('navigation', { name: '主导航' })).toBeTruthy()
-    expect(await screen.findByRole('table', { name: '来源清单' })).toBeTruthy()
+    expect(await screen.findByRole('table', { name: '来源可用技能' })).toBeTruthy()
 
     expect(screen.queryByText(/类型:/)).toBeNull()
     expect(screen.queryByText(/Ref:/)).toBeNull()

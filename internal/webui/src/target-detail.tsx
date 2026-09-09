@@ -7,14 +7,16 @@ import { ChevronLeft, Target } from '@appica/icons-react'
 import {
   fetchTargets,
   fetchTarget,
+  fetchTargetAdapters,
   createAssignment,
   deleteAssignment,
+  type TargetAdapter,
   type TargetView,
 } from './target-api'
+import { adapterLabel, scopeLabel } from './target-labels'
 import { fetchSkills, type Skill } from './skill-api'
 import { fetchGroups, type GroupSummary } from './group-api'
 import { TargetAssignmentsSection } from './target-assignments-section'
-import { TargetDesiredSetSection } from './target-desired-set-section'
 import { TargetDistributionSection } from './target-distribution-section'
 import type { DistributionStatus } from './distribution-api'
 import { TargetDeleteAction } from './target-delete-action'
@@ -24,6 +26,7 @@ export function TargetDetailPage() {
   const { name: rawName } = useParams()
   const { t, formatTime, getErrorMessage } = useLocale()
   const [target, setTarget] = useState<TargetView | null>(null)
+  const [adapters, setAdapters] = useState<TargetAdapter[]>([])
   const [allSkills, setAllSkills] = useState<Skill[]>([])
   const [allGroups, setAllGroups] = useState<GroupSummary[]>([])
   const [loading, setLoading] = useState(true)
@@ -45,11 +48,13 @@ export function TargetDetailPage() {
       fetchTargets(controller.signal),
       fetchSkills(controller.signal).catch(() => []),
       fetchGroups(controller.signal).catch(() => []),
+      fetchTargetAdapters(controller.signal).catch(() => []),
     ])
-      .then(async ([targets, skills, groups]) => {
+      .then(async ([targets, skills, groups, adList]) => {
         if (inflight.current !== controller) return
         setAllSkills(skills)
         setAllGroups(groups)
+        setAdapters(adList)
 
         const found = targets.find((t) => t.name === rawName || String(t.id) === rawName)
         if (!found) {
@@ -79,15 +84,17 @@ export function TargetDetailPage() {
     }
   }, [load])
 
-  const handleAddAssignment = async (kind: 'skill' | 'group', subjectId: number) => {
-    if (!target) return
+  const handleAddAssignment = async (kind: 'skill' | 'group', subjectIds: number[]) => {
+    if (!target || subjectIds.length === 0) return
     setSubmitting(true)
     setActionError(null)
     try {
-      if (kind === 'skill') {
-        await createAssignment(target.id, { kind: 'skill', skill_id: subjectId })
-      } else {
-        await createAssignment(target.id, { kind: 'group', group_id: subjectId })
+      for (const subjectId of subjectIds) {
+        if (kind === 'skill') {
+          await createAssignment(target.id, { kind: 'skill', skill_id: subjectId })
+        } else {
+          await createAssignment(target.id, { kind: 'group', group_id: subjectId })
+        }
       }
       const updated = await fetchTarget(target.id)
       setTarget(updated)
@@ -163,14 +170,12 @@ export function TargetDetailPage() {
           <div className="flex items-center gap-3">
             <Target className="size-7 text-foreground-muted" />
             <h1 className="text-2xl font-bold">{target.name || t('targetsTitle')}</h1>
-            <Badge variant="soft" className="uppercase font-mono">
-              {target.adapter}
-            </Badge>
+            <Badge variant="soft">{adapterLabel(target.adapter, adapters, t)}</Badge>
           </div>
           <TargetDeleteAction targetId={target.id} name={target.name} />
         </div>
         <div className="flex flex-wrap gap-4 text-xs text-foreground-muted mt-2">
-          <span>{t('colScope')}: <strong className="text-foreground font-mono">{target.scope}</strong></span>
+          <span>{t('colScope')}: <strong className="text-foreground">{scopeLabel(target.scope, t)}</strong></span>
           <span>{t('colPath')}: <strong className="text-foreground font-mono">{target.path}</strong></span>
           {target.project_root && (
             <span>{t('labelProjectRootFact')}: <strong className="text-foreground font-mono">{target.project_root}</strong></span>
@@ -191,12 +196,11 @@ export function TargetDetailPage() {
         groupAssignments={groupAssignments}
         availableSkills={availableSkills}
         availableGroups={availableGroups}
+        desiredSkills={desiredSkills}
         submitting={submitting}
         onAddAssignment={handleAddAssignment}
         onDeleteAssignment={handleDeleteAssignment}
       />
-
-      <TargetDesiredSetSection desiredSkills={desiredSkills} />
 
       <TargetDistributionSection
         key={target.id}

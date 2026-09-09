@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@appica/ui-react/button'
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
+import { Badge } from '@appica/ui-react/badge'
 import { Input } from '@appica/ui-react/input'
 import { Field, FieldLabel } from '@appica/ui-react/field'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@appica/ui-react/select'
@@ -12,18 +13,16 @@ import { useLocale } from './locale-context'
 
 interface RegisterTargetFormProps {
   adapters: TargetAdapter[]
-  initialAdapter?: string
   onRegistered?: () => void
 }
 
-export function RegisterTargetForm({ adapters, initialAdapter, onRegistered }: RegisterTargetFormProps) {
+export function RegisterTargetForm({ adapters, onRegistered }: RegisterTargetFormProps) {
   const navigate = useNavigate()
   const { t, getErrorMessage } = useLocale()
 
-  const [mode, setMode] = useState<'builtin' | 'custom'>(initialAdapter ? 'builtin' : 'builtin')
+  const [mode, setMode] = useState<'builtin' | 'custom'>('builtin')
   const [name, setName] = useState('')
-  const defaultAdapter = initialAdapter || (adapters.length > 0 ? adapters[0].key : '')
-  const [adapter, setAdapter] = useState(defaultAdapter)
+  const [adapter, setAdapter] = useState(adapters.length > 0 ? adapters[0].key : '')
   const [scope, setScope] = useState<'user' | 'project'>('user')
   const [projectRoot, setProjectRoot] = useState('')
   const [customPath, setCustomPath] = useState('')
@@ -33,13 +32,8 @@ export function RegisterTargetForm({ adapters, initialAdapter, onRegistered }: R
   const inflight = useRef<AbortController | null>(null)
 
   useEffect(() => {
-    if (initialAdapter) {
-      setMode('builtin')
-      setAdapter(initialAdapter)
-    } else if (!adapter && adapters.length > 0) {
-      setAdapter(adapters[0].key)
-    }
-  }, [initialAdapter, adapters, adapter])
+    if (!adapter && adapters.length > 0) setAdapter(adapters[0].key)
+  }, [adapters, adapter])
 
   useEffect(() => {
     return () => {
@@ -98,8 +92,8 @@ export function RegisterTargetForm({ adapters, initialAdapter, onRegistered }: R
     <form onSubmit={handleSubmit} className="space-y-4">
       {error !== null && (
         <Alert variant="error">
-          <AlertTitle>{t('alertRegisterTargetFailed')}</AlertTitle>
-          <AlertDescription>{getErrorMessage(error, 'errRegisteringTargetFailed')}</AlertDescription>
+          <AlertTitle>{t('alertAddTargetFailed')}</AlertTitle>
+          <AlertDescription>{getErrorMessage(error, 'errAddingTargetFailed')}</AlertDescription>
         </Alert>
       )}
 
@@ -141,15 +135,21 @@ export function RegisterTargetForm({ adapters, initialAdapter, onRegistered }: R
               <Select
                 value={adapter}
                 onValueChange={(val) => setAdapter(val as string)}
-                items={Object.fromEntries(adapters.map((a) => [a.key, `${a.name} (${a.key})`]))}
+                items={Object.fromEntries(adapters.map((a) => [a.key, a.name]))}
               >
                 <SelectTrigger aria-label={t('labelSelectAdapter')}>
                   <SelectValue placeholder={t('labelSelectAdapter')} />
                 </SelectTrigger>
                 <SelectContent>
                   {adapters.map((a) => (
-                    <SelectItem key={a.key} value={a.key}>
-                      {a.name} ({a.key})
+                    // The item's text slot only sizes to its content, so grow it to let the badge sit flush right.
+                    <SelectItem key={a.key} value={a.key} className="[&>*:first-child]:grow">
+                      <span className="grow">{a.name}</span>
+                      {a.detection.status === 'detected' && (
+                        <Badge variant="success" size="sm" className="shrink-0">
+                          {t('statusInstalled')}
+                        </Badge>
+                      )}
                     </SelectItem>
                   ))}
                   {adapters.length === 0 && <SelectItem value="">—</SelectItem>}
@@ -201,7 +201,7 @@ export function RegisterTargetForm({ adapters, initialAdapter, onRegistered }: R
 
       <Button type="submit" disabled={loading} focusableWhenDisabled>
         {loading ? <Spinner data-icon="start" currentColor className="text-[1.2em]" /> : <Plus data-icon="start" />}
-        {loading ? t('btnRegisteringTarget') : t('btnRegisterTarget')}
+        {loading ? t('btnAddingTarget') : t('btnSubmitTarget')}
       </Button>
     </form>
   )

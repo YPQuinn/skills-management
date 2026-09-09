@@ -130,7 +130,7 @@ export function registerTarget(input: CreateTargetInput, signal?: AbortSignal): 
     body: JSON.stringify(input),
     signal,
   }).then(async (res) => {
-    if (!res.ok) throw await responseError(res, 'errRegisteringTargetFailed')
+    if (!res.ok) throw await responseError(res, 'errAddingTargetFailed')
     return (await res.json()) as TargetView
   })
 }

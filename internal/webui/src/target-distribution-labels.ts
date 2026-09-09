@@ -73,3 +73,23 @@ export function outcomeBadgeVariant(outcome: string): 'success' | 'error' | 'war
   if (outcome === 'failed') return 'error'
   return 'warning'
 }
+
+export function itemResultBadge(result: string): {
+  key: DictionaryKey
+  variant: 'outline' | 'success' | 'warning' | 'error'
+} {
+  switch (result) {
+    case 'created':
+    case 'removed':
+    case 'adopted':
+      return { key: resultKey(result), variant: 'success' }
+    case 'blocked_conflict':
+    case 'blocked_broken':
+      return { key: resultKey(result), variant: 'warning' }
+    case 'ownership_lost':
+    case 'failed':
+      return { key: resultKey(result), variant: 'error' }
+    default:
+      return { key: resultKey(result), variant: 'outline' }
+  }
+}

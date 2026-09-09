@@ -1,3 +1,4 @@
+import { Badge } from '@appica/ui-react/badge'
 import { Button } from '@appica/ui-react/button'
 import {
   AlertDialog,
@@ -7,9 +8,18 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
 } from '@appica/ui-react/alert-dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogBody,
+} from '@appica/ui-react/dialog'
+import { Table, TableCaption, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@appica/ui-react/table'
 import type { DistributionItemResult, DistributionItemView, DistributionResult } from './distribution-api'
-import { useLocale } from './locale-context'
-import { outcomeKey, resultKey } from './target-distribution-labels'
+import { useLocale, type LocaleContextType } from './locale-context'
+import { itemResultBadge, outcomeBadgeVariant, outcomeKey } from './target-distribution-labels'
 
 interface TargetDistributionDialogsProps {
   preview: DistributionResult | null
@@ -25,18 +35,50 @@ interface TargetDistributionDialogsProps {
   onConfirmAdopt: () => void
 }
 
-function ItemResultList({ items }: { items: DistributionItemResult[] }) {
+function ItemResultTable({ items, caption }: { items: DistributionItemResult[]; caption: string }) {
   const { t } = useLocale()
+  if (items.length === 0) {
+    return <p className="text-foreground-muted text-sm py-2">{t('emptyDistributionItems')}</p>
+  }
   return (
-    <ul className="space-y-1 text-sm">
-      {items.map((item) => (
-        <li key={item.skill_id} className="font-mono">
-          {item.slug}: {t(resultKey(item.result))}
-          {item.error ? ` (${item.error})` : ''}
-        </li>
-      ))}
-    </ul>
+    <Table size="sm" aria-label={caption}>
+      <TableCaption className="sr-only">{caption}</TableCaption>
+      <TableHeader>
+        <TableRow>
+          <TableHead>{t('colName')}</TableHead>
+          <TableHead>{t('colItemResult')}</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {items.map((item) => {
+          const badge = itemResultBadge(item.result)
+          return (
+            <TableRow key={item.skill_id}>
+              <TableCell>{item.slug}</TableCell>
+              <TableCell>
+                <div className="flex flex-col items-start gap-1">
+                  <Badge variant={badge.variant}>{t(badge.key)}</Badge>
+                  {item.error ? <span className="text-xs text-foreground-muted">{item.error}</span> : null}
+                </div>
+              </TableCell>
+            </TableRow>
+          )
+        })}
+      </TableBody>
+    </Table>
   )
+}
+
+function resultSummary(result: DistributionResult, t: LocaleContextType['t']): string {
+  const blocked = result.summary.blocked_conflict + result.summary.blocked_broken
+  return [
+    result.summary.created > 0 ? t('summaryCreated', { count: result.summary.created }) : '',
+    result.summary.removed > 0 ? t('summaryRemoved', { count: result.summary.removed }) : '',
+    blocked > 0 ? t('summaryBlocked', { count: blocked }) : '',
+    result.summary.failed > 0 ? t('summaryFailed', { count: result.summary.failed }) : '',
+  ]
+    .filter(Boolean)
+    .join(' · ')
 }
 
 export function TargetDistributionDialogs({
@@ -53,25 +95,27 @@ export function TargetDistributionDialogs({
   onConfirmAdopt,
 }: TargetDistributionDialogsProps) {
   const { t } = useLocale()
-  const blocked = result ? result.summary.blocked_conflict + result.summary.blocked_broken : 0
+  const summary = result && !result.dry_run ? resultSummary(result, t) : ''
   return (
     <>
-      <AlertDialog open={preview !== null} onOpenChange={(open) => !open && onClosePreview()}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('previewTitle')}</AlertDialogTitle>
-            <AlertDialogDescription>
+      <Dialog open={preview !== null} onOpenChange={(open) => !open && onClosePreview()}>
+        <DialogContent className="sm:max-w-lg" closeLabel={t('btnClose')}>
+          <DialogHeader>
+            <div className="flex flex-wrap items-center gap-2">
+              <DialogTitle>{t('previewTitle')}</DialogTitle>
+              {preview && (
+                <Badge variant={outcomeBadgeVariant(preview.outcome)}>{t(outcomeKey(preview.outcome))}</Badge>
+              )}
+            </div>
+            <DialogDescription className="sr-only">
               {t('previewOutcome', { outcome: t(outcomeKey(preview?.outcome)) })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <ItemResultList items={preview?.items ?? []} />
-          <AlertDialogFooter>
-            <Button variant="outline" onClick={onClosePreview}>
-              {t('btnCancel')}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogBody>
+            <ItemResultTable items={preview?.items ?? []} caption={t('previewTitle')} />
+          </DialogBody>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={confirmDistribute} onOpenChange={onConfirmOpenChange}>
         <AlertDialogContent>
@@ -90,30 +134,24 @@ export function TargetDistributionDialogs({
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={result !== null} onOpenChange={(open) => !open && onCloseResult()}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('distributionResultTitle')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('distributionResultOutcome', { outcome: t(outcomeKey(result?.outcome)) })}
-              {result && !result.dry_run && (
-                <span className="block text-xs mt-1">
-                  {result.summary.created > 0 && ` ${t('summaryCreated', { count: result.summary.created })}`}
-                  {result.summary.removed > 0 && ` ${t('summaryRemoved', { count: result.summary.removed })}`}
-                  {blocked > 0 && ` ${t('summaryBlocked', { count: blocked })}`}
-                  {result.summary.failed > 0 && ` ${t('summaryFailed', { count: result.summary.failed })}`}
-                </span>
+      <Dialog open={result !== null} onOpenChange={(open) => !open && onCloseResult()}>
+        <DialogContent className="sm:max-w-lg" closeLabel={t('btnClose')}>
+          <DialogHeader>
+            <div className="flex flex-wrap items-center gap-2">
+              <DialogTitle>{t('distributionResultTitle')}</DialogTitle>
+              {result && (
+                <Badge variant={outcomeBadgeVariant(result.outcome)}>{t(outcomeKey(result.outcome))}</Badge>
               )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <ItemResultList items={result?.items ?? []} />
-          <AlertDialogFooter>
-            <Button variant="outline" onClick={onCloseResult}>
-              {t('btnCancel')}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </div>
+            <DialogDescription className={summary ? undefined : 'sr-only'}>
+              {summary || t('distributionResultOutcome', { outcome: t(outcomeKey(result?.outcome)) })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogBody>
+            <ItemResultTable items={result?.items ?? []} caption={t('distributionResultTitle')} />
+          </DialogBody>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={adoptItem !== null} onOpenChange={(open) => !open && onCloseAdopt()}>
         <AlertDialogContent>
