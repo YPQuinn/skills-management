@@ -65,12 +65,12 @@ export function GroupDetailPage() {
     }
   }, [load])
 
-  const handleAddMember = async (skillId: number) => {
-    if (!group) return
+  const handleAddMember = async (skillIds: number[]) => {
+    if (!group || skillIds.length === 0) return
     setSubmitting(true)
     setActionError(null)
     try {
-      const updated = await addGroupMembers(group.id, [skillId])
+      const updated = await addGroupMembers(group.id, skillIds)
       setGroup(updated)
     } catch (err: unknown) {
       setActionError(err)

@@ -13,8 +13,8 @@ import {
 } from './target-api'
 import { RegisterTargetForm } from './register-target-form'
 import { ResourceCreateDialog } from './resource-create-dialog'
-import { TargetAdapterTable } from './target-adapter-table'
 import { outcomeBadgeVariant, outcomeKey } from './target-distribution-labels'
+import { adapterLabel, scopeLabel } from './target-labels'
 import { CopyablePath } from './copyable-path'
 import { useLocale } from './locale-context'
 
@@ -22,7 +22,6 @@ export function TargetsIndex() {
   const { t, getErrorMessage } = useLocale()
   const [adapters, setAdapters] = useState<TargetAdapter[]>([])
   const [targets, setTargets] = useState<TargetSummary[] | null>(null)
-  const [selectedAdapterKey, setSelectedAdapterKey] = useState<string | undefined>(undefined)
   const [createOpen, setCreateOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<unknown | null>(null)
@@ -76,12 +75,10 @@ export function TargetsIndex() {
           onOpenChange={setCreateOpen}
           title={t('registerTargetTitle')}
           description={t('registerTargetSubtitle')}
-          triggerLabel={t('btnRegisterTarget')}
+          triggerLabel={t('btnAddTarget')}
         >
-          <TargetAdapterTable adapters={adapters} onSelectAdapter={setSelectedAdapterKey} />
           <RegisterTargetForm
             adapters={adapters}
-            initialAdapter={selectedAdapterKey}
             onRegistered={() => {
               setCreateOpen(false)
               load()
@@ -128,13 +125,11 @@ export function TargetsIndex() {
                       </Link>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="soft" className="uppercase font-mono">
-                        {tgt.adapter}
-                      </Badge>
+                      <Badge variant="soft">{adapterLabel(tgt.adapter, adapters, t)}</Badge>
                     </TableCell>
-                    <TableCell className="font-mono text-foreground-muted text-xs">
-                      {tgt.scope}
-                      {tgt.project_root ? ` (${tgt.project_root})` : ''}
+                    <TableCell className="text-foreground-muted text-xs">
+                      {scopeLabel(tgt.scope, t)}
+                      {tgt.project_root ? <span className="font-mono"> ({tgt.project_root})</span> : null}
                     </TableCell>
                     <TableCell className="font-mono text-foreground-muted text-xs" title={tgt.path}>
                       <CopyablePath value={tgt.path} className="text-xs" />

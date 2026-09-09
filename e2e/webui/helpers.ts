@@ -128,6 +128,14 @@ export async function initializeStore(page: Page): Promise<void> {
   await expect(page.getByRole('heading', { name: 'Skills' })).toBeVisible()
 }
 
+async function dismissOpenListbox(page: Page): Promise<void> {
+  const listbox = page.getByRole('listbox')
+  if ((await listbox.count()) === 0) return
+  if (!(await listbox.first().isVisible().catch(() => false))) return
+  await page.keyboard.press('Escape')
+  await expect(listbox.first()).toBeHidden()
+}
+
 export async function chooseSelect(page: Page, label: string, option: string | RegExp): Promise<void> {
   const control = page.getByLabel(label)
   await control.click()
@@ -138,6 +146,7 @@ export async function chooseSelect(page: Page, label: string, option: string | R
   const item = page.getByRole('option', { name: option })
   await expect(item).toBeVisible()
   await item.click()
+  await dismissOpenListbox(page)
 }
 
 export async function expectNoHorizontalOverflow(page: Page): Promise<void> {
@@ -173,6 +182,7 @@ export async function keyboardChooseSelect(page: Page, label: string, option: st
     const item = page.getByRole('option', { name: option })
     await expect(item).toBeVisible()
     await item.click()
+    await dismissOpenListbox(page)
     return
   }
   await page.keyboard.press('Enter')
@@ -193,4 +203,5 @@ export async function keyboardChooseSelect(page: Page, label: string, option: st
     }
   })
   await page.keyboard.press('Enter')
+  await dismissOpenListbox(page)
 }

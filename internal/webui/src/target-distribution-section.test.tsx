@@ -140,8 +140,10 @@ describe('TargetDistributionSection', () => {
     renderSection(statusLinked)
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: 'Preview' }))
-    await waitFor(() => expect(screen.getByText('Distribution plan')).toBeTruthy())
-    expect(screen.getAllByText(/demo: Created/).length).toBeGreaterThan(0)
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Distribution plan' })).toBeTruthy())
+    const plan = screen.getByRole('dialog', { name: /Distribution plan/ })
+    expect(within(plan).getByText('demo')).toBeTruthy()
+    expect(within(plan).getByText('Created')).toBeTruthy()
     const fetchMock = vi.mocked(fetch)
     const calls = fetchMock.mock.calls.map((c) => String(c[0]))
     expect(calls.some((u) => u.includes('/distribute') && JSON.parse(String(fetchMock.mock.calls[calls.indexOf(u)][1]?.body)).dry_run === true)).toBe(true)
@@ -154,8 +156,10 @@ describe('TargetDistributionSection', () => {
     await waitFor(() => expect(screen.getByText('Distribute to this Target?')).toBeTruthy())
     const confirmButtons = screen.getAllByRole('button', { name: 'Distribute' })
     await user.click(confirmButtons[confirmButtons.length - 1])
-    await waitFor(() => expect(screen.getByText('Distribution result')).toBeTruthy())
-    expect(screen.getByText(/demo: No change/)).toBeTruthy()
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Distribution result' })).toBeTruthy())
+    const done = screen.getByRole('dialog', { name: /Distribution result/ })
+    expect(within(done).getByText('demo')).toBeTruthy()
+    expect(within(done).getByText('No change')).toBeTruthy()
   })
 
   it('resets status and dialogs when switching Targets', async () => {
@@ -184,15 +188,15 @@ describe('TargetDistributionSection', () => {
     )
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: 'Preview' }))
-    await waitFor(() => expect(screen.getByText('Distribution plan')).toBeTruthy())
-    expect(screen.getByText('demo')).toBeTruthy()
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Distribution plan' })).toBeTruthy())
+    expect(screen.getAllByText('demo').length).toBeGreaterThan(0)
 
     rerender(
       <LocaleProvider>
         <TargetDistributionSection targetId={2} initial={other} onChanged={onChanged} />
       </LocaleProvider>,
     )
-    expect(screen.queryByText('Distribution plan')).toBeNull()
+    expect(screen.queryByRole('heading', { name: 'Distribution plan' })).toBeNull()
     expect(screen.queryByText('demo')).toBeNull()
     expect(screen.getByText('other')).toBeTruthy()
   })

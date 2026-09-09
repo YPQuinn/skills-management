@@ -18,6 +18,7 @@ export const translationsDistributionEn = {
   colDesired: 'Desired',
   colObserved: 'Observed',
   colLastResult: 'Last result',
+  colItemResult: 'Result',
   colDistributionActions: 'Actions',
   // States and outcomes
   distributionStateOk: 'OK',

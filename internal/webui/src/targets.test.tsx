@@ -74,7 +74,10 @@ const mockTargetView = {
       id: 10,
       slug: 'go-lint',
       name: 'Go Linter',
-      reasons: [{ assignment_id: 101, kind: 'skill' }],
+      reasons: [
+        { assignment_id: 101, kind: 'skill' },
+        { assignment_id: 102, kind: 'group', group_id: 1, group_name: 'backend-tools' },
+      ],
     },
     {
       id: 11,
@@ -124,15 +127,15 @@ describe('Targets UI', () => {
 
   afterEach(() => cleanup())
 
-  it('renders target adapters with detection evidence and registered targets', async () => {
+  it('registers targets from the form alone, without exposing detection evidence', async () => {
     const user = userEvent.setup()
     renderTargets()
     expect(await screen.findByRole('link', { name: 'Claude User Config' })).toBeTruthy()
     expect(screen.getByText('Never distributed')).toBeTruthy()
-    await user.click(screen.getByRole('button', { name: 'Register Target' }))
-    expect(await screen.findByText('Claude Code')).toBeTruthy()
-    expect(screen.getByText('Detected')).toBeTruthy()
-    expect(screen.getByText('found /usr/local/bin/claude')).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: 'Add Distribution Target' }))
+    expect(await screen.findByRole('combobox', { name: 'Agent Type' })).toBeTruthy()
+    expect(screen.queryByText('found /usr/local/bin/claude')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Register as Target' })).toBeNull()
   })
 
   it('shows last Distribution outcome and stale on registered Targets', async () => {
@@ -154,16 +157,47 @@ describe('Targets UI', () => {
     expect(screen.getByText('stale observation')).toBeTruthy()
   })
 
+  it('lists Agent Type and Scope as labels instead of the stored keys', async () => {
+    window.fetch = vi.fn().mockImplementation(async (url: RequestInfo | URL) => {
+      const u = String(url)
+      if (u === '/api/v1/targets/adapters') {
+        return mockResponse({ items: mockAdapters, total: 1 })
+      }
+      if (u === '/api/v1/targets') {
+        return mockResponse({
+          items: [
+            mockTargetSummary,
+            { ...mockTargetSummary, id: 2, name: 'Scratch Dir', adapter: 'custom', scope: 'custom' },
+          ],
+          total: 2,
+        })
+      }
+      return mockResponse({ error: { message: 'not found' } }, false, 404)
+    })
+    renderTargets()
+
+    const table = await screen.findByRole('table', { name: 'Registered Targets' })
+    const rows = within(table).getAllByRole('row')
+
+    const builtin = within(rows[1]).getAllByRole('cell')
+    expect(builtin[1].textContent).toBe('Claude Code')
+    expect(builtin[2].textContent).toBe('User (global)')
+
+    const custom = within(rows[2]).getAllByRole('cell')
+    expect(custom[1].textContent).toBe('Custom Directory')
+    expect(custom[2].textContent).toBe('Custom')
+  })
+
   it('registers a custom target via POST /api/v1/targets without adapter/scope/project_root', async () => {
     const user = userEvent.setup()
     renderTargets()
     await screen.findByRole('link', { name: 'Claude User Config' })
-    await user.click(screen.getByRole('button', { name: 'Register Target' }))
+    await user.click(screen.getByRole('button', { name: 'Add Distribution Target' }))
 
     const modeSelect = screen.getByRole('combobox', { name: 'Target Type' })
-    expect(modeSelect.textContent).toContain('Built-in Adapter')
+    expect(modeSelect.textContent).toContain('Popular Agent')
     expect(modeSelect.textContent).not.toMatch(/^\s*builtin\s*$/)
-    const adapterSelect = screen.getByRole('combobox', { name: 'Adapter' })
+    const adapterSelect = screen.getByRole('combobox', { name: 'Agent Type' })
     expect(adapterSelect.textContent).toContain('Claude Code')
     expect(adapterSelect.textContent).not.toMatch(/^\s*claude\s*$/)
     expect(screen.getByRole('combobox', { name: 'Scope' }).textContent).toContain('User (global)')
@@ -193,9 +227,9 @@ describe('Targets UI', () => {
     })
 
     await user.click(modeSelect)
-    const customOption = await screen.findByRole('option', { name: 'Custom Directory Path' })
+    const customOption = await screen.findByRole('option', { name: 'Custom Directory' })
     await user.click(customOption)
-    expect(modeSelect.textContent).toContain('Custom Directory Path')
+    expect(modeSelect.textContent).toContain('Custom Directory')
     expect(modeSelect.textContent).not.toMatch(/^\s*custom\s*$/)
 
     const nameInput = screen.getByPlaceholderText('e.g. Claude User Config')
@@ -204,7 +238,7 @@ describe('Targets UI', () => {
     const pathInput = screen.getByPlaceholderText('/path/to/target/skills')
     await user.type(pathInput, '/tmp/agent-skills')
 
-    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Register Target' }))
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Add' }))
 
     await waitFor(() => expect(postCall).toHaveBeenCalled())
     const [, init] = postCall.mock.calls[0]
@@ -214,16 +248,48 @@ describe('Targets UI', () => {
     })
   })
 
+  it('surfaces the server message under an Adding Target failed alert when the POST fails', async () => {
+    const user = userEvent.setup()
+    renderTargets()
+    await screen.findByRole('link', { name: 'Claude User Config' })
+    await user.click(screen.getByRole('button', { name: 'Add Distribution Target' }))
+
+    vi.mocked(window.fetch).mockImplementation(async (url: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === 'POST' && String(url) === '/api/v1/targets') {
+        return mockResponse({ error: { message: 'target name already taken' } }, false, 409)
+      }
+      if (String(url) === '/api/v1/targets/adapters') return mockResponse({ items: mockAdapters, total: 1 })
+      if (String(url) === '/api/v1/targets') return mockResponse({ items: [mockTargetSummary], total: 1 })
+      return mockResponse({ error: { message: 'not found' } }, false, 404)
+    })
+
+    await user.type(screen.getByPlaceholderText('e.g. Claude User Config'), 'Claude User Config')
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Add' }))
+
+    expect(await screen.findByText('Adding Target failed')).toBeTruthy()
+    expect(screen.getByText('target name already taken')).toBeTruthy()
+  })
+
   it('renders target detail page by stable name route with direct assignments and expanded desired set reasons', async () => {
     renderTargets('/targets/Claude%20User%20Config')
     expect(await screen.findByRole('heading', { name: 'Claude User Config' })).toBeTruthy()
-    expect(screen.getAllByRole('link', { name: 'Go Linter' }).length).toBe(2)
+    expect(screen.getAllByRole('link', { name: 'Go Linter' }).length).toBe(1)
     expect(screen.getByRole('link', { name: 'backend-tools' })).toBeTruthy()
 
-    // Desired skills section
-    expect(screen.getByText('Desired Skill Set (2)')).toBeTruthy()
-    expect(screen.getByText('Directly assigned (Assignment #101)')).toBeTruthy()
-    expect(screen.getByText('Assigned via Group "backend-tools" (Group #1, Assignment #102)')).toBeTruthy()
+    // Agent Type and Scope read as labels, not the keys the Target stores
+    expect(await screen.findByText('Claude Code')).toBeTruthy()
+    expect(screen.getByText('User (global)')).toBeTruthy()
+    expect(screen.queryByText('claude')).toBeNull()
+
+    expect(screen.getByRole('heading', { name: 'Skill Assignments (2)' })).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: 'All Skills List' })).toBeNull()
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Preview desired Skills' }))
+    expect(await screen.findByRole('heading', { name: 'All Skills List' })).toBeTruthy()
+    expect(screen.getByText('Skill Source')).toBeTruthy()
+    expect(screen.getByText('Skill assignment · From Group: backend-tools')).toBeTruthy()
+    expect(screen.getByText('From Group: backend-tools')).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'SQL Checker' })).toBeTruthy()
   })
 
   it('assigns a Group through the searchable picker', async () => {
@@ -260,18 +326,80 @@ describe('Targets UI', () => {
     renderTargets('/targets/Claude%20User%20Config')
     await screen.findByRole('heading', { name: 'Claude User Config' })
     await user.click(screen.getByRole('combobox', { name: 'Assignment Type' }))
-    await user.click(await screen.findByRole('option', { name: 'Group' }))
-    expect(screen.getByRole('combobox', { name: 'Assignment Type' }).textContent).toContain('Group')
+    await user.click(await screen.findByRole('option', { name: 'Skill Group' }))
+    expect(screen.getByRole('combobox', { name: 'Assignment Type' }).textContent).toContain('Skill Group')
     expect(screen.getByRole('combobox', { name: 'Assignment Type' }).textContent).not.toMatch(/^\s*group\s*$/)
-    const picker = screen.getByLabelText('Group')
+    const picker = screen.getByRole('combobox', { name: 'Skill Group' })
     await user.click(picker)
-    await user.type(picker, 'crew')
     await user.click(await screen.findByRole('option', { name: 'crew' }))
     await user.click(screen.getByRole('button', { name: 'Assign' }))
     await waitFor(() => expect(postCall).toHaveBeenCalled())
     expect(JSON.parse((postCall.mock.calls[0][1] as RequestInit).body as string)).toEqual({
       kind: 'group',
       group_id: 2,
+    })
+  })
+
+  it('shows an empty Group picker instead of an empty popup when none remain', async () => {
+    const user = userEvent.setup()
+    renderTargets('/targets/Claude%20User%20Config')
+    await screen.findByRole('heading', { name: 'Claude User Config' })
+    await user.click(screen.getByRole('combobox', { name: 'Assignment Type' }))
+    await user.click(await screen.findByRole('option', { name: 'Skill Group' }))
+    const picker = screen.getByRole('combobox', { name: 'Skill Group' })
+    expect(picker.getAttribute('data-disabled')).not.toBeNull()
+    expect(picker.textContent).toContain('No Groups left to assign')
+    expect(screen.queryByRole('listbox')).toBeNull()
+  })
+
+  it('assigns multiple Skills in one submit', async () => {
+    const user = userEvent.setup()
+    const postCall = vi.fn().mockResolvedValue(
+      mockResponse({
+        id: 200,
+        kind: 'skill',
+        skill: { id: 20, slug: 'fmt', name: 'Formatter' },
+        created_at: '2026-01-01T00:00:00Z',
+      }),
+    )
+    vi.mocked(window.fetch).mockImplementation(async (url: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === 'POST' && String(url) === '/api/v1/targets/1/assignments') {
+        return postCall(url, init)
+      }
+      if (String(url) === '/api/v1/targets') return mockResponse({ items: [mockTargetSummary], total: 1 })
+      if (String(url) === '/api/v1/targets/1') return mockResponse(mockTargetView)
+      if (String(url) === '/api/v1/skills') {
+        return mockResponse({
+          items: [
+            { id: 10, slug: 'go-lint', name: 'Go Linter' },
+            { id: 20, slug: 'fmt', name: 'Formatter' },
+            { id: 21, slug: 'lint', name: 'Linter' },
+          ],
+          total: 3,
+        })
+      }
+      if (String(url) === '/api/v1/groups') {
+        return mockResponse({ items: [{ id: 1, name: 'backend-tools', member_count: 2 }], total: 1 })
+      }
+      return mockResponse({ error: { message: 'not found' } }, false, 404)
+    })
+
+    renderTargets('/targets/Claude%20User%20Config')
+    await screen.findByRole('heading', { name: 'Claude User Config' })
+    const picker = screen.getByRole('combobox', { name: 'Single Skill' })
+    await user.click(picker)
+    await user.click(await screen.findByRole('option', { name: /Formatter/ }))
+    await user.click(await screen.findByRole('option', { name: /Linter/ }))
+    expect(picker.textContent).toContain('2 selected')
+    await user.click(screen.getByRole('button', { name: 'Assign' }))
+    await waitFor(() => expect(postCall).toHaveBeenCalledTimes(2))
+    expect(JSON.parse((postCall.mock.calls[0][1] as RequestInit).body as string)).toEqual({
+      kind: 'skill',
+      skill_id: 20,
+    })
+    expect(JSON.parse((postCall.mock.calls[1][1] as RequestInit).body as string)).toEqual({
+      kind: 'skill',
+      skill_id: 21,
     })
   })
 
@@ -311,7 +439,8 @@ describe('Targets UI', () => {
     expect(await screen.findByText('Could not load Target')).toBeTruthy()
   })
 
-  it('renders all 4 adapter detection statuses (detected, not_detected, unknown, not_applicable)', async () => {
+  it('marks only detected adapters as Installed in the adapter picker', async () => {
+    const user = userEvent.setup()
     const multiStatusAdapters = [
       { key: 'a1', name: 'Adapter 1', detection: { status: 'detected', evidence: ['e1'], detected_at: '2026-01-01T00:00:00Z' } },
       { key: 'a2', name: 'Adapter 2', detection: { status: 'not_detected', evidence: [], detected_at: '2026-01-01T00:00:00Z' } },
@@ -327,11 +456,16 @@ describe('Targets UI', () => {
     })
 
     renderTargets('/targets')
-    await userEvent.setup().click(await screen.findByRole('button', { name: 'Register Target' }))
-    expect(await screen.findByText('Detected')).toBeTruthy()
-    expect(screen.getByText('Not Detected')).toBeTruthy()
-    expect(screen.getByText('Unknown')).toBeTruthy()
-    expect(screen.getByText('N/A')).toBeTruthy()
+    await user.click(await screen.findByRole('button', { name: 'Add Distribution Target' }))
+    await user.click(screen.getByRole('combobox', { name: 'Agent Type' }))
+
+    const options = await screen.findAllByRole('option')
+    expect(options.map((o) => o.textContent)).toEqual([
+      'Adapter 1Installed',
+      'Adapter 2',
+      'Adapter 3',
+      'Adapter 4',
+    ])
   })
 
   it('handles target names with % characters without double decoding or URIError', async () => {

@@ -53,8 +53,10 @@ const mockSkills = {
     { id: 10, slug: 'go-lint', name: 'Go Linter' },
     { id: 11, slug: 'sql-check', name: 'SQL Checker' },
     { id: 12, slug: 'docker-fmt', name: 'Docker Formatter' },
+    { id: 13, slug: 'k8s-apply', name: 'K8s Apply' },
+    { id: 14, slug: 'handoff', name: 'handoff' },
   ],
-  total: 3,
+  total: 5,
 }
 
 function renderGroups(initialEntry = '/groups') {
@@ -151,10 +153,50 @@ describe('Groups UI', () => {
 
     const skillSelect = screen.getByRole('combobox', { name: 'Select a Skill to add' })
     await user.click(skillSelect)
+    expect(await screen.findByRole('option', { name: /^handoff$/ })).toBeTruthy()
+    expect(screen.queryByRole('option', { name: 'handoff (handoff)' })).toBeNull()
     await user.click(await screen.findByRole('option', { name: 'Docker Formatter (docker-fmt)' }))
 
     expect(skillSelect.textContent).toContain('Docker Formatter')
     expect(skillSelect.textContent).not.toMatch(/^\s*12\s*$/)
+  })
+
+  it('adds multiple selected Skills in one POST', async () => {
+    const user = userEvent.setup()
+    renderGroups('/groups/backend-tools')
+    expect(await screen.findByRole('heading', { name: 'backend-tools' })).toBeTruthy()
+
+    const postCall = vi.fn().mockResolvedValue(
+      mockResponse({
+        ...mockGroupView,
+        members: [
+          ...mockGroupView.members,
+          { id: 12, slug: 'docker-fmt', name: 'Docker Formatter' },
+          { id: 13, slug: 'k8s-apply', name: 'K8s Apply' },
+        ],
+      }),
+    )
+
+    vi.mocked(window.fetch).mockImplementation(async (url: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === 'POST' && String(url) === '/api/v1/groups/1/members') {
+        return postCall(url, init)
+      }
+      if (String(url) === '/api/v1/groups') return mockResponse({ items: [mockGroupSummary], total: 1 })
+      if (String(url) === '/api/v1/groups/1') return mockResponse(mockGroupView)
+      if (String(url) === '/api/v1/skills') return mockResponse(mockSkills)
+      return mockResponse({ error: { message: 'not found' } }, false, 404)
+    })
+
+    const skillSelect = screen.getByRole('combobox', { name: 'Select a Skill to add' })
+    await user.click(skillSelect)
+    await user.click(await screen.findByRole('option', { name: 'Docker Formatter (docker-fmt)' }))
+    await user.click(await screen.findByRole('option', { name: 'K8s Apply (k8s-apply)' }))
+    expect(skillSelect.textContent).toContain('2 selected')
+    await user.click(screen.getByRole('button', { name: 'Add Skill' }))
+
+    await waitFor(() => expect(postCall).toHaveBeenCalled())
+    const [, init] = postCall.mock.calls[0]
+    expect(JSON.parse(init.body)).toEqual({ skill_ids: [12, 13] })
   })
 
   it('removes member when remove button is clicked and sends Content-Type application/json', async () => {
