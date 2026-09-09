@@ -17,35 +17,27 @@ export function SourceFacts({ source }: { source: SourceDetail }) {
   const { t, formatTime } = useLocale()
 
   return (
-    <div className="space-y-2 text-xs">
-      <p className="text-foreground-muted">
-        {t('colKind')}: {source.kind}
-        <span aria-hidden="true"> · </span>
-        {t('colLastChecked')}: {formatTime(source.last_checked_at)}
-      </p>
-
-      <Collapsible>
-        <CollapsibleTrigger className="group inline-flex items-center gap-1 text-foreground-muted underline decoration-border underline-offset-2 transition-colors hover:text-foreground hover:decoration-foreground">
-          <ChevronRight className="size-3.5 shrink-0 stroke-2 transition-transform duration-200 group-data-panel-open:rotate-90 motion-reduce:transition-none" />
-          {t('showSourceDetails')}
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <div className="space-y-1 pt-2">
-            <FactLine label={t('colKind')} value={source.kind} />
-            <FactLine label={t('labelRef')} value={source.ref || t('factRefDefault')} />
-            {(source.kind === 'git' || Boolean(source.subpath)) && (
-              <FactLine label={t('labelSubpath')} value={source.subpath || t('factSubpathDefault')} />
-            )}
-            {source.kind === 'git' && (
-              <FactLine
-                label={t('labelResolvedCommit')}
-                value={<span className="font-mono">{source.last_commit || '—'}</span>}
-              />
-            )}
-            <FactLine label={t('colLastChecked')} value={formatTime(source.last_checked_at)} />
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
-    </div>
+    <Collapsible className="text-xs">
+      <CollapsibleTrigger className="group inline-flex items-center gap-1 text-foreground-muted underline decoration-border underline-offset-2 transition-colors hover:text-foreground hover:decoration-foreground">
+        <ChevronRight className="size-3.5 shrink-0 stroke-2 transition-transform duration-200 group-data-panel-open:rotate-90 motion-reduce:transition-none" />
+        {t('showSourceDetails')}
+      </CollapsibleTrigger>
+      <CollapsibleContent className="data-closed:h-0">
+        <div className="space-y-1 pt-2">
+          <FactLine label={t('colKind')} value={source.kind} />
+          <FactLine label={t('labelRef')} value={source.ref || t('factRefDefault')} />
+          {(source.kind === 'git' || Boolean(source.subpath)) && (
+            <FactLine label={t('labelSubpath')} value={source.subpath || t('factSubpathDefault')} />
+          )}
+          {source.kind === 'git' && (
+            <FactLine
+              label={t('labelResolvedCommit')}
+              value={<span className="font-mono">{source.last_commit || '—'}</span>}
+            />
+          )}
+          <FactLine label={t('colLastScanned')} value={formatTime(source.last_checked_at)} />
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   )
 }

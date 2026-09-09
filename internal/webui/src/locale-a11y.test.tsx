@@ -181,10 +181,11 @@ describe('Localized Accessibility Labels & TableCaptions (English & Chinese)', (
     expect(await screen.findByRole('navigation', { name: '主导航' })).toBeTruthy()
     expect(await screen.findByRole('table', { name: '来源清单' })).toBeTruthy()
 
-    // subtle summary near the title, full facts behind the Details disclosure
-    expect(screen.getByText(/类型: local/)).toBeTruthy()
+    expect(screen.queryByText(/类型:/)).toBeNull()
     expect(screen.queryByText(/Ref:/)).toBeNull()
     await userEvent.setup().click(screen.getByRole('button', { name: '详情' }))
+    expect(screen.getByText(/类型:/)).toBeTruthy()
+    expect(screen.getByText('local')).toBeTruthy()
     expect(screen.getByText(/Ref:/)).toBeTruthy()
     expect(screen.queryByText(/子路径:/)).toBeNull()
   })

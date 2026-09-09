@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, useRef } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, Routes, Route, useParams } from 'react-router-dom'
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
 import { Badge } from '@appica/ui-react/badge'
 import { Table, TableCaption, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@appica/ui-react/table'
@@ -97,7 +97,7 @@ export function SourcesIndex() {
                   <TableHead>{t('colLocation')}</TableHead>
                   <TableHead>{t('colStatus')}</TableHead>
                   <TableHead className="text-end">{t('colSkills')}</TableHead>
-                  <TableHead>{t('colLastChecked')}</TableHead>
+                  <TableHead>{t('colLastScanned')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -131,4 +131,13 @@ export function SourcesIndex() {
 export function SourceExplorer() {
   const { name } = useParams()
   return <SourceDetailPage key={name} />
+}
+
+export default function Sources() {
+  return (
+    <Routes>
+      <Route path="/" element={<SourcesIndex />} />
+      <Route path="/:name" element={<SourceExplorer />} />
+    </Routes>
+  )
 }

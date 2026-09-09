@@ -5,11 +5,13 @@ import type { SourceDetail, SourceSummary } from './source-api'
 import { fetchSkills } from './skill-api'
 import type { Skill } from './skill-api'
 import { SourceInventory } from './source-inventory'
-import { SourceSyncSection } from './source-sync'
+import { useSourceSync, SourceSyncButton, SourceSyncStatus } from './source-sync'
+import { summarizeBoundSync } from './source-sync-summary'
 import { SourceReplaceDialog } from './source-replace-dialog'
 import { SourceFacts } from './source-facts'
 import { SourceIssuesList } from './source-issues-list'
 import { SourceDetailHeader } from './source-detail-header'
+import { diffInventory, inventoryUnchanged } from './source-inventory-diff'
 import { useSourceImport } from './use-source-import'
 import { ListPageSkeleton } from './list-page-skeleton'
 import { useLocale } from './locale-context'
@@ -32,7 +34,7 @@ export function SourceDetailPage() {
   const [sourceId, setSourceId] = useState<number | null>(null)
   const [skills, setSkills] = useState<Skill[]>([])
   const [error, setError] = useState<unknown | null>(null)
-  const [checking, setChecking] = useState(false)
+  const [rescanning, setRescanning] = useState(false)
 
   const inflight = useRef<AbortController | null>(null)
   const skillsInflight = useRef<AbortController | null>(null)
@@ -67,6 +69,8 @@ export function SourceDetailPage() {
     handleConfirmReplace,
     handleDeclineReplace,
   } = useSourceImport(source, sourceId, loadSkills)
+
+  const sync = useSourceSync(sourceId, loadSkills)
 
   const load = useCallback(() => {
     inflight.current?.abort()
@@ -119,13 +123,17 @@ export function SourceDetailPage() {
     }
   }, [load, resetImportState])
 
-  const check = async () => {
+  // A rescan replaces the Inventory and nothing else, so its only visible
+  // outcome is the list below plus this tally. It reports Inventory entries
+  // only: a Source check does not re-evaluate per-Skill Sync Status.
+  const rescan = async () => {
     if (sourceId === null) return
+    const before = source?.inventory ?? []
     resetImportState()
     inflight.current?.abort()
     const controller = new AbortController()
     inflight.current = controller
-    setChecking(true)
+    setRescanning(true)
     setError(null)
     try {
       const res = await fetch(`/api/v1/sources/${sourceId}/check`, {
@@ -136,15 +144,22 @@ export function SourceDetailPage() {
       })
       if (!res.ok) {
         const data = (await res.json()) as ErrorEnvelope
-        throw new ApiError(data?.error?.message, 'errCheckingSourceFailed')
+        throw new ApiError(data?.error?.message, 'errRescanningSourceFailed')
       }
       const data = (await res.json()) as SourceDetail
-      if (inflight.current === controller) setSource(data)
+      if (inflight.current !== controller) return
+      setSource(data)
+      const change = diffInventory(before, data.inventory)
+      notifySuccess(
+        inventoryUnchanged(change)
+          ? t('toastInventoryUnchanged')
+          : t('toastInventoryChanged', { ...change }),
+      )
     } catch (err: unknown) {
       if (isAbortError(err)) return
       if (inflight.current === controller) setError(err)
     } finally {
-      if (inflight.current === controller) setChecking(false)
+      if (inflight.current === controller) setRescanning(false)
     }
   }
 
@@ -160,23 +175,20 @@ export function SourceDetailPage() {
     return <ListPageSkeleton label={t('ariaLoadingSource')} />
   }
 
-  const boundSkillMap = new Map<string, Skill>()
-  if (sourceId !== null && skills.length > 0) {
-    for (const sk of skills) {
-      if (sk.binding && sk.binding.source_id === sourceId) {
-        boundSkillMap.set(sk.binding.relative_dir, sk)
-      }
-    }
-  }
+  const boundSkills =
+    sourceId === null ? [] : skills.filter((sk) => sk.binding?.source_id === sourceId)
+  const boundSkillMap = new Map<string, Skill>(
+    boundSkills.map((sk) => [sk.binding!.relative_dir, sk]),
+  )
 
   return (
     <div className="space-y-6">
-      <SourceDetailHeader source={source} sourceId={sourceId} checking={checking} onCheck={check} />
+      <SourceDetailHeader source={source} sourceId={sourceId} />
 
       {error !== null && (
         <Alert variant="error">
-          <AlertTitle>{t('alertCheckFailed')}</AlertTitle>
-          <AlertDescription>{getErrorMessage(error, 'errCheckingSourceFailed')}</AlertDescription>
+          <AlertTitle>{t('alertRescanFailed')}</AlertTitle>
+          <AlertDescription>{getErrorMessage(error, 'errRescanningSourceFailed')}</AlertDescription>
         </Alert>
       )}
 
@@ -204,6 +216,9 @@ export function SourceDetailPage() {
       <SourceInventory
         inventory={source.inventory}
         available={source.available}
+        lastScannedAt={source.last_checked_at}
+        rescanning={rescanning}
+        onRescan={() => void rescan()}
         boundSkillMap={boundSkillMap}
         selectedDirs={selectedDirs}
         setSelectedDirs={setSelectedDirs}
@@ -219,9 +234,17 @@ export function SourceDetailPage() {
             notifySuccess(t('toastImported'))
           }
         }}
+        syncAction={
+          boundSkills.length > 0 ? (
+            <SourceSyncButton
+              syncing={sync.syncing}
+              onRun={sync.run}
+              lastEvaluatedAt={summarizeBoundSync(boundSkills).lastEvaluatedAt}
+            />
+          ) : null
+        }
+        syncStatus={<SourceSyncStatus boundSkills={boundSkills} error={sync.error} />}
       />
-
-      {sourceId !== null && <SourceSyncSection sourceId={sourceId} onSynced={loadSkills} />}
 
       <SourceIssuesList issues={source.issues} />
 

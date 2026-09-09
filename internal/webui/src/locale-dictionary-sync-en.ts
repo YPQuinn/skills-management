@@ -119,20 +119,19 @@ export const translationsSyncEn = {
   diffExecutable: 'executable',
   diffSizeBytes: '{size} bytes',
   // Source batch sync
-  sourceSyncHeading: 'Synchronize bound Skills',
   sourceSyncDesc:
-    'Runs one fresh Source check and applies the safe synchronization rules to every Skill bound to this Source. Conflicts are skipped.',
-  btnSyncBoundSkills: 'Sync bound Skills',
-  btnSyncingBoundSkills: 'Syncing…',
+    'Pulls upstream changes into the Skills bound to this Source. A rescan runs first; Skills you changed locally are skipped, never overwritten.',
+  sourceSyncNoneBound:
+    'No Skills are bound to this Source yet. Import from this Inventory to synchronize upstream changes here.',
+  sourceSyncAllInSync: 'All {count} bound Skills match their Source.',
+  sourceSyncLastEvaluated: 'Sync Status last evaluated',
+  sourceSyncConflictDesc:
+    "Synchronization will skip {count} of them until you Keep Store or Accept Source on the Skill's Synchronization tab.",
+  btnSyncBoundSkills: 'Synchronize now',
+  btnSyncingBoundSkills: 'Synchronizing…',
   alertSyncSourceFailed: 'Source synchronization failed',
-  batchSyncCompleted: 'Batch sync completed',
-  batchSyncSummary:
-    'Total: {total}; {updated} updated, {kept_store} kept, {accepted_source} accepted, {no_op} no-op, {skipped} skipped, {blocked} blocked, {failed} failed, {rolled_back} rolled back.',
   batchNoBoundSkills: 'No Skills are bound to this Source.',
-  colSyncItemSkill: 'Skill',
-  colSyncItemStatus: 'Status',
-  colSyncItemResult: 'Result',
-  colSyncItemDetail: 'Detail',
+  batchSyncMoreItems: '…and {count} more needing attention. See the Skills index.',
   // Sync API fallback errors
   errCheckingSkillSyncFailed: 'Checking the Skill failed',
   errSyncingSkillFailed: 'Synchronizing the Skill failed',

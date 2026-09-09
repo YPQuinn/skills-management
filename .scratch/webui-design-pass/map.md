@@ -26,6 +26,11 @@ Make the localhost WebUI answer “what needs attention?” from the list pages,
 - [Sync conclusions and conflict Alert](issues/07-sync-conclusions-and-conflict-alert.md) — Sentence/Alert lead; no Sync during conflict; digests collapsed.
 - [Path-aggregated diff](issues/08-path-aggregated-diff.md) — One Accordion row per path with Upstream/Store chips.
 - [Appica polish](issues/09-appica-polish.md) — Skeleton, Copy, term tooltips, success toasts, Combobox assignment pickers, quieter Delete, visible nav overflow.
+- [Separate the Source page's read action from its write action](issues/10-source-read-vs-write-actions.md) — Rescan moved onto the Inventory heading with a scope sentence and a change tally; Synchronization carries the bound count.
+- [Lead the Source page with the bound Skills](issues/11-lead-source-page-with-bound-skills.md) — Synchronization moved above the Inventory and leads with a bound-Skill Sync Status tally; zero Bindings collapse to one line.
+- [One signal per fact, one primary per state](issues/12-one-signal-one-primary-on-source.md) — Import all yields the primary once anything is bound; Conflict speaks only through its Alert; a finished run toasts instead of claiming success in green.
+- [One toolbar for the Source actions](issues/13-one-toolbar-for-source-actions.md) — Synchronize now joins Rescan and the import buttons in a single row, every description and timestamp moves onto its button's Tooltip, and Import all takes the primary back.
+- [Run outcomes belong in the toast](issues/14-run-outcomes-belong-in-the-toast.md) — a Synchronization run reports counted result badges plus the Skills it left stranded in a toast that waits to be dismissed; the page keeps only what outlasts the run.
 
 ## Not yet specified
 

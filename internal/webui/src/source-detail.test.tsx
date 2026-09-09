@@ -2,9 +2,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, cleanup, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
+import { ToastProvider, Toaster } from '@appica/ui-react/toast'
 import { SourceDetailPage } from './source-detail'
+import { NotifySuccessBridge } from './notify-success'
 import { SourcesIndex } from './sources'
 import { setupMatchMedia, summary, detail, unavailableDetail, mockResponse } from './source-fixtures'
+import { skillAlpha } from './skill-fixtures'
 import type { SourceDetail } from './source-api'
 
 setupMatchMedia()
@@ -24,10 +27,15 @@ vi.mock('@appica/ui-react/scroll-area', async (importOriginal) => {
 function renderDetail() {
   return render(
     <MemoryRouter initialEntries={['/sources/local-one']}>
-      <Routes>
-        <Route path="/sources" element={<SourcesIndex />} />
-        <Route path="/sources/:name" element={<SourceDetailPage />} />
-      </Routes>
+      <ToastProvider>
+        <NotifySuccessBridge>
+          <Routes>
+            <Route path="/sources" element={<SourcesIndex />} />
+            <Route path="/sources/:name" element={<SourceDetailPage />} />
+          </Routes>
+        </NotifySuccessBridge>
+        <Toaster />
+      </ToastProvider>
     </MemoryRouter>,
   )
 }
@@ -65,7 +73,7 @@ describe('SourceDetailPage', () => {
     expect(within(nameCell).getByText('skills/alpha')).toBeTruthy()
   })
 
-  it('re-checks through the API and refreshes the page', async () => {
+  it('rescans through the API and refreshes the Inventory', async () => {
     const user = userEvent.setup()
     renderDetail()
     await screen.findByRole('heading', { name: 'local-one' })
@@ -78,11 +86,12 @@ describe('SourceDetailPage', () => {
       return mockResponse(detail)
     })
 
-    await user.click(screen.getByRole('button', { name: /Check again/ }))
+    await user.click(screen.getByRole('button', { name: /Rescan/ }))
 
     await waitFor(() => expect(post).toHaveBeenCalledWith('/api/v1/sources/1/check', expect.anything()))
     expect(await screen.findByText('Gamma')).toBeTruthy()
     expect(screen.getByText(/Inventory \(3\)/)).toBeTruthy()
+    expect(await screen.findByText('Inventory updated: 1 added, 0 removed, 0 changed')).toBeTruthy()
   })
 
   it('renders the unavailable state with the retained Inventory', async () => {
@@ -95,24 +104,60 @@ describe('SourceDetailPage', () => {
     expect(screen.getByText('Alpha')).toBeTruthy()
   })
 
-  it('shows kind and last checked by default and expands the full facts on request', async () => {
+  it('places status beside the title and keeps kind inside details', async () => {
     const user = userEvent.setup()
     renderDetail()
-    await screen.findByRole('heading', { name: 'local-one' })
+    const heading = await screen.findByRole('heading', { name: 'local-one' })
+    expect(within(heading.parentElement as HTMLElement).getByText('Available')).toBeTruthy()
 
-    // default subtle summary line near the title
-    expect(screen.getByText(/Kind: local/)).toBeTruthy()
-    expect(screen.getByText(/Last checked:/)).toBeTruthy()
-    // detailed facts stay hidden until expanded
+    expect(screen.queryByText(/Kind:/)).toBeNull()
+    expect(screen.queryByText(/Last scanned:.*\d{4}/)).toBeNull()
     expect(screen.queryByText(/Ref:/)).toBeNull()
     expect(screen.queryByText(/Subpath:/)).toBeNull()
 
     await user.click(screen.getByRole('button', { name: 'Details' }))
 
+    expect(screen.getByText(/Kind:/)).toBeTruthy()
+    expect(screen.getByText('local')).toBeTruthy()
     expect(screen.getByText(/Ref:/)).toBeTruthy()
     expect(screen.queryByText(/Subpath:/)).toBeNull()
-    expect(screen.getAllByText(/Kind: local/).length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/Last checked:/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/Last scanned:/).length).toBeGreaterThan(0)
+  })
+
+  function mockSkillsResponse() {
+    const bound = {
+      ...skillAlpha,
+      binding: { ...skillAlpha.binding!, source_id: 1, relative_dir: 'skills/alpha' },
+    }
+    vi.mocked(window.fetch).mockImplementation(async (url: RequestInfo | URL) => {
+      if (String(url) === '/api/v1/sources') return mockResponse({ items: [summary], total: 1 })
+      if (String(url) === '/api/v1/skills') return mockResponse({ items: [bound], total: 1 })
+      return mockResponse(detail)
+    })
+  }
+
+  it('gathers the Source actions into one toolbar, Synchronize beside Rescan', async () => {
+    mockSkillsResponse()
+    renderDetail()
+
+    const rescan = await screen.findByRole('button', { name: 'Rescan' })
+    const sync = screen.getByRole('button', { name: 'Synchronize now' })
+    const importAll = screen.getByRole('button', { name: 'Import all' })
+    expect(rescan.compareDocumentPosition(sync) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(sync.compareDocumentPosition(importAll) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+
+    // What each button does, and how old its reading is, lives on hover now.
+    expect(screen.queryByText(/A rescan only refreshes this list/)).toBeNull()
+    expect(screen.queryByText(/Last scanned/)).toBeNull()
+    expect(screen.queryByText(/Sync Status last evaluated/)).toBeNull()
+  })
+
+  it('offers no Synchronize and says why on an untouched Source', async () => {
+    renderDetail()
+    await screen.findByRole('heading', { name: 'local-one' })
+    expect(screen.getByText(/Import from this Inventory to synchronize upstream changes/)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Synchronize now' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Import all' })).toBeTruthy()
   })
 
   it('presents the resolved Git commit only after expanding details', async () => {
@@ -202,7 +247,7 @@ describe('SourceDetailPage', () => {
       return mockResponse(detail)
     })
 
-    await user.click(screen.getByRole('button', { name: /Check again/ }))
+    await user.click(screen.getByRole('button', { name: /Rescan/ }))
     await waitFor(() => expect(post).toHaveBeenCalled())
     const init = post.mock.calls[0][1] as RequestInit
 

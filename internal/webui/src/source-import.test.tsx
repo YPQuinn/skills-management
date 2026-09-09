@@ -214,7 +214,7 @@ describe('Source Import & Conflict Replace UI', () => {
     expect(replaceSignal).toBeDefined()
     expect(replaceSignal.aborted).toBe(false)
 
-    await user.click(screen.getByRole('button', { name: 'Check again', hidden: true }))
+    await user.click(screen.getByRole('button', { name: 'Rescan', hidden: true }))
 
     expect(replaceSignal.aborted).toBe(true)
     await waitFor(() => {

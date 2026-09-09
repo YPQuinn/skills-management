@@ -96,3 +96,21 @@ const successfulSyncResults: Record<SyncActionResult, boolean> = {
 export function isSuccessfulSyncResult(value: string): boolean {
   return isSyncActionResult(value) && successfulSyncResults[value]
 }
+
+// Distinct from the negation of the above: a `no_op` did not succeed at
+// anything, but it also asks nothing of the reader. These are the results
+// worth naming a Skill over.
+const attentionSyncResults: Record<SyncActionResult, boolean> = {
+  no_op: false,
+  updated: false,
+  kept_store: false,
+  accepted_source: false,
+  skipped: true,
+  blocked: true,
+  failed: true,
+  rolled_back: false,
+}
+
+export function syncResultNeedsAttention(value: string): boolean {
+  return !isSyncActionResult(value) || attentionSyncResults[value]
+}
