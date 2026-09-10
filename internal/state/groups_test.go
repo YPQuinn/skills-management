@@ -2,7 +2,6 @@ package state
 
 import (
 	"database/sql"
-	"reflect"
 	"testing"
 	"time"
 )
@@ -121,13 +120,18 @@ func TestGroupTargets(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	refs, err := ListGroupTargets(db, groupID)
+	got, err := ListGroupTargets(db, groupID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []TargetRef{{ID: t2, Name: "a"}, {ID: t1, Name: "z"}}
-	if !reflect.DeepEqual(refs, want) {
-		t.Fatalf("group targets: got %+v, want %+v", refs, want)
+	if len(got) != 2 || got[0].ID != t2 || got[1].ID != t1 {
+		t.Fatalf("group targets: %+v", got)
+	}
+	if got[0].Name != "a" || got[0].Path != "/tmp/a" || got[0].Adapter != "custom" || got[0].Scope != "custom" {
+		t.Fatalf("first Target identity: %+v", got[0])
+	}
+	if got[1].Name != "z" || got[1].Path != "/tmp/z" {
+		t.Fatalf("second Target identity: %+v", got[1])
 	}
 }
 

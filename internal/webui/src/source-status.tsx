@@ -1,16 +1,35 @@
-import { Badge } from '@appica/ui-react/badge'
+import { CircleCheck, CircleX, Clock } from '@appica/icons-react'
+import { StatusLabel, type StatusSize } from './status-label'
 import { useLocale } from './locale-context'
 
-export function SourceStatusBadge({ available, stale }: { available: boolean; stale: boolean }) {
+export function SourceStatusBadge({
+  available,
+  stale,
+  size = 'sm',
+}: {
+  available: boolean
+  stale: boolean
+  size?: StatusSize
+}) {
   const { t } = useLocale()
 
   if (available) {
-    return <Badge variant="success">{t('statusAvailable')}</Badge>
+    return (
+      <StatusLabel icon={CircleCheck} tone="muted" size={size}>
+        {t('statusAvailable')}
+      </StatusLabel>
+    )
   }
   return (
-    <>
-      <Badge variant="error">{t('statusUnavailable')}</Badge>
-      {stale && <Badge variant="warning">{t('statusStale')}</Badge>}
-    </>
+    <span className="inline-flex flex-wrap items-center gap-1.5">
+      <StatusLabel icon={CircleX} tone="error" size={size}>
+        {t('statusUnavailable')}
+      </StatusLabel>
+      {stale && (
+        <StatusLabel icon={Clock} tone="warning" size={size}>
+          {t('statusStale')}
+        </StatusLabel>
+      )}
+    </span>
   )
 }

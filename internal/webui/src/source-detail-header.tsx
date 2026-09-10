@@ -27,7 +27,7 @@ export function SourceDetailHeader({
         </Link>
         <div className="mt-1 flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-bold">{source.name}</h1>
-          <SourceStatusBadge available={source.available} stale={source.stale} />
+          <SourceStatusBadge available={source.available} stale={source.stale} size="md" />
         </div>
         <p className="mt-0.5 flex items-start gap-1.5 text-sm text-foreground-muted break-all">
           <SourceLocationIcon source={source} />

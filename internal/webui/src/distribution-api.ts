@@ -120,3 +120,19 @@ export function adoptTargetLink(
 ): Promise<AdoptResult> {
   return postDistribution(`/api/v1/targets/${targetId}/adopt`, 'errAdoptingLinkFailed', { skill_id: skillId }, signal)
 }
+
+export function linkTargetSkill(
+  targetId: number | string,
+  skillId: number,
+  signal?: AbortSignal,
+): Promise<DistributionStatus> {
+  return postDistribution(`/api/v1/targets/${targetId}/link`, 'errLinkingSkillFailed', { skill_id: skillId }, signal)
+}
+
+export function unlinkTargetSkill(
+  targetId: number | string,
+  skillId: number,
+  signal?: AbortSignal,
+): Promise<DistributionStatus> {
+  return postDistribution(`/api/v1/targets/${targetId}/unlink`, 'errUnlinkingSkillFailed', { skill_id: skillId }, signal)
+}

@@ -29,15 +29,14 @@ type Target struct {
 	LastDistError      string
 }
 
-// TargetRef is the minimal identity of one Target for relationship views.
-type TargetRef struct {
-	ID   int64
-	Name string
-}
-
 const targetSelect = `id, name, path, adapter, scope, project_root, created_at, updated_at,
 	last_inspected_at, last_inspected_stale, last_inspected_error,
 	last_distribute_result, last_distribute_started_at, last_distribute_completed_at, last_distribute_error`
+
+// targetSelectAliased is targetSelect qualified for JOIN queries.
+const targetSelectAliased = `t.id, t.name, t.path, t.adapter, t.scope, t.project_root, t.created_at, t.updated_at,
+	t.last_inspected_at, t.last_inspected_stale, t.last_inspected_error,
+	t.last_distribute_result, t.last_distribute_started_at, t.last_distribute_completed_at, t.last_distribute_error`
 
 func scanTarget(row scanner) (*Target, error) {
 	var t Target

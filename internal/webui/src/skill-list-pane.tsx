@@ -3,7 +3,9 @@ import { Link, useParams } from 'react-router-dom'
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
 import { Badge } from '@appica/ui-react/badge'
 import { ListPageSkeleton } from './list-page-skeleton'
+import { Unlink } from '@appica/icons-react'
 import { fetchSkills } from './skill-api'
+import { StatusLabel } from './status-label'
 import type { Skill } from './skill-api'
 import { SyncStatusBadge } from './sync-status'
 import { SkillIdentity } from './skill-identity'
@@ -85,9 +87,9 @@ export function SkillListPane({ refreshCounter = 0 }: { refreshCounter?: number 
                         {s.binding.source_name}
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="shrink-0 text-xs">
+                      <StatusLabel icon={Unlink} tone="muted">
                         {t('badgeUnbound')}
-                      </Badge>
+                      </StatusLabel>
                     )}
                   </span>
                   <span className="mt-0.5 flex justify-end">

@@ -11,6 +11,17 @@ export interface TargetRef {
   name: string
 }
 
+export interface GroupTarget {
+  id: number
+  name: string
+  path: string
+  adapter: string
+  scope: string
+  project_root?: string
+  last_result?: string
+  stale?: boolean
+}
+
 export interface GroupSummary {
   id: number
   name: string
@@ -25,7 +36,7 @@ export interface GroupView {
   created_at: string
   updated_at: string
   members: SkillRef[]
-  targets: TargetRef[]
+  targets: GroupTarget[]
 }
 
 export interface GroupListResponse {

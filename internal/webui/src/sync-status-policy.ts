@@ -1,11 +1,9 @@
 // Sync presentation policy: the ten-state relationship and the eight
-// result values mapped to Appica Badge variants and locale keys. Text
-// always accompanies color, per decision 07. Kept free of components so
-// the badge renderers stay the only exports of their file.
+// result values mapped to locale keys. Text always accompanies color, per
+// decision 07. Kept free of components so the status renderers stay the
+// only exports of their file.
 import type { DictionaryKey } from './locale-dictionary'
 import type { SyncActionResult, SyncStatus } from './sync-api'
-
-export type SyncBadgeVariant = 'success' | 'error' | 'warning' | 'info' | 'soft' | 'outline'
 
 export const syncStatusKey: Record<SyncStatus, DictionaryKey> = {
   unbound: 'statusSyncUnbound',
@@ -20,19 +18,6 @@ export const syncStatusKey: Record<SyncStatus, DictionaryKey> = {
   store_invalid: 'statusSyncStoreInvalid',
 }
 
-export const syncStatusVariant: Record<SyncStatus, SyncBadgeVariant> = {
-  unbound: 'outline',
-  unchecked: 'soft',
-  in_sync: 'success',
-  source_changed: 'info',
-  store_changed: 'info',
-  conflict: 'error',
-  source_missing: 'warning',
-  source_invalid: 'warning',
-  store_missing: 'error',
-  store_invalid: 'error',
-}
-
 export const syncResultKey: Record<SyncActionResult, DictionaryKey> = {
   no_op: 'resultNoOp',
   updated: 'resultUpdated',
@@ -42,17 +27,6 @@ export const syncResultKey: Record<SyncActionResult, DictionaryKey> = {
   blocked: 'resultBlocked',
   failed: 'resultFailed',
   rolled_back: 'resultRolledBack',
-}
-
-export const syncResultVariant: Record<SyncActionResult, SyncBadgeVariant> = {
-  no_op: 'soft',
-  updated: 'success',
-  kept_store: 'info',
-  accepted_source: 'success',
-  skipped: 'warning',
-  blocked: 'warning',
-  failed: 'error',
-  rolled_back: 'info',
 }
 
 export const syncActionKey: Record<string, DictionaryKey> = {

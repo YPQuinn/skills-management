@@ -32,7 +32,7 @@ test('Chromium WebUI core journey against embedded skillctl', async ({ page }) =
     await openCreateDialog(page, 'Create Group')
     await page.getByLabel('Group Name').fill('crew')
     await page.getByRole('dialog').getByRole('button', { name: 'Create Group' }).click()
-    await page.getByRole('table', { name: 'Managed Groups' }).getByRole('link', { name: 'crew' }).click()
+    await page.getByRole('list', { name: 'Managed Groups' }).getByRole('link', { name: 'crew' }).click()
     await expect(page.getByRole('heading', { name: 'crew' })).toBeVisible()
     await chooseSelect(page, 'Select a Skill to add', /demo/)
     await page.getByRole('button', { name: 'Add Skill' }).click()

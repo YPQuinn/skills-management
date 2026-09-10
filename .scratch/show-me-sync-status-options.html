@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>同步状态展示 · 待选方案</title>
+  <style>
+    :root {
+      --bg: #f4f4f5;
+      --surface: #ffffff;
+      --fg: #171717;
+      --muted: #737373;
+      --subtle: #a3a3a3;
+      --border: #e5e5e5;
+      --success-bg: #d8eee0;
+      --success-fg: #1a5c3a;
+      --info-bg: #dceaf8;
+      --info-fg: #1d4e7a;
+      --error-bg: #f6d9d6;
+      --error-fg: #8a2b22;
+      --warning-bg: #f5e6c8;
+      --warning-fg: #7a4b12;
+      --dot-success: #3f8f5b;
+      --dot-info: #3b82c4;
+      --dot-error: #c24132;
+      --dot-muted: #c4c4c4;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--fg);
+      background:
+        radial-gradient(circle, #d4d4d4 0.6px, transparent 0.7px) 0 0 / 14px 14px,
+        var(--bg);
+      padding: 32px 24px 64px;
+    }
+    .wrap { max-width: 980px; margin: 0 auto; }
+    h1 { font-size: 22px; font-weight: 700; margin: 0 0 8px; }
+    .lede { color: var(--muted); font-size: 14px; margin: 0 0 28px; max-width: 640px; }
+    h2 {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      margin: 28px 0 10px;
+    }
+    h2 .tag {
+      display: inline-block;
+      margin-left: 8px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 1px 8px;
+      vertical-align: 1px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .note {
+      padding: 12px 16px 4px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--subtle);
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: 0; }
+    .name { font-weight: 500; text-decoration: underline; text-decoration-color: var(--border); }
+    .desc { color: var(--muted); }
+    .path { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--muted); }
+    .time { font-size: 12px; color: var(--muted); }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border-radius: 999px;
+      white-space: nowrap;
+      font-weight: 500;
+    }
+    .md { height: 24px; padding: 0 10px; font-size: 12px; }
+    .sm { height: 20px; padding: 0 8px; font-size: 12px; }
+    .success { background: var(--success-bg); color: var(--success-fg); }
+    .info { background: var(--info-bg); color: var(--info-fg); }
+    .error { background: var(--error-bg); color: var(--error-fg); }
+    .warning { background: var(--warning-bg); color: var(--warning-fg); }
+    .outline {
+      background: var(--surface);
+      color: var(--fg);
+      box-shadow: inset 0 0 0 1px var(--border);
+    }
+    .soft { background: #f4f4f5; color: var(--fg); }
+
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto;
+    }
+    .inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .inline.hot { color: var(--fg); }
+    .ico { width: 14px; height: 14px; flex: 0 0 auto; }
+    .quiet { color: var(--muted); font-size: 13px; }
+
+    .chips { display: flex; gap: 8px; padding: 0 16px 12px; }
+    .chip {
+      height: 24px; padding: 0 10px; border-radius: 999px; font-size: 12px;
+      display: inline-flex; align-items: center;
+      border: 1px solid var(--border); background: var(--surface); color: var(--fg);
+    }
+    .chip.on { background: #171717; color: #fff; border-color: #171717; }
+
+    .why {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    @media (max-width: 720px) { .why { grid-template-columns: 1fr; } }
+    .why div {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .why strong { display: block; color: var(--fg); font-size: 12px; margin-bottom: 2px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>同步列：四套待选</h1>
+    <p class="lede">
+      现在的「已同步」用 Appica <code>Badge variant="success"</code> 默认 <code>md</code>。
+      文档里 success / error / warning / info 是用来抢注意力的；soft / outline 才是表格里的中性元数据。
+      上面的筛选 Chip 已经是描边语言，来源页也已经规定「已对齐的状态不再发绿色徽章」。
+    </p>
+
+    <h2>现状 <span class="tag">每行一颗薄荷绿实心胶囊</span></h2>
+    <div class="card">
+      <p class="note">和上方「37 已同步」Chip 抢同一事实，整列同色，健康态比技能名还抢眼。</p>
+      <div class="chips">
+        <span class="chip on">全部 (4)</span>
+        <span class="chip">3 已同步</span>
+        <span class="chip">1 来源已变更</span>
+      </div>
+      <table>
+        <thead>
+          <tr><th>名称</th><th>同步</th><th>来源绑定</th><th>更新时间</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="name">ask-matt</span></td>
+            <td><span class="badge md success">已同步</span></td>
+            <td><span class="path">skills/engineering/ask-matt</span></td>
+            <td class="time">昨天</td>
+          </tr>
+          <tr>
+            <td><span class="name">code-review</span></td>
+            <td><span class="badge md success">已同步</span></td>
+            <td><span class="path">skills/engineering/code-review</span></td>
+            <td class="time">昨天</td>
+          </tr>
+          <tr>
+            <td><span class="name">diagnosing-bugs</span></td>
+            <td><span class="badge md info">来源已变更</span></td>
+            <td><span class="path">skills/engineering/diagnosing-bugs</span></td>
+            <td class="time">昨天</td>
+          </tr>
+          <tr>
+            <td><span class="name">local-draft</span></td>
+            <td><span class="badge md error">同步冲突</span></td>
+            <td><span class="path">skills/local-draft</span></td>
+            <td class="time">昨天</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>A · 描边 + 色点 <span class="tag">推荐 · Appica Data Table 配方</span></h2>
+    <div class="card">
+      <p class="note">中性 outline Badge，颜色只落在 8px 圆点上。和筛选 Chip 同属描边家族，健康态不再铺一整块绿。</p>
+      <table>
+        <thead>
+          <tr><th>名称</th><th>同步</th><th>来源绑定</th><th>更新时间</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="name">ask-matt</span></td>
+            <td><span class="badge sm outline"><span class="dot" style="background:var(--dot-success)"></span>已同步</span></td>
+            <td><span class="path">skills/engineering/ask-matt</span></td>
+            <td class="time">昨天</td>
+          </tr>
+          <tr>
+            <td><span class="name">code-review</span></td>
+            <td><span class="badge sm outline"><span class="dot" style="background:var(--dot-success)"></span>已同步</span></td>
+            <td><span class="path">skills/engineering/code-review</span></td>
+            <td class="time">昨天</td>
+          </tr>
+          <tr>
+            <td><span class="name">diagnosing-bugs</span></td>
+            <td><span class="badge sm outline"><span class="dot" style="background:var(--dot-info)"></span>来源已变更</span></td>
+            <td><span class="path">skills/engineering/diagnosing-bugs</span></td>
+            <td class="time">昨天</td>
+          </tr>
+          <tr>
+            <td><span class="name">local-draft</span></td>
+            <td><span class="badge sm outline"><span class="dot" style="background:var(--dot-error)"></span>同步冲突</span></td>
+            <td><span class="path">skills/local-draft</span></td>
+            <td class="time">昨天</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="why">
+      <div><strong>改动</strong>所有行统一 <code>variant="outline" size="sm"</code>，前面加色点。文案仍在，符合「不单靠颜色」。</div>
+      <div><strong>代价</strong>冲突不再是大红胶囊，扫描异常要靠红点。若希望冲突更响，冲突可单独保留 error 实心。</div>
+    </div>
+
+    <h2>B · 安静默认，异常才上色 <span class="tag">改动最小</span></h2>
+    <div class="card">
+      <p class="note">还是 Badge，只把健康态改成 outline/soft。来源已变更 / 冲突继续用 info / error。尺寸一律 sm。</p>
+      <table>
+        <thead>
+          <tr><th>名称</th><th>同步</th><th>来源绑定</th><th>更新时间</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="name">ask-matt</span></td>
+            <td><span class="badge sm outline">已同步</span></td>
+            <td><span class="path">skills/engineering/ask-matt</span></td>
+            <td class="time">昨天</td>
+          </tr>
+          <tr>
+            <td><span class="name">code-review</span></td>
+            <td><span class="badge sm outline">已同步</span></td>
+            <td><span class="path">skills/engineering/code-review</span></td>
+            <td class="time">昨天</td>
+          </tr>
+          <tr>
+            <td><span class="name">diagnosing-bugs</span></td>
+            <td><span class="badge sm info">来源已变更</span></td>
+            <td><span class="path">skills/engineering/diagnosing-bugs</span></td>
+            <td class="time">昨天</td>
+          </tr>
+          <tr>
+            <td><span class="name">local-draft</span></td>
+            <td><span class="badge sm error">同步冲突</span></td>
+            <td><span class="path">skills/local-draft</span></td>
+            <td class="time">昨天</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="why">
+      <div><strong>改动</strong>只改 <code>syncStatusVariant</code>：<code>in_sync</code> / <code>unbound</code> / <code>unchecked</code> → <code>outline</code>，表格传 <code>size="sm"</code>。</div>
+      <div><strong>代价</strong>健康态仍是胶囊，只是不再绿。和筛选 Chip 接近，但仍有一列重复的「已同步」。</div>
+    </div>
+
+    <h2>C · 图标 + 文字，去掉胶囊 <span class="tag">和「昨天」同权重</span></h2>
+    <div class="card">
+      <p class="note">同步列变成表格元数据，不再是标签。健康态用 CircleCheck + 灰色字；异常用彩色图标。</p>
+      <table>
+        <thead>
+          <tr><th>名称</th><th>同步</th><th>来源绑定</th><th>更新时间</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="name">ask-matt</span></td>
+            <td>
+              <span class="inline">
+                <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z"/><path d="m9 12 2 2 4-4"/></svg>
+                已同步
+              </span>
+            </td>
+            <td><span class="path">skills/engineering/ask-matt</span></td>
+            <td class="time">昨天</td>
+          </tr>
+          <tr>
+            <td><span class="name">code-review</span></td>
+            <td>
+              <span class="inline">
+                <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z"/><path d="m9 12 2 2 4-4"/></svg>
+                已同步
+              </span>
+            </td>
+            <td><span class="path">skills/engineering/code-review</span></td>
+            <td class="time">昨天</td>
+          </tr>
+          <tr>
+            <td><span class="name">diagnosing-bugs</span></td>
+            <td>
+              <span class="inline hot" style="color:var(--info-fg)">
+                <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 8v5"/><path d="M12 16.5v.01"/><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z"/></svg>
+                来源已变更
+              </span>
+            </td>
+            <td><span class="path">skills/engineering/diagnosing-bugs</span></td>
+            <td class="time">昨天</td>
+          </tr>
+          <tr>
+            <td><span class="name">local-draft</span></td>
+            <td>
+              <span class="inline hot" style="color:var(--error-fg)">
+                <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="m10.2 4.3-7.3 12.6A2 9 0 0 0 4.6 20h14.8a2 9 0 0 0 1.7-3.1L13.8 4.3a2 9 0 0 0-3.6 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                同步冲突
+              </span>
+            </td>
+            <td><span class="path">skills/local-draft</span></td>
+            <td class="time">昨天</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="why">
+      <div><strong>改动</strong>表格列不再用 Badge，改成图标 + 文字。详情页 / Toast 仍可用 Badge。</div>
+      <div><strong>代价</strong>列表和详情两套形态。列表侧栏现在也在用 Badge，要一起收。</div>
+    </div>
+
+    <h2>D · 已对齐不发徽章 <span class="tag">和来源页同一条规则</span></h2>
+    <div class="card">
+      <p class="note">来源页已经写过：settled statuses earn no badge。筛选 Chip 已经报了「37 已同步」。表格只给需要行动的状态上色。</p>
+      <table>
+        <thead>
+          <tr><th>名称</th><th>同步</th><th>来源绑定</th><th>更新时间</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="name">ask-matt</span></td>
+            <td><span class="quiet">已同步</span></td>
+            <td><span class="path">skills/engineering/ask-matt</span></td>
+            <td class="time">昨天</td>
+          </tr>
+          <tr>
+            <td><span class="name">code-review</span></td>
+            <td><span class="quiet">已同步</span></td>
+            <td><span class="path">skills/engineering/code-review</span></td>
+            <td class="time">昨天</td>
+          </tr>
+          <tr>
+            <td><span class="name">diagnosing-bugs</span></td>
+            <td><span class="badge sm info">来源已变更</span></td>
+            <td><span class="path">skills/engineering/diagnosing-bugs</span></td>
+            <td class="time">昨天</td>
+          </tr>
+          <tr>
+            <td><span class="name">local-draft</span></td>
+            <td><span class="badge sm error">同步冲突</span></td>
+            <td><span class="path">skills/local-draft</span></td>
+            <td class="time">昨天</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="why">
+      <div><strong>改动</strong><code>in_sync</code> 渲染成 <code>text-foreground-muted</code>；其余状态继续 Badge。与 Source 页「全对齐只写一句话」一致。</div>
+      <div><strong>代价</strong>默认视图几乎全是灰字。扫描「是不是同步了」要靠文字，不能靠色块。文案仍在，列不会空。</div>
+    </div>
+  </div>
+</body>
+</html>

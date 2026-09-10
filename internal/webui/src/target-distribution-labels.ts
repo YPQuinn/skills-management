@@ -1,59 +1,6 @@
-import type { DistributionItemView } from './distribution-api'
 import type { DictionaryKey } from './locale-dictionary'
-
-export function desiredBadge(item: DistributionItemView) {
-  if (item.desired === 'present') return { key: 'desiredPresent' as const, variant: 'soft' as const }
-  return { key: 'desiredAbsent' as const, variant: 'outline' as const }
-}
-
-export function observedBadge(item: DistributionItemView) {
-  switch (item.observed) {
-    case 'linked':
-      return { key: 'observedLinked' as const, variant: 'success' as const }
-    case 'missing':
-      return { key: 'observedMissing' as const, variant: 'outline' as const }
-    case 'conflict':
-      return { key: 'observedConflict' as const, variant: 'error' as const }
-    case 'broken_link':
-      return { key: 'observedBrokenLink' as const, variant: 'warning' as const }
-  }
-}
-
-export function stateKey(state: string): DictionaryKey {
-  switch (state) {
-    case 'ok':
-      return 'distributionStateOk'
-    case 'missing':
-      return 'distributionStateMissing'
-    case 'redirected':
-      return 'distributionStateRedirected'
-    case 'invalid':
-      return 'distributionStateInvalid'
-    default:
-      return 'distributionStateStored'
-  }
-}
-
-export function resultKey(result: string): DictionaryKey {
-  switch (result) {
-    case 'created':
-      return 'itemResultCreated'
-    case 'removed':
-      return 'itemResultRemoved'
-    case 'adopted':
-      return 'itemResultAdopted'
-    case 'blocked_conflict':
-      return 'itemResultBlockedConflict'
-    case 'blocked_broken':
-      return 'itemResultBlockedBroken'
-    case 'ownership_lost':
-      return 'itemResultOwnershipLost'
-    case 'failed':
-      return 'itemResultFailed'
-    default:
-      return 'itemResultNoOp'
-  }
-}
+import { AlertTriangle, CircleCheck, CircleX } from '@appica/icons-react'
+import type { StatusIcon, StatusTone } from './status-label'
 
 export function outcomeKey(outcome: string | undefined): DictionaryKey {
   switch (outcome) {
@@ -68,28 +15,8 @@ export function outcomeKey(outcome: string | undefined): DictionaryKey {
   }
 }
 
-export function outcomeBadgeVariant(outcome: string): 'success' | 'error' | 'warning' {
-  if (outcome === 'succeeded') return 'success'
-  if (outcome === 'failed') return 'error'
-  return 'warning'
-}
-
-export function itemResultBadge(result: string): {
-  key: DictionaryKey
-  variant: 'outline' | 'success' | 'warning' | 'error'
-} {
-  switch (result) {
-    case 'created':
-    case 'removed':
-    case 'adopted':
-      return { key: resultKey(result), variant: 'success' }
-    case 'blocked_conflict':
-    case 'blocked_broken':
-      return { key: resultKey(result), variant: 'warning' }
-    case 'ownership_lost':
-    case 'failed':
-      return { key: resultKey(result), variant: 'error' }
-    default:
-      return { key: resultKey(result), variant: 'outline' }
-  }
+export function outcomeMark(outcome: string): { icon: StatusIcon; tone: StatusTone } {
+  if (outcome === 'succeeded') return { icon: CircleCheck, tone: 'muted' }
+  if (outcome === 'failed') return { icon: CircleX, tone: 'error' }
+  return { icon: AlertTriangle, tone: 'warning' }
 }

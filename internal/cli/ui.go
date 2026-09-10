@@ -1,11 +1,13 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
 	"os/exec"
 	"runtime"
+	"syscall"
 
 	"github.com/spf13/cobra"
 
@@ -26,7 +28,7 @@ func NewUICmd(bm *bootstrap.Manager) *cobra.Command {
 				return app.Errorf(app.CodeInvalidArgument, "invalid --port %d: must be between 0 and 65535", port)
 			}
 			// The listener is loopback-only by construction.
-			listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
+			listener, err := listenLoopback(port)
 			if err != nil {
 				return app.Errorf(app.CodeInternal, "listening on 127.0.0.1:%d: %v", port, err)
 			}
@@ -39,9 +41,30 @@ func NewUICmd(bm *bootstrap.Manager) *cobra.Command {
 			return httpapi.New(bm, actualPort).Serve(cmd.Context(), listener)
 		},
 	}
-	cmd.Flags().IntVar(&port, "port", 10000, "port to listen on (0 picks a free port)")
+	cmd.Flags().IntVar(&port, "port", 10000, "port to listen on (occupied ports try the next; 0 picks a free port)")
 	cmd.Flags().BoolVar(&noOpen, "no-open", false, "do not open a browser automatically")
 	return cmd
+}
+
+// listenLoopback binds 127.0.0.1 at port. Port 0 lets the kernel assign a
+// free port. Any other port that is already in use tries the next port
+// until 65535.
+func listenLoopback(port int) (net.Listener, error) {
+	if port == 0 {
+		return net.Listen("tcp", "127.0.0.1:0")
+	}
+	var last error
+	for p := port; p <= 65535; p++ {
+		ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", p))
+		if err == nil {
+			return ln, nil
+		}
+		if !errors.Is(err, syscall.EADDRINUSE) {
+			return nil, err
+		}
+		last = err
+	}
+	return nil, last
 }
 
 // openBrowser opens url in the system browser. A failure is only reported:

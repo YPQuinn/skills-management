@@ -118,7 +118,7 @@ func NewGroupShowCmd(bm *bootstrap.Manager) *cobra.Command {
 			if len(g.Targets) == 0 {
 				fmt.Fprintln(cmd.OutOrStdout(), "Assigned Targets: none")
 			} else {
-				fmt.Fprintf(cmd.OutOrStdout(), "Assigned Targets: %s\n", targetRefLabels(g.Targets))
+				fmt.Fprintf(cmd.OutOrStdout(), "Assigned Targets: %s\n", targetNames(g.Targets))
 			}
 			return nil
 		},
@@ -209,6 +209,15 @@ func targetRefLabels(refs []app.TargetRef) string {
 	parts := make([]string, 0, len(refs))
 	for _, r := range refs {
 		parts = append(parts, fmt.Sprintf("%q", r.Name))
+	}
+	return strings.Join(parts, ", ")
+}
+
+// targetNames renders Target list rows as quoted names joined by commas.
+func targetNames(targets []app.Target) string {
+	parts := make([]string, 0, len(targets))
+	for _, t := range targets {
+		parts = append(parts, fmt.Sprintf("%q", t.Name))
 	}
 	return strings.Join(parts, ", ")
 }

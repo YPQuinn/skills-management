@@ -39,7 +39,7 @@ test('keyboard-only Add Source, Import, Assignment, Distribution, destructive co
     await page.keyboard.type('key-group')
     await tabTo(page, page.getByRole('dialog').getByRole('button', { name: 'Create Group' }))
     await page.keyboard.press('Enter')
-    await tabTo(page, page.getByRole('table', { name: 'Managed Groups' }).getByRole('link', { name: 'key-group' }))
+    await tabTo(page, page.getByRole('list', { name: 'Managed Groups' }).getByRole('link', { name: 'key-group' }))
     await page.keyboard.press('Enter')
     await expect(page.getByRole('heading', { name: 'key-group' })).toBeVisible()
     await keyboardChooseSelect(page, 'Select a Skill to add', 'keys')

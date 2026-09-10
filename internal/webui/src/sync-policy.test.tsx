@@ -9,7 +9,7 @@ import { conflictSkill, setupMatchMedia } from './skill-sync-fixtures'
 setupMatchMedia()
 
 describe('Sync status badge policy', () => {
-  it('maps every one of the ten sync states to a text badge', () => {
+  it('maps every one of the ten sync states to a text label', () => {
     const states: Array<[SyncStatus, string]> = [
       ['unbound', 'Unbound'],
       ['unchecked', 'Unchecked'],

@@ -3,7 +3,8 @@
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
 import { Badge } from '@appica/ui-react/badge'
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@appica/ui-react/collapsible'
-import { ChevronRight } from '@appica/icons-react'
+import { ChevronRight, Clock } from '@appica/icons-react'
+import { StatusLabel } from './status-label'
 import { CopyableField } from './copyable-path'
 import { SyncStatusBadge, SyncResultBadge } from './sync-status'
 import { isSuccessfulSyncResult, isSyncStatus, syncActionKey, syncConclusionKey } from './sync-status-policy'
@@ -48,7 +49,11 @@ export function SyncStatePanel({ skill, outcome, actionError }: SyncStatePanelPr
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-foreground-muted">{t('labelSyncStatus')}</span>
             <SyncStatusBadge status={skill.sync_status} />
-            {skill.sync_stale && <Badge variant="warning">{t('statusSyncStale')}</Badge>}
+            {skill.sync_stale && (
+              <StatusLabel icon={Clock} tone="warning">
+                {t('statusSyncStale')}
+              </StatusLabel>
+            )}
           </div>
           <div>
             <div className="text-foreground-muted">{t('labelSyncCheckedAt')}</div>

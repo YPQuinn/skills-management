@@ -1,11 +1,11 @@
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
-import { Badge } from '@appica/ui-react/badge'
 import { Chip } from '@appica/ui-react/chip'
 import { CopyButton } from '@appica/ui-react/copy-button'
 import { Input } from '@appica/ui-react/input'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@appica/ui-react/accordion'
-import { GitCompare, Search } from '@appica/icons-react'
+import { AlertCircle, AlertTriangle, Circle, CircleX, File, GitCompare, Plus, Search } from '@appica/icons-react'
 import { ListPageSkeleton } from './list-page-skeleton'
+import { StatusLabel, type StatusIcon, type StatusTone } from './status-label'
 import { useLocale } from './locale-context'
 import type { DictionaryKey } from './locale-dictionary'
 import type { DiffEntry, DiffNode, DiffResult } from './sync-api'
@@ -16,15 +16,14 @@ import {
   type SideState,
 } from './sync-diff-paths'
 
-type ChangeVariant = 'success' | 'error' | 'info' | 'warning'
 type ChipVariant = 'outline' | 'primary' | 'destructive' | 'secondary'
 
-const CHANGE_BADGES: Record<string, { key: DictionaryKey; variant: ChangeVariant }> = {
-  add: { key: 'changeAdd', variant: 'success' },
-  delete: { key: 'changeDelete', variant: 'error' },
-  content: { key: 'changeContent', variant: 'info' },
-  exec: { key: 'changeExec', variant: 'warning' },
-  node_type: { key: 'changeNodeType', variant: 'warning' },
+const CHANGE_MARK: Record<string, { key: DictionaryKey; icon: StatusIcon; tone: StatusTone }> = {
+  add: { key: 'changeAdd', icon: Plus, tone: 'info' },
+  delete: { key: 'changeDelete', icon: CircleX, tone: 'error' },
+  content: { key: 'changeContent', icon: File, tone: 'info' },
+  exec: { key: 'changeExec', icon: AlertCircle, tone: 'warning' },
+  node_type: { key: 'changeNodeType', icon: AlertTriangle, tone: 'warning' },
 }
 
 const NODE_KIND_KEYS: Record<string, DictionaryKey> = {
@@ -116,18 +115,18 @@ function DiffEntryView({
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-sm font-medium">{heading}</span>
         {entry.changes.map((change) => {
-          const def = CHANGE_BADGES[change]
+          const def = CHANGE_MARK[change]
           if (!def) {
             return (
-              <Badge key={change} variant="outline" size="sm">
+              <StatusLabel key={change} icon={Circle} tone="muted">
                 {change}
-              </Badge>
+              </StatusLabel>
             )
           }
           return (
-            <Badge key={change} variant={def.variant} size="sm">
+            <StatusLabel key={change} icon={def.icon} tone={def.tone}>
               {t(def.key)}
-            </Badge>
+            </StatusLabel>
           )
         })}
       </div>

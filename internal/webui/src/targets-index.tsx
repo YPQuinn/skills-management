@@ -13,9 +13,11 @@ import {
 } from './target-api'
 import { RegisterTargetForm } from './register-target-form'
 import { ResourceCreateDialog } from './resource-create-dialog'
-import { outcomeBadgeVariant, outcomeKey } from './target-distribution-labels'
+import { outcomeKey, outcomeMark } from './target-distribution-labels'
 import { adapterLabel, scopeLabel } from './target-labels'
 import { CopyablePath } from './copyable-path'
+import { StatusLabel } from './status-label'
+import { Clock } from '@appica/icons-react'
 import { useLocale } from './locale-context'
 
 export function TargetsIndex() {
@@ -137,16 +139,16 @@ export function TargetsIndex() {
                     <TableCell>
                       <div className="flex flex-wrap items-center gap-1">
                         {tgt.last_result ? (
-                          <Badge variant={outcomeBadgeVariant(tgt.last_result)}>
+                          <StatusLabel {...outcomeMark(tgt.last_result)}>
                             {t(outcomeKey(tgt.last_result))}
-                          </Badge>
+                          </StatusLabel>
                         ) : (
                           <span className="text-foreground-muted text-xs">{t('distributionNever')}</span>
                         )}
                         {tgt.stale && (
-                          <Badge variant="warning" className="text-xs">
+                          <StatusLabel icon={Clock} tone="warning">
                             {t('distributionStale')}
-                          </Badge>
+                          </StatusLabel>
                         )}
                       </div>
                     </TableCell>

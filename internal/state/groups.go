@@ -159,9 +159,9 @@ func ListGroupMemberSkills(db *sql.DB, groupID int64) ([]Skill, error) {
 }
 
 // ListGroupTargets returns the Targets that assign this Group, in name
-// order.
-func ListGroupTargets(db *sql.DB, groupID int64) ([]TargetRef, error) {
-	rows, err := db.Query(`SELECT DISTINCT t.id, t.name
+// order, with the same identity and last-Distribution fields as a Target list.
+func ListGroupTargets(db *sql.DB, groupID int64) ([]Target, error) {
+	rows, err := db.Query(`SELECT `+targetSelectAliased+`
 		FROM assignments a JOIN targets t ON t.id = a.target_id
 		WHERE a.kind = 'group' AND a.group_id = ?
 		ORDER BY t.name, t.id`, groupID)
@@ -169,13 +169,13 @@ func ListGroupTargets(db *sql.DB, groupID int64) ([]TargetRef, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var out []TargetRef
+	var out []Target
 	for rows.Next() {
-		var r TargetRef
-		if err := rows.Scan(&r.ID, &r.Name); err != nil {
+		t, err := scanTarget(rows)
+		if err != nil {
 			return nil, err
 		}
-		out = append(out, r)
+		out = append(out, *t)
 	}
 	return out, rows.Err()
 }

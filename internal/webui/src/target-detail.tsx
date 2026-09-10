@@ -16,9 +16,7 @@ import {
 import { adapterLabel, scopeLabel } from './target-labels'
 import { fetchSkills, type Skill } from './skill-api'
 import { fetchGroups, type GroupSummary } from './group-api'
-import { TargetAssignmentsSection } from './target-assignments-section'
-import { TargetDistributionSection } from './target-distribution-section'
-import type { DistributionStatus } from './distribution-api'
+import { TargetSkillsSection } from './target-skills-section'
 import { TargetDeleteAction } from './target-delete-action'
 import { useLocale } from './locale-context'
 
@@ -85,7 +83,7 @@ export function TargetDetailPage() {
   }, [load])
 
   const handleAddAssignment = async (kind: 'skill' | 'group', subjectIds: number[]) => {
-    if (!target || subjectIds.length === 0) return
+    if (!target || subjectIds.length === 0) return []
     setSubmitting(true)
     setActionError(null)
     try {
@@ -98,20 +96,25 @@ export function TargetDetailPage() {
       }
       const updated = await fetchTarget(target.id)
       setTarget(updated)
+      return updated.desired_skills || []
     } catch (err: unknown) {
       setActionError(err)
+      return target.desired_skills || []
     } finally {
       setSubmitting(false)
     }
   }
 
-  const handleDeleteAssignment = async (assignmentId: number) => {
-    if (!target) return
+  const handleRemoveAssignments = async (assignmentIds: number[]) => {
+    if (!target || assignmentIds.length === 0) return
     setSubmitting(true)
     setActionError(null)
     try {
-      const updated = await deleteAssignment(target.id, assignmentId)
-      setTarget(updated)
+      let updated = null
+      for (const id of assignmentIds) {
+        updated = await deleteAssignment(target.id, id)
+      }
+      if (updated) setTarget(updated)
     } catch (err: unknown) {
       setActionError(err)
     } finally {
@@ -191,22 +194,16 @@ export function TargetDetailPage() {
         </Alert>
       )}
 
-      <TargetAssignmentsSection
-        directSkills={directSkills}
-        groupAssignments={groupAssignments}
-        availableSkills={availableSkills}
-        availableGroups={availableGroups}
-        desiredSkills={desiredSkills}
-        submitting={submitting}
-        onAddAssignment={handleAddAssignment}
-        onDeleteAssignment={handleDeleteAssignment}
-      />
-
-      <TargetDistributionSection
+      <TargetSkillsSection
         key={target.id}
         targetId={target.id}
-        initial={(target.distribution ?? null) as DistributionStatus | null}
-        onChanged={(status) => setTarget((prev) => (prev ? { ...prev, distribution: status } : prev))}
+        desiredSkills={desiredSkills}
+        availableSkills={availableSkills}
+        availableGroups={availableGroups}
+        initialStatus={target.distribution ?? null}
+        submitting={submitting}
+        onAddAssignment={handleAddAssignment}
+        onRemoveAssignments={handleRemoveAssignments}
       />
     </div>
   )

@@ -7,18 +7,6 @@ import { LocaleProvider } from './locale-provider'
 
 import { setupMatchMedia } from './source-fixtures'
 
-vi.mock('@appica/ui-react/scroll-area', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@appica/ui-react/scroll-area')>()
-  return {
-    ...actual,
-    ScrollArea: (props: any) => (
-      <div data-testid="mock-scroll-area" data-orientation={props.orientation}>
-        {actual.ScrollArea ? actual.ScrollArea(props) : props.children}
-      </div>
-    ),
-  }
-})
-
 setupMatchMedia()
 
 function mockResponse(data: any, ok = true, status = 200) {
@@ -45,7 +33,25 @@ const mockGroupView = {
     { id: 10, slug: 'go-lint', name: 'Go Linter' },
     { id: 11, slug: 'sql-check', name: 'SQL Checker' },
   ],
-  targets: [{ id: 100, name: 'Dev Server' }],
+  targets: [{
+    id: 100,
+    name: 'Dev Server',
+    path: '/tmp/dev/skills',
+    adapter: 'claude',
+    scope: 'user',
+    last_result: 'succeeded',
+  }],
+}
+
+const mockAdapters = {
+  items: [
+    {
+      key: 'claude',
+      name: 'Claude Code',
+      detection: { status: 'detected', evidence: [], detected_at: '2026-01-01T00:00:00Z' },
+    },
+  ],
+  total: 1,
 }
 
 const mockSkills = {
@@ -86,16 +92,22 @@ describe('Groups UI', () => {
       if (u === '/api/v1/skills') {
         return mockResponse(mockSkills)
       }
+      if (u === '/api/v1/targets/adapters') {
+        return mockResponse(mockAdapters)
+      }
       return mockResponse({ error: { message: 'not found' } }, false, 404)
     })
   })
 
   afterEach(() => cleanup())
 
-  it('renders groups list with member count and links', async () => {
+  it('renders groups list with skill count and links', async () => {
     renderGroups()
-    expect(await screen.findByRole('link', { name: 'backend-tools' })).toBeTruthy()
+    expect(await screen.findByRole('list', { name: 'Managed Groups' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'backend-tools' })).toBeTruthy()
     expect(screen.getByText('2')).toBeTruthy()
+    expect(screen.getByText('Skills')).toBeTruthy()
+    expect(screen.queryByRole('table')).toBeNull()
   })
 
   it('submits create group form and calls POST /api/v1/groups', async () => {
@@ -143,7 +155,28 @@ describe('Groups UI', () => {
     expect(await screen.findByRole('heading', { name: 'backend-tools' })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Go Linter' })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'SQL Checker' })).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'Dev Server' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Assigned Targets (1)' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Dev Server' }).getAttribute('href')).toBe('/targets/Dev%20Server')
+    expect(screen.getByText('Claude Code')).toBeTruthy()
+    expect(screen.getByText('User (global)')).toBeTruthy()
+    expect(screen.getByText('/tmp/dev/skills')).toBeTruthy()
+    expect(screen.getByText('Succeeded')).toBeTruthy()
+    expect(screen.queryByText(/ID #/)).toBeNull()
+  })
+
+  it('points an unassigned Group at the Targets page', async () => {
+    vi.mocked(window.fetch).mockImplementation(async (url: RequestInfo | URL) => {
+      const u = String(url)
+      if (u === '/api/v1/groups') return mockResponse({ items: [mockGroupSummary], total: 1 })
+      if (u === '/api/v1/groups/1') return mockResponse({ ...mockGroupView, targets: [] })
+      if (u === '/api/v1/skills') return mockResponse(mockSkills)
+      if (u === '/api/v1/targets/adapters') return mockResponse(mockAdapters)
+      return mockResponse({ error: { message: 'not found' } }, false, 404)
+    })
+    renderGroups('/groups/backend-tools')
+    expect(await screen.findByRole('heading', { name: 'Assigned Targets (0)' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Go to Targets' }).getAttribute('href')).toBe('/targets')
+    expect(screen.queryByText(/ID #/)).toBeNull()
   })
 
   it('shows the Skill name in the add-member trigger after selection', async () => {

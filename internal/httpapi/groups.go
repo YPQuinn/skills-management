@@ -32,17 +32,11 @@ type skillRefJSON struct {
 	Name string `json:"name"`
 }
 
-// targetRefJSON is the minimal Target identity for relationship views.
-type targetRefJSON struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
-}
-
 // groupViewJSON is the Group detail: membership plus assigning Targets.
 type groupViewJSON struct {
 	groupJSON
-	Members []skillRefJSON  `json:"members"`
-	Targets []targetRefJSON `json:"targets"`
+	Members []skillRefJSON `json:"members"`
+	Targets []targetJSON   `json:"targets"`
 }
 
 // addGroupMembersRequest is one membership batch: the Skill ids to add.
@@ -62,13 +56,13 @@ func newGroupViewJSON(g *app.GroupView) groupViewJSON {
 	out := groupViewJSON{
 		groupJSON: newGroupJSON(g.Group),
 		Members:   make([]skillRefJSON, 0, len(g.Members)),
-		Targets:   make([]targetRefJSON, 0, len(g.Targets)),
+		Targets:   make([]targetJSON, 0, len(g.Targets)),
 	}
 	for _, m := range g.Members {
 		out.Members = append(out.Members, skillRefJSON{ID: m.ID, Slug: m.Slug, Name: m.Name})
 	}
 	for _, t := range g.Targets {
-		out.Targets = append(out.Targets, targetRefJSON{ID: t.ID, Name: t.Name})
+		out.Targets = append(out.Targets, newTargetJSON(t))
 	}
 	return out
 }

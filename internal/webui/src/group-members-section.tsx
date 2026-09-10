@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@appica/ui-react/button'
-import { Table, TableCaption, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@appica/ui-react/table'
-import { ScrollArea } from '@appica/ui-react/scroll-area'
 import { Spinner } from '@appica/ui-react/spinner'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@appica/ui-react/select'
 import { Trash, UserPlus } from '@appica/icons-react'
@@ -88,50 +86,31 @@ export function GroupMembersSection({
       {members.length === 0 ? (
         <p className="text-foreground-muted text-sm py-4">{t('emptyGroupMembers')}</p>
       ) : (
-        <ScrollArea className="w-full" orientation="horizontal">
-          <div className="min-w-[600px]">
-            <Table aria-label={t('groupMembersHeading', { count: members.length })}>
-              <TableCaption className="sr-only">
-                {t('groupMembersHeading', { count: members.length })}
-              </TableCaption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('colName')}</TableHead>
-                  <TableHead>{t('colSlug')}</TableHead>
-                  <TableHead className="text-end">{t('colActions')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {members.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell className="font-medium text-foreground-strong">
-                      <Link
-                        to={`/skills/${encodeURIComponent(member.slug)}`}
-                        className="underline decoration-border underline-offset-2 hover:decoration-foreground"
-                      >
-                        {member.name}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="font-mono text-foreground-muted">{member.slug}</TableCell>
-                    <TableCell className="text-end">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={submitting}
-                        aria-label={t('ariaRemoveMemberFor', { name: member.name })}
-                        onClick={() => onRemoveMember(member.id)}
-                        className="text-error-emphasis hover:text-error-emphasis"
-                      >
-                        <Trash className="size-4" />
-                        {t('btnRemoveMember')}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </ScrollArea>
+        <div className="grid gap-3 md:grid-cols-2">
+          {members.map((member) => (
+            <div
+              key={member.id}
+              className="flex items-center gap-3 rounded-lg border border-border px-3 py-2"
+            >
+              <Link
+                to={`/skills/${encodeURIComponent(member.slug)}`}
+                className="min-w-0 flex-1 truncate font-medium text-foreground-strong underline decoration-border underline-offset-2 hover:decoration-foreground"
+              >
+                {member.name}
+              </Link>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={submitting}
+                aria-label={t('ariaRemoveMemberFor', { name: member.name })}
+                onClick={() => onRemoveMember(member.id)}
+                className="text-error-emphasis hover:text-error-emphasis"
+              >
+                <Trash className="size-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   )

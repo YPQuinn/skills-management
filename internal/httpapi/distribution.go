@@ -163,6 +163,11 @@ type adoptRequest struct {
 	SkillID int64 `json:"skill_id"`
 }
 
+// linkRequest names the Skill whose Managed Link is created or removed.
+type linkRequest struct {
+	SkillID int64 `json:"skill_id"`
+}
+
 // handleInspectTarget runs one fresh coherent Target inspection.
 func (s *Server) handleInspectTarget(w http.ResponseWriter, r *http.Request) {
 	a, ok := s.app(w, r)
@@ -230,4 +235,48 @@ func (s *Server) handleAdoptTargetLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, newAdoptResultJSON(res))
+}
+
+// handleLinkTargetSkill establishes one Skill's Managed Link at one Target
+// and returns the fresh Distribution Status.
+func (s *Server) handleLinkTargetSkill(w http.ResponseWriter, r *http.Request) {
+	s.mutateOneLink(w, r, func(a *app.App, targetID, skillID int64) (*app.DistributionStatus, error) {
+		return a.LinkTargetSkill(r.Context(), targetID, skillID)
+	})
+}
+
+// handleUnlinkTargetSkill removes one Skill's Managed Link at one Target,
+// leaving the Assignment in place, and returns the fresh Distribution Status.
+func (s *Server) handleUnlinkTargetSkill(w http.ResponseWriter, r *http.Request) {
+	s.mutateOneLink(w, r, func(a *app.App, targetID, skillID int64) (*app.DistributionStatus, error) {
+		return a.UnlinkTargetSkill(r.Context(), targetID, skillID)
+	})
+}
+
+// mutateOneLink decodes a single-Skill link request and returns the fresh
+// Distribution Status produced by the given create-or-remove operation.
+func (s *Server) mutateOneLink(w http.ResponseWriter, r *http.Request, op func(a *app.App, targetID, skillID int64) (*app.DistributionStatus, error)) {
+	a, ok := s.app(w, r)
+	if !ok {
+		return
+	}
+	id, ok := targetID(w, r)
+	if !ok {
+		return
+	}
+	var req *linkRequest
+	if err := decodeJSON(r, &req); err != nil || req == nil {
+		emitError(w, codeBadRequest, "invalid JSON body", http.StatusBadRequest)
+		return
+	}
+	if req.SkillID == 0 {
+		emitError(w, app.CodeInvalidArgument, "a skill_id is required", http.StatusBadRequest)
+		return
+	}
+	st, err := op(a, id, req.SkillID)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, newDistributionStatusJSON(st))
 }

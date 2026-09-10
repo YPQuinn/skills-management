@@ -1,11 +1,11 @@
 import type { MouseEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { Badge } from '@appica/ui-react/badge'
 import { Pagination, PaginationList, PaginationItem, PaginationLink, PaginationEllipsis } from '@appica/ui-react/pagination'
 import { ScrollArea } from '@appica/ui-react/scroll-area'
 import { Table, TableCaption, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@appica/ui-react/table'
-import { ChevronLeft, ChevronRight } from '@appica/icons-react'
+import { ChevronLeft, ChevronRight, Clock, Unlink } from '@appica/icons-react'
 import type { Skill } from './skill-api'
+import { StatusLabel } from './status-label'
 import { SyncStatusBadge } from './sync-status'
 import { useLocale } from './locale-context'
 import { SkillIdentity } from './skill-identity'
@@ -64,9 +64,9 @@ export function SkillsIndexTable({
                     <div className="flex flex-wrap items-center gap-1">
                       <SyncStatusBadge status={s.sync_status} />
                       {s.sync_stale && (
-                        <Badge variant="warning" className="text-xs">
+                        <StatusLabel icon={Clock} tone="warning">
                           {t('statusSyncStale')}
-                        </Badge>
+                        </StatusLabel>
                       )}
                     </div>
                   </TableCell>
@@ -82,9 +82,9 @@ export function SkillsIndexTable({
                         <span className="font-mono text-foreground-muted">{s.binding.relative_dir}</span>
                       </div>
                     ) : (
-                      <Badge variant="outline" className="text-xs">
+                      <StatusLabel icon={Unlink} tone="muted">
                         {t('badgeUnbound')}
-                      </Badge>
+                      </StatusLabel>
                     )}
                   </TableCell>
                   <TableCell className="text-foreground-muted text-xs">

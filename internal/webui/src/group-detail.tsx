@@ -5,7 +5,9 @@ import { Spinner } from '@appica/ui-react/spinner'
 import { ChevronLeft, Folder } from '@appica/icons-react'
 import { fetchGroups, fetchGroup, addGroupMembers, removeGroupMember, type GroupView } from './group-api'
 import { fetchSkills, type Skill } from './skill-api'
+import { fetchTargetAdapters, type TargetAdapter } from './target-api'
 import { GroupMembersSection } from './group-members-section'
+import { GroupAssignedTargetsSection } from './group-assigned-targets-section'
 import { GroupDeleteAction } from './group-delete-action'
 import { useLocale } from './locale-context'
 
@@ -14,6 +16,7 @@ export function GroupDetailPage() {
   const { t, formatTime, getErrorMessage } = useLocale()
   const [group, setGroup] = useState<GroupView | null>(null)
   const [allSkills, setAllSkills] = useState<Skill[]>([])
+  const [adapters, setAdapters] = useState<TargetAdapter[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<unknown | null>(null)
   const [actionError, setActionError] = useState<unknown | null>(null)
@@ -32,10 +35,12 @@ export function GroupDetailPage() {
     Promise.all([
       fetchGroups(controller.signal),
       fetchSkills(controller.signal).catch(() => []),
+      fetchTargetAdapters(controller.signal).catch(() => []),
     ])
-      .then(async ([groups, skills]) => {
+      .then(async ([groups, skills, adList]) => {
         if (inflight.current !== controller) return
         setAllSkills(skills)
+        setAdapters(adList)
 
         const found = groups.find((g) => g.name === rawName || String(g.id) === rawName)
         if (!found) {
@@ -161,32 +166,7 @@ export function GroupDetailPage() {
         onRemoveMember={handleRemoveMember}
       />
 
-      {/* Assigned Targets */}
-      <div className="space-y-4 border border-border rounded-xl p-6 bg-background shadow-sm">
-        <h2 className="text-lg font-semibold">
-          {t('groupAssignedTargetsHeading', { count: group.targets.length })}
-        </h2>
-        {group.targets.length === 0 ? (
-          <p className="text-foreground-muted text-sm py-2">{t('emptyGroupAssignedTargets')}</p>
-        ) : (
-          <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
-            {group.targets.map((target) => (
-              <div
-                key={target.id}
-                className="p-3 border border-border rounded-lg flex items-center justify-between bg-background-subtle"
-              >
-                <Link
-                  to={`/targets/${encodeURIComponent(target.name)}`}
-                  className="font-medium text-sm underline decoration-border underline-offset-2 hover:decoration-foreground"
-                >
-                  {target.name}
-                </Link>
-                <span className="text-xs text-foreground-muted">ID #{target.id}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <GroupAssignedTargetsSection targets={group.targets} adapters={adapters} />
     </div>
   )
 }

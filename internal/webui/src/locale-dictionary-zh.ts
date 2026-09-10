@@ -59,7 +59,7 @@ export const translationsZhCN: Record<keyof typeof translationsEn, string> = {
   ariaLoadingGroups: '正在加载分组',
   emptyGroupsIndex: '尚未创建任何分组。',
   captionGroupsIndex: '已管理的分组',
-  colMemberCount: '成员数',
+  colSkillCount: '技能数',
   linkAllGroups: '所有分组',
   ariaLoadingGroup: '正在加载分组',
   alertCouldNotLoadGroup: '无法加载分组',
@@ -74,8 +74,10 @@ export const translationsZhCN: Record<keyof typeof translationsEn, string> = {
   selectedCount: '已选 {count} 项',
   btnRemoveMember: '移除',
   ariaRemoveMemberFor: '从分组中移除 {name}',
-  groupAssignedTargetsHeading: '已分配的目标 ({count})',
-  emptyGroupAssignedTargets: '该分组尚未分配给任何目标。',
+  groupAssignedTargetsHeading: '分发目标 ({count})',
+  groupAssignedTargetsSubtitle: '该分组已分配到这些 Agent 目录。成员技能会在下次分发时进入对应路径。',
+  emptyGroupAssignedTargets: '该分组尚未分配到任何分发目标。在「技能分发」页把此分组分配给 Agent 目录。',
+  linkGoToTargets: '前往技能分发',
   colActions: '操作',
 
   // Targets Index & Explorer & Detail

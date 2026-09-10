@@ -88,6 +88,15 @@ const mockTargetView = {
   ],
 }
 
+const mockStatus = {
+  target_id: 1,
+  name: 'Claude User Config',
+  path: '/Users/test/.claude/skills',
+  state: 'missing',
+  stale: false,
+  items: [],
+}
+
 function renderTargets(initialEntry = '/targets') {
   return render(
     <LocaleProvider>
@@ -114,6 +123,9 @@ describe('Targets UI', () => {
       }
       if (u === '/api/v1/targets/1') {
         return mockResponse(mockTargetView)
+      }
+      if (u === '/api/v1/targets/1/inspect') {
+        return mockResponse(mockStatus)
       }
       if (u === '/api/v1/skills') {
         return mockResponse({ items: [{ id: 10, slug: 'go-lint', name: 'Go Linter' }], total: 1 })
@@ -270,26 +282,26 @@ describe('Targets UI', () => {
     expect(screen.getByText('target name already taken')).toBeTruthy()
   })
 
-  it('renders target detail page by stable name route with direct assignments and expanded desired set reasons', async () => {
+  it('renders the merged Skill Assignments section with skill-level rows expanded from Groups', async () => {
     renderTargets('/targets/Claude%20User%20Config')
     expect(await screen.findByRole('heading', { name: 'Claude User Config' })).toBeTruthy()
-    expect(screen.getAllByRole('link', { name: 'Go Linter' }).length).toBe(1)
-    expect(screen.getByRole('link', { name: 'backend-tools' })).toBeTruthy()
 
     // Agent Type and Scope read as labels, not the keys the Target stores
     expect(await screen.findByText('Claude Code')).toBeTruthy()
     expect(screen.getByText('User (global)')).toBeTruthy()
     expect(screen.queryByText('claude')).toBeNull()
 
-    expect(screen.getByRole('heading', { name: 'Skill Assignments (2)' })).toBeTruthy()
+    // One merged section, headed by the direct-assignments count of desired Skills.
+    expect(screen.getByRole('heading', { name: /Skill Assignments \(2\)/ })).toBeTruthy()
+    // The old dual-block layout is gone.
     expect(screen.queryByRole('heading', { name: 'All Skills List' })).toBeNull()
-    const user = userEvent.setup()
-    await user.click(screen.getByRole('button', { name: 'Preview desired Skills' }))
-    expect(await screen.findByRole('heading', { name: 'All Skills List' })).toBeTruthy()
-    expect(screen.getByText('Skill Source')).toBeTruthy()
-    expect(screen.getByText('Skill assignment · From Group: backend-tools')).toBeTruthy()
-    expect(screen.getByText('From Group: backend-tools')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Preview desired Skills' })).toBeNull()
+
+    // Each desired Skill is a single row; the Group Assignment expands into its members.
+    expect(screen.getAllByRole('link', { name: 'Go Linter' }).length).toBe(1)
     expect(screen.getByRole('link', { name: 'SQL Checker' })).toBeTruthy()
+    // Both member Skills carry the originating Group chip as a link.
+    expect(screen.getAllByRole('link', { name: 'backend-tools' }).length).toBe(2)
   })
 
   it('assigns a Group through the searchable picker', async () => {
@@ -308,6 +320,7 @@ describe('Targets UI', () => {
       }
       if (String(url) === '/api/v1/targets') return mockResponse({ items: [mockTargetSummary], total: 1 })
       if (String(url) === '/api/v1/targets/1') return mockResponse(mockTargetView)
+      if (String(url) === '/api/v1/targets/1/inspect') return mockResponse(mockStatus)
       if (String(url) === '/api/v1/skills') {
         return mockResponse({ items: [{ id: 10, slug: 'go-lint', name: 'Go Linter' }], total: 1 })
       }
@@ -368,6 +381,7 @@ describe('Targets UI', () => {
       }
       if (String(url) === '/api/v1/targets') return mockResponse({ items: [mockTargetSummary], total: 1 })
       if (String(url) === '/api/v1/targets/1') return mockResponse(mockTargetView)
+      if (String(url) === '/api/v1/targets/1/inspect') return mockResponse(mockStatus)
       if (String(url) === '/api/v1/skills') {
         return mockResponse({
           items: [
@@ -403,7 +417,7 @@ describe('Targets UI', () => {
     })
   })
 
-  it('deletes assignment via DELETE /api/v1/targets/1/assignments/:id with Content-Type application/json', async () => {
+  it('removing a Group-sourced Skill confirms, then deletes every backing Assignment with Content-Type application/json', async () => {
     const user = userEvent.setup()
     renderTargets('/targets/Claude%20User%20Config')
     await screen.findByRole('heading', { name: 'Claude User Config' })
@@ -411,25 +425,35 @@ describe('Targets UI', () => {
     const updatedTargetView = {
       ...mockTargetView,
       direct_skills: [],
+      groups: [],
+      desired_skills: [],
     }
 
+    // Go Linter is backed by a direct Assignment (101) and a Group one (102).
     const deleteCall = vi.fn().mockResolvedValue(mockResponse(updatedTargetView))
 
     vi.mocked(window.fetch).mockImplementation(async (url: RequestInfo | URL, init?: RequestInit) => {
-      if (init?.method === 'DELETE' && String(url) === '/api/v1/targets/1/assignments/101') {
+      if (init?.method === 'DELETE' && /^\/api\/v1\/targets\/1\/assignments\/\d+$/.test(String(url))) {
         return deleteCall(url, init)
       }
       if (String(url) === '/api/v1/targets') return mockResponse({ items: [mockTargetSummary], total: 1 })
       if (String(url) === '/api/v1/targets/1') return mockResponse(mockTargetView)
+      if (String(url) === '/api/v1/targets/1/inspect') return mockResponse(mockStatus)
       if (String(url) === '/api/v1/skills') return mockResponse({ items: [], total: 0 })
       if (String(url) === '/api/v1/groups') return mockResponse({ items: [], total: 0 })
       return mockResponse({ error: { message: 'not found' } }, false, 404)
     })
 
-    const unassignBtn = screen.getByRole('button', { name: 'Unassign Go Linter from target' })
-    await user.click(unassignBtn)
+    // A Group-sourced Skill first warns that the whole Group will be removed.
+    await user.click(screen.getByRole('button', { name: 'Remove Go Linter' }))
+    expect(await screen.findByRole('heading', { name: 'Remove this Skill?' })).toBeTruthy()
+    expect(deleteCall).not.toHaveBeenCalled()
 
-    await waitFor(() => expect(deleteCall).toHaveBeenCalled())
+    await user.click(screen.getByRole('button', { name: 'Remove Group' }))
+
+    await waitFor(() => expect(deleteCall).toHaveBeenCalledTimes(2))
+    const deletedIds = deleteCall.mock.calls.map(([u]) => String(u).replace(/.*\//, '')).sort()
+    expect(deletedIds).toEqual(['101', '102'])
     const deleteInit = deleteCall.mock.calls[0][1] as RequestInit
     expect(deleteInit.headers).toEqual({ 'Content-Type': 'application/json' })
   })
@@ -488,6 +512,7 @@ describe('Targets UI', () => {
       const u = String(url)
       if (u === '/api/v1/targets') return mockResponse({ items: [specialTargetSummary], total: 1 })
       if (u === '/api/v1/targets/99') return mockResponse(specialTargetView)
+      if (u === '/api/v1/targets/99/inspect') return mockResponse({ ...mockStatus, target_id: 99, name: '100% coverage' })
       if (u === '/api/v1/skills') return mockResponse({ items: [], total: 0 })
       if (u === '/api/v1/groups') return mockResponse({ items: [], total: 0 })
       return mockResponse({ error: { message: 'not found' } }, false, 404)

@@ -94,6 +94,8 @@ func (s *Server) Handler() http.Handler {
 			r.With(jsonMutationsOnly).Post("/{id}/inspect", s.handleInspectTarget)
 			r.With(jsonMutationsOnly).Post("/{id}/distribute", s.handleDistributeTarget)
 			r.With(jsonMutationsOnly).Post("/{id}/adopt", s.handleAdoptTargetLink)
+			r.With(jsonMutationsOnly).Post("/{id}/link", s.handleLinkTargetSkill)
+			r.With(jsonMutationsOnly).Post("/{id}/unlink", s.handleUnlinkTargetSkill)
 			r.Get("/{id}/deletion", s.handlePreviewDeleteTarget)
 			r.With(jsonMutationsOnly).Delete("/{id}", s.handleDeleteTarget)
 		})

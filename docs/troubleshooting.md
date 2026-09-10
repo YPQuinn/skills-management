@@ -110,4 +110,4 @@ skillctl ui --no-open
 
 Then visit the printed URL. On Linux, `xdg-open` must be installed for automatic launch; on macOS, `open` is used. Launch failure never stops the server.
 
-`--port` must be between 0 and 65535. Port `0` asks the kernel for a free port. Another process bound to the requested port produces a listen error; choose another `--port`.
+`--port` must be between 0 and 65535. Port `0` asks the kernel for a free port. If the requested port is already bound, the next free loopback port is used. The printed URL is the port that actually bound.

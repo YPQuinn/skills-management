@@ -97,7 +97,7 @@ All writes stay under these chosen paths plus registered Target containers.
 skillctl ui
 ```
 
-Listens on `http://127.0.0.1:10000` and tries to open a browser. `--port 0` picks a free port. `--no-open` never launches a browser. If the browser cannot be opened, the URL is still printed. The server is loopback-only.
+Listens on `http://127.0.0.1:10000` and tries to open a browser. If that port is in use, the next free port is used. `--port 0` picks a free port. `--no-open` never launches a browser. If the browser cannot be opened, the URL is still printed. The server is loopback-only.
 
 ## Uninstall
 

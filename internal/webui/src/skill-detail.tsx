@@ -4,10 +4,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
-import { Badge } from '@appica/ui-react/badge'
 import { Spinner } from '@appica/ui-react/spinner'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@appica/ui-react/tabs'
-import { ArrowLeft } from '@appica/icons-react'
+import { ArrowLeft, Link as LinkIcon, Unlink } from '@appica/icons-react'
+import { StatusLabel } from './status-label'
 import { fetchSkill } from './skill-api'
 import type { Skill } from './skill-api'
 import { SkillOverview } from './skill-overview'
@@ -93,9 +93,13 @@ export function SkillDetailPage() {
           </div>
           <div className="flex flex-col items-end gap-2">
             {skill.binding ? (
-              <Badge variant="success">{t('badgeBound')}</Badge>
+              <StatusLabel icon={LinkIcon} tone="muted" size="md">
+                {t('badgeBound')}
+              </StatusLabel>
             ) : (
-              <Badge variant="outline">{t('badgeUnbound')}</Badge>
+              <StatusLabel icon={Unlink} tone="muted" size="md">
+                {t('badgeUnbound')}
+              </StatusLabel>
             )}
             <SkillCleanupActions skill={skill} onSkillUpdated={setSkill} />
           </div>

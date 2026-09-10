@@ -45,11 +45,11 @@ type GroupRef struct {
 }
 
 // GroupView is the Group detail: membership plus the Targets that assign
-// the Group.
+// the Group, with the same identity fields as a Target list row.
 type GroupView struct {
 	Group
-	Members []SkillRef  `json:"members"`
-	Targets []TargetRef `json:"targets"`
+	Members []SkillRef `json:"members"`
+	Targets []Target   `json:"targets"`
 }
 
 // validateGroupName checks an operator-facing Group name with the same
@@ -117,7 +117,7 @@ func (a *App) ShowGroup(id int64) (*GroupView, error) {
 	view := &GroupView{
 		Group:   Group{ID: g.ID, Name: g.Name, CreatedAt: g.CreatedAt, UpdatedAt: g.UpdatedAt},
 		Members: []SkillRef{},
-		Targets: []TargetRef{},
+		Targets: []Target{},
 	}
 	members, err := state.ListGroupMemberSkills(a.db, id)
 	if err != nil {
@@ -131,7 +131,10 @@ func (a *App) ShowGroup(id int64) (*GroupView, error) {
 		return nil, Errorf(CodeInternal, "reading Group %d Targets: %v", id, err)
 	}
 	for _, t := range targets {
-		view.Targets = append(view.Targets, TargetRef{ID: t.ID, Name: t.Name})
+		item := targetFromState(&t)
+		item.LastResult = t.LastDistResult
+		item.Stale = t.LastInspectedStale
+		view.Targets = append(view.Targets, item)
 	}
 	return view, nil
 }

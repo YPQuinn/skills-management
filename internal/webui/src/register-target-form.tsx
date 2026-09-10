@@ -2,12 +2,12 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@appica/ui-react/button'
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
-import { Badge } from '@appica/ui-react/badge'
 import { Input } from '@appica/ui-react/input'
 import { Field, FieldLabel } from '@appica/ui-react/field'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@appica/ui-react/select'
 import { Spinner } from '@appica/ui-react/spinner'
-import { Plus } from '@appica/icons-react'
+import { CircleCheck, Plus } from '@appica/icons-react'
+import { StatusLabel } from './status-label'
 import { registerTarget, type TargetAdapter, type CreateTargetInput } from './target-api'
 import { useLocale } from './locale-context'
 
@@ -146,9 +146,9 @@ export function RegisterTargetForm({ adapters, onRegistered }: RegisterTargetFor
                     <SelectItem key={a.key} value={a.key} className="[&>*:first-child]:grow">
                       <span className="grow">{a.name}</span>
                       {a.detection.status === 'detected' && (
-                        <Badge variant="success" size="sm" className="shrink-0">
+                        <StatusLabel icon={CircleCheck} tone="muted">
                           {t('statusInstalled')}
-                        </Badge>
+                        </StatusLabel>
                       )}
                     </SelectItem>
                   ))}

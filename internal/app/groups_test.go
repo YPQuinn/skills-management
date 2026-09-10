@@ -163,7 +163,11 @@ func TestGroupViewShowsTargets(t *testing.T) {
 	if len(view.Targets) != 1 || view.Targets[0].ID != tv.ID {
 		t.Fatalf("group targets: %+v", view.Targets)
 	}
-	if view.Targets[0].Name == "" {
-		t.Fatal("target name missing")
+	got := view.Targets[0]
+	if got.Name != tv.Name || got.Path != tv.Path || got.Adapter != tv.Adapter || got.Scope != tv.Scope {
+		t.Fatalf("target identity: %+v", got)
+	}
+	if got.LastResult != "" || got.Stale {
+		t.Fatalf("fresh Target must omit distribution health: %+v", got)
 	}
 }

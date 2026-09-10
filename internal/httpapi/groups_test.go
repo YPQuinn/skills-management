@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"testing"
 )
 
@@ -136,6 +137,45 @@ func TestGroupsRESTLifecycle(t *testing.T) {
 		t.Fatalf("non-numeric id: got %d", resp.StatusCode)
 	}
 	resp.Body.Close()
+}
+
+func TestGroupViewIncludesAssignedTargetIdentity(t *testing.T) {
+	home, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("HOME", home)
+
+	ts := readyServer(t, nil)
+	id := createAPIGroup(t, ts, "eng")
+
+	resp := ts.do(t, "POST", "/api/v1/targets", `{"path": "~/skills", "name": "Claude Global"}`, "application/json", "", "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("register target: got %d, body %s", resp.StatusCode, readBody(t, resp))
+	}
+	tv := decodeTargetView(t, readBody(t, resp))
+
+	resp = ts.do(t, "POST", fmt.Sprintf("/api/v1/targets/%d/assignments", tv.ID),
+		fmt.Sprintf(`{"kind": "group", "group_id": %d}`, id), "application/json", "", "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("assign group: got %d, body %s", resp.StatusCode, readBody(t, resp))
+	}
+	resp.Body.Close()
+
+	view := decodeGroupView(t, readBodyOf(t, ts, fmt.Sprintf("/api/v1/groups/%d", id)))
+	if len(view.Targets) != 1 {
+		t.Fatalf("targets: %+v", view.Targets)
+	}
+	got := view.Targets[0]
+	if got.ID != tv.ID || got.Name != "Claude Global" || got.Adapter != "custom" || got.Scope != "custom" {
+		t.Fatalf("target: %+v", got)
+	}
+	if got.Path != filepath.Join(home, "skills") {
+		t.Fatalf("path: %q", got.Path)
+	}
+	if got.LastResult != "" || got.Stale {
+		t.Fatalf("fresh Target must omit distribution health: %+v", got)
+	}
 }
 
 // readBodyOf issues a GET and returns the decoded body.

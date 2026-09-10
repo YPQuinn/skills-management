@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
-import { Table, TableCaption, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@appica/ui-react/table'
-import { ScrollArea } from '@appica/ui-react/scroll-area'
+import { Thumbnail } from '@appica/ui-react/thumbnail'
+import { ChevronRight, Clock, Folder } from '@appica/icons-react'
 import { ListPageSkeleton } from './list-page-skeleton'
 import { fetchGroups, type GroupSummary } from './group-api'
 import { CreateGroupForm } from './create-group-form'
@@ -76,38 +76,33 @@ export function GroupsIndex() {
       ) : groups === null ? null : groups.length === 0 ? (
         <p className="text-foreground-muted text-center py-8">{t('emptyGroupsIndex')}</p>
       ) : (
-        <ScrollArea className="w-full" orientation="horizontal">
-          <div className="min-w-[420px]">
-            <Table aria-label={t('captionGroupsIndex')}>
-              <TableCaption className="sr-only">{t('captionGroupsIndex')}</TableCaption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('colName')}</TableHead>
-                  <TableHead className="text-end">{t('colMemberCount')}</TableHead>
-                  <TableHead>{t('labelUpdated')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {groups.map((g) => (
-                  <TableRow key={g.id}>
-                    <TableCell className="font-medium text-foreground-strong">
-                      <Link
-                        to={`/groups/${encodeURIComponent(g.name)}`}
-                        className="underline decoration-border underline-offset-2 hover:decoration-foreground"
-                      >
-                        {g.name}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-end tabular-nums">{g.member_count}</TableCell>
-                    <TableCell className="text-foreground-muted">
-                      <RelativeTime value={g.updated_at} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </ScrollArea>
+        <ul aria-label={t('captionGroupsIndex')} className="space-y-3">
+          {groups.map((group) => (
+            <li key={group.id}>
+              <Link
+                to={`/groups/${encodeURIComponent(group.name)}`}
+                aria-label={group.name}
+                className="flex items-center gap-4 rounded-xl border border-border bg-background px-5 py-4 shadow-sm transition hover:bg-background-muted hover:shadow-md"
+              >
+                <Thumbnail variant="icon-primary" size="lg" shape="rounded" aria-hidden>
+                  <Folder />
+                </Thumbnail>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-semibold text-foreground-strong">{group.name}</div>
+                  <div className="mt-1 flex items-center gap-1 text-sm text-foreground-muted">
+                    <Clock className="size-3.5 shrink-0" />
+                    <RelativeTime value={group.updated_at} />
+                  </div>
+                </div>
+                <div className="text-end">
+                  <div className="text-2xl font-semibold tabular-nums text-foreground-strong">{group.member_count}</div>
+                  <div className="text-xs text-foreground-muted">{t('colSkillCount')}</div>
+                </div>
+                <ChevronRight className="size-5 shrink-0 text-foreground-muted" />
+              </Link>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   )

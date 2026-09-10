@@ -58,7 +58,7 @@ export const translationsEn = {
   ariaLoadingGroups: 'Loading groups',
   emptyGroupsIndex: 'No Groups created yet.',
   captionGroupsIndex: 'Managed Groups',
-  colMemberCount: 'Members',
+  colSkillCount: 'Skills',
   linkAllGroups: 'All Groups',
   ariaLoadingGroup: 'Loading group',
   alertCouldNotLoadGroup: 'Could not load Group',
@@ -74,7 +74,9 @@ export const translationsEn = {
   btnRemoveMember: 'Remove',
   ariaRemoveMemberFor: 'Remove {name} from group',
   groupAssignedTargetsHeading: 'Assigned Targets ({count})',
-  emptyGroupAssignedTargets: 'This Group is not assigned to any Targets yet.',
+  groupAssignedTargetsSubtitle: 'This Group is assigned to these Agent directories. Member Skills land there on the next Distribution.',
+  emptyGroupAssignedTargets: 'This Group is not assigned to any Targets yet. Assign it from a Target on the Targets page.',
+  linkGoToTargets: 'Go to Targets',
   colActions: 'Actions',
 
   // Targets Index & Explorer & Detail

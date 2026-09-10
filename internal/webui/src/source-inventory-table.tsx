@@ -1,16 +1,70 @@
 import { Link } from 'react-router-dom'
-import { Badge } from '@appica/ui-react/badge'
 import { Table, TableCaption, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@appica/ui-react/table'
 import { ScrollArea } from '@appica/ui-react/scroll-area'
 import { Checkbox } from '@appica/ui-react/checkbox'
 import { CheckboxGroup } from '@appica/ui-react/checkbox-group'
+import { AlertTriangle, CircleCheck, CircleDashed, CircleX } from '@appica/icons-react'
 import { SlugOverrideDialog } from './slug-override-dialog'
 import type { SourceEntry } from './source-api'
-import type { Skill, ImportResponse, ImportItemResult } from './skill-api'
+import type { Skill, ImportResponse, ImportItemResult, ImportStatus } from './skill-api'
+import type { DictionaryKey } from './locale-dictionary'
+import { StatusLabel, type StatusIcon, type StatusTone } from './status-label'
 import { useLocale } from './locale-context'
 
 function truncate(value: string, max = 80): string {
   return value.length > max ? value.slice(0, max - 1) + '…' : value
+}
+
+const IMPORT_MARK: Record<ImportStatus, { icon: StatusIcon; tone: StatusTone; key: DictionaryKey }> = {
+  imported: { icon: CircleCheck, tone: 'muted', key: 'statusImported' },
+  already_imported: { icon: CircleCheck, tone: 'muted', key: 'statusAlreadyImported' },
+  replaced: { icon: CircleCheck, tone: 'muted', key: 'statusReplaced' },
+  skipped_conflict: { icon: AlertTriangle, tone: 'warning', key: 'statusConflict' },
+  failed: { icon: CircleX, tone: 'error', key: 'statusFailed' },
+}
+
+function InventoryStatus({
+  bound,
+  itemResult,
+}: {
+  bound: boolean
+  itemResult: ImportItemResult | undefined
+}) {
+  const { t } = useLocale()
+  if (!itemResult) {
+    return bound ? (
+      <StatusLabel icon={CircleCheck} tone="muted">
+        {t('statusImported')}
+      </StatusLabel>
+    ) : (
+      <StatusLabel icon={CircleDashed} tone="muted">
+        {t('statusAvailable')}
+      </StatusLabel>
+    )
+  }
+  const mark = IMPORT_MARK[itemResult.status]
+  return (
+    <div className="space-y-1">
+      {mark ? (
+        <StatusLabel icon={mark.icon} tone={mark.tone}>
+          {t(mark.key)}
+        </StatusLabel>
+      ) : (
+        <StatusLabel icon={CircleDashed} tone="muted">
+          {itemResult.status}
+        </StatusLabel>
+      )}
+      {itemResult.slug && (
+        <Link
+          to={`/skills/${encodeURIComponent(itemResult.slug)}`}
+          className="block text-xs underline text-foreground-muted hover:text-foreground"
+        >
+          {t('linkViewSlug', { slug: itemResult.slug })}
+        </Link>
+      )}
+      {itemResult.message && <span className="block text-xs text-foreground-muted">{itemResult.message}</span>}
+    </div>
+  )
 }
 
 interface SourceInventoryTableProps {
@@ -113,58 +167,7 @@ export function SourceInventoryTable({
                       />
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-col gap-1 items-start">
-                        {boundSkill && !itemResult && (
-                          <Badge variant="success" className="text-xs">
-                            {t('statusImported')}
-                          </Badge>
-                        )}
-                        {!boundSkill && !itemResult && (
-                          <Badge variant="soft" className="text-xs">
-                            {t('statusAvailable')}
-                          </Badge>
-                        )}
-                        {itemResult && (
-                          <div className="space-y-1">
-                            {itemResult.status === 'imported' && (
-                              <Badge variant="success" className="text-xs">
-                                {t('statusImported')}
-                              </Badge>
-                            )}
-                            {itemResult.status === 'already_imported' && (
-                              <Badge variant="soft" className="text-xs">
-                                {t('statusAlreadyImported')}
-                              </Badge>
-                            )}
-                            {itemResult.status === 'replaced' && (
-                              <Badge variant="success" className="text-xs">
-                                {t('statusReplaced')}
-                              </Badge>
-                            )}
-                            {itemResult.status === 'skipped_conflict' && (
-                              <Badge variant="warning" className="text-xs">
-                                {t('statusConflict')}
-                              </Badge>
-                            )}
-                            {itemResult.status === 'failed' && (
-                              <Badge variant="error" className="text-xs">
-                                {t('statusFailed')}
-                              </Badge>
-                            )}
-                            {itemResult.slug && (
-                              <Link
-                                to={`/skills/${encodeURIComponent(itemResult.slug)}`}
-                                className="block text-xs underline text-foreground-muted hover:text-foreground"
-                              >
-                                {t('linkViewSlug', { slug: itemResult.slug })}
-                              </Link>
-                            )}
-                            {itemResult.message && (
-                              <span className="block text-xs text-foreground-muted">{itemResult.message}</span>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                      <InventoryStatus bound={!!boundSkill} itemResult={itemResult} />
                     </TableCell>
                     <TableCell className="text-foreground-muted">{truncate(e.description)}</TableCell>
                   </TableRow>
