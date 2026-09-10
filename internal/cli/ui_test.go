@@ -39,6 +39,24 @@ func TestListenLoopbackSkipsOccupiedPorts(t *testing.T) {
 	}
 }
 
+func TestListenLoopbackSkipsWildcardOccupiedPort(t *testing.T) {
+	start, occupied := occupyAddressRange(t, "0.0.0.0", 1)
+	defer closeListeners(occupied)
+
+	ln, err := listenLoopback(start)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ln.Close()
+	got := ln.Addr().(*net.TCPAddr).Port
+	if got == start {
+		t.Fatalf("bound 127.0.0.1:%d while 0.0.0.0:%d is already listening", got, start)
+	}
+	if got != start+1 {
+		t.Fatalf("got port %d, want next free %d", got, start+1)
+	}
+}
+
 func TestListenLoopbackPortZero(t *testing.T) {
 	ln, err := listenLoopback(0)
 	if err != nil {
@@ -52,11 +70,16 @@ func TestListenLoopbackPortZero(t *testing.T) {
 
 func occupyLoopbackRange(t *testing.T, n int) (int, []net.Listener) {
 	t.Helper()
+	return occupyAddressRange(t, "127.0.0.1", n)
+}
+
+func occupyAddressRange(t *testing.T, host string, n int) (int, []net.Listener) {
+	t.Helper()
 	for start := 20000; start < 45000; start++ {
 		var lns []net.Listener
 		ok := true
 		for i := 0; i < n; i++ {
-			ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", start+i))
+			ln, err := net.Listen("tcp", fmt.Sprintf("%s:%d", host, start+i))
 			if err != nil {
 				closeListeners(lns)
 				ok = false
@@ -75,7 +98,7 @@ func occupyLoopbackRange(t *testing.T, n int) (int, []net.Listener) {
 		probe.Close()
 		return start, lns
 	}
-	t.Fatal("no free consecutive loopback ports")
+	t.Fatalf("no free consecutive ports for %s", host)
 	return 0, nil
 }
 

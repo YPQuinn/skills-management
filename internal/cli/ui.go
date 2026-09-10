@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"runtime"
 	"syscall"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -49,12 +50,20 @@ func NewUICmd(bm *bootstrap.Manager) *cobra.Command {
 // listenLoopback binds 127.0.0.1 at port. Port 0 lets the kernel assign a
 // free port. Any other port that is already in use tries the next port
 // until 65535.
+//
+// Listen success is not enough: Darwin SO_REUSEADDR lets 127.0.0.1 bind
+// while a wildcard listener already owns that port and steal its loopback
+// traffic. A successful Dial is the occupancy signal that covers that case.
 func listenLoopback(port int) (net.Listener, error) {
 	if port == 0 {
 		return net.Listen("tcp", "127.0.0.1:0")
 	}
 	var last error
 	for p := port; p <= 65535; p++ {
+		if loopbackReachable(p) {
+			last = syscall.EADDRINUSE
+			continue
+		}
 		ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", p))
 		if err == nil {
 			return ln, nil
@@ -65,6 +74,15 @@ func listenLoopback(port int) (net.Listener, error) {
 		last = err
 	}
 	return nil, last
+}
+
+func loopbackReachable(port int) bool {
+	c, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", port), 200*time.Millisecond)
+	if err != nil {
+		return false
+	}
+	c.Close()
+	return true
 }
 
 // openBrowser opens url in the system browser. A failure is only reported:
