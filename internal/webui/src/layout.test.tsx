@@ -44,12 +44,14 @@ describe('Layout background pattern', () => {
     cleanup()
   })
 
-  it('wraps the content panel in the Appica dots pattern with spotlight and top/side borders', () => {
+  it('wraps the content panel in the Appica dots pattern with top/side borders and no spotlight', () => {
     renderLayout()
 
     const props = vi.mocked(BackgroundPattern).mock.calls[0][0]
     expect(props.variant).toBe('dots')
-    expect(props.spotlight).toBe(true)
+    // The spotlight brightens its dot layer behind page text, which drops muted
+    // labels such as the inactive tab below the AA contrast threshold.
+    expect(props.spotlight).toBeUndefined()
     const classes = (props.className ?? '').split(/\s+/)
     expect(classes).toContain('mx-4')
     expect(classes).toContain('md:mx-6')

@@ -8,8 +8,7 @@ html {
 }
 
 /* Clip only Appica's decorative layers; clipping their content host causes Chrome repaint artifacts. */
-[data-slot="background-pattern"] > [data-slot="background-pattern-layer"],
-[data-slot="background-pattern"] > [data-slot="background-pattern-highlight"] {
+[data-slot="background-pattern"] > [data-slot="background-pattern-layer"] {
   border-radius: inherit;
   overflow: hidden;
 }
