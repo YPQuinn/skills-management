@@ -14,7 +14,7 @@ import { useLocale } from './locale-context'
 export function AddSourceForm({ onCreated }: { onCreated?: () => void }) {
   const navigate = useNavigate()
   const { t, getErrorMessage } = useLocale()
-  const [kind, setKind] = useState<'local' | 'git'>('local')
+  const [kind, setKind] = useState<'local' | 'git'>('git')
   const [location, setLocation] = useState('')
   const [name, setName] = useState('')
   const [ref, setRef] = useState('')
@@ -80,7 +80,7 @@ export function AddSourceForm({ onCreated }: { onCreated?: () => void }) {
             items={{ local: t('optLocalDir'), git: t('optGitRepo') }}
           >
             <SelectTrigger aria-label={t('ariaSourceKind')}>
-              <SelectValue placeholder={t('optLocalDir')} />
+              <SelectValue placeholder={t('optGitRepo')} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="local">{t('optLocalDir')}</SelectItem>

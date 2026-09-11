@@ -69,14 +69,14 @@ describe('SourcesIndex', () => {
     expect(screen.queryByText('Subpath (optional)')).toBeNull()
 
     await user.click(screen.getByRole('button', { name: 'Add Source' }))
-    const location = screen.getByPlaceholderText('/absolute/path/to/skills')
+    const location = screen.getByPlaceholderText('owner/repo or https://…')
     await user.type(location, '/tmp/new-skills')
     await user.click(screen.getByRole('button', { name: /Register and scan/ }))
 
     await waitFor(() => expect(post).toHaveBeenCalled())
     const [url, init] = post.mock.calls[0]
     expect(url).toBe('/api/v1/sources')
-    expect(JSON.parse(init.body)).toEqual({ kind: 'local', location: '/tmp/new-skills' })
+    expect(JSON.parse(init.body)).toEqual({ kind: 'git', location: '/tmp/new-skills' })
     // the created Source detail opens instead of only refreshing the list
     expect(await screen.findByRole('heading', { name: 'new-skills' })).toBeTruthy()
     expect((await screen.findAllByText('/tmp/new-skills')).length).toBeGreaterThan(0)
@@ -93,9 +93,6 @@ describe('SourcesIndex', () => {
 
     await user.click(screen.getByRole('button', { name: 'Add Source' }))
     const kindSelect = screen.getByRole('combobox', { name: 'Kind' })
-    expect(kindSelect.textContent).toContain('Local directory')
-    await user.click(kindSelect)
-    await user.click(await screen.findByRole('option', { name: 'Git repository' }))
     expect(kindSelect.textContent).toContain('Git repository')
     expect(kindSelect.textContent).not.toMatch(/^\s*git\s*$/)
 
@@ -139,7 +136,7 @@ describe('SourcesIndex', () => {
     })
 
     await user.click(screen.getByRole('button', { name: 'Add Source' }))
-    await user.type(screen.getByPlaceholderText('/absolute/path/to/skills'), '/tmp/x')
+    await user.type(screen.getByPlaceholderText('owner/repo or https://…'), '/tmp/x')
     await user.click(screen.getByRole('button', { name: /Register and scan/ }))
 
     expect(await screen.findByText('Source /tmp/x is not reachable')).toBeTruthy()
@@ -159,7 +156,7 @@ describe('SourcesIndex', () => {
     })
 
     await user.click(screen.getByRole('button', { name: 'Add Source' }))
-    const location = screen.getByPlaceholderText('/absolute/path/to/skills')
+    const location = screen.getByPlaceholderText('owner/repo or https://…')
     await user.type(location, '/tmp/new')
     await user.click(screen.getByRole('button', { name: /Register and scan/ }))
 

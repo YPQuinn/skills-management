@@ -80,10 +80,10 @@ describe('Localized Accessibility Labels & TableCaptions (English & Chinese)', (
 
     await user.click(screen.getByRole('button', { name: 'Add Source' }))
     const combo = await screen.findByRole('combobox', { name: 'Kind' })
-    expect(combo.textContent).toContain('Local directory')
-    expect(combo.textContent).not.toMatch(/^\s*local\s*$/)
+    expect(combo.textContent).toContain('Git repository')
+    expect(combo.textContent).not.toMatch(/^\s*git\s*$/)
     await user.click(combo)
-    expect(await screen.findByRole('option', { name: 'Local directory' })).toBeTruthy()
+    expect(await screen.findByRole('option', { name: 'Git repository' })).toBeTruthy()
   })
 
   it('renders Sources Index TableCaption and Add Source Select placeholder in Chinese', async () => {
@@ -125,10 +125,10 @@ describe('Localized Accessibility Labels & TableCaptions (English & Chinese)', (
 
     await user.click(screen.getByRole('button', { name: '添加来源' }))
     const combo = await screen.findByRole('combobox', { name: '类型' })
-    expect(combo.textContent).toContain('本地目录')
-    expect(combo.textContent).not.toMatch(/^\s*local\s*$/)
+    expect(combo.textContent).toContain('Git 仓库')
+    expect(combo.textContent).not.toMatch(/^\s*git\s*$/)
     await user.click(combo)
-    expect(await screen.findByRole('option', { name: '本地目录' })).toBeTruthy()
+    expect(await screen.findByRole('option', { name: 'Git 仓库' })).toBeTruthy()
   })
 
   it('renders Source Inventory TableCaption in Chinese', async () => {
