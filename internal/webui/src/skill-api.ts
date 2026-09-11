@@ -34,6 +34,19 @@ export interface SkillListResponse {
   total: number
 }
 
+export interface SkillFrontmatterField {
+  key: string
+  value: string
+}
+
+export interface SkillContent {
+  skill_id: number
+  slug: string
+  path: string
+  frontmatter: SkillFrontmatterField[]
+  body: string
+}
+
 export interface ImportSelector {
   relative_dir?: string
   name?: string
@@ -135,6 +148,13 @@ export function fetchSkill(idOrSlug: string | number, signal?: AbortSignal): Pro
     const res = await fetch(`/api/v1/skills/${found.id}`, { signal })
     if (!res.ok) throw await responseError(res, 'errServerResponded', { status: res.status })
     return (await res.json()) as Skill
+  })
+}
+
+export function fetchSkillContent(id: number, signal?: AbortSignal): Promise<SkillContent> {
+  return fetch(`/api/v1/skills/${id}/content`, { signal }).then(async (res) => {
+    if (!res.ok) throw await responseError(res, 'errLoadingSkillContentFailed')
+    return (await res.json()) as SkillContent
   })
 }
 

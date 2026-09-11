@@ -6,9 +6,9 @@ import { render } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { SkillDetailPage } from './skill-detail'
 import { mockResponse } from './source-fixtures'
-import type { Skill } from './skill-api'
+import type { Skill, SkillContent } from './skill-api'
 import type { DiffResult } from './sync-api'
-import { skillAlpha } from './skill-fixtures'
+import { skillAlpha, skillAlphaContent } from './skill-fixtures'
 
 export function setupMatchMedia(): void {
   window.matchMedia =
@@ -129,10 +129,17 @@ export function installFetch(
   return mock
 }
 
+const conflictSkillContent: SkillContent = {
+  ...skillAlphaContent,
+  skill_id: 103,
+  slug: 'conflict-skill',
+}
+
 export function defaultHandler(url: string, init?: RequestInit): Response {
   const urlStr = String(url)
   if (urlStr === '/api/v1/skills') return mockResponse({ items: [conflictSkill], total: 1 })
   if (urlStr === '/api/v1/skills/103') return mockResponse(conflictSkill)
+  if (urlStr === '/api/v1/skills/103/content') return mockResponse(conflictSkillContent)
   if (urlStr === '/api/v1/skills/103/diff') return mockResponse(diffResult)
   if (urlStr === '/api/v1/skills/103/diff?path=SKILL.md') {
     return mockResponse({

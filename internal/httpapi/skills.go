@@ -42,6 +42,22 @@ type skillJSON struct {
 	HasPreviousSnapshot bool `json:"has_previous_snapshot"`
 }
 
+// skillFrontmatterFieldJSON is one YAML frontmatter field of a Skill
+// document, in document order. Non-scalar values are YAML text.
+type skillFrontmatterFieldJSON struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+// skillContentJSON is the live Skill Store copy of one Skill's SKILL.md.
+type skillContentJSON struct {
+	SkillID     int64                       `json:"skill_id"`
+	Slug        string                      `json:"slug"`
+	Path        string                      `json:"path"`
+	Frontmatter []skillFrontmatterFieldJSON `json:"frontmatter"`
+	Body        string                      `json:"body"`
+}
+
 // importSkillSelectorJSON selects one Source Inventory entry by exact
 // relative path or by unique Inventory name, with per-entry slug override
 // and replace permission. A selector must choose exactly one of
@@ -154,6 +170,20 @@ func newSkillJSON(s app.Skill) skillJSON {
 	return out
 }
 
+func newSkillContentJSON(c *app.SkillContent) skillContentJSON {
+	out := skillContentJSON{
+		SkillID:     c.SkillID,
+		Slug:        c.Slug,
+		Path:        c.Path,
+		Frontmatter: make([]skillFrontmatterFieldJSON, 0, len(c.Frontmatter)),
+		Body:        c.Body,
+	}
+	for _, f := range c.Frontmatter {
+		out.Frontmatter = append(out.Frontmatter, skillFrontmatterFieldJSON{Key: f.Key, Value: f.Value})
+	}
+	return out
+}
+
 func newImportSkillsResultJSON(r *app.ImportSkillsResult) importSkillsResultJSON {
 	out := importSkillsResultJSON{
 		Items: make([]importItemResultJSON, 0, len(r.Items)),
@@ -227,6 +257,23 @@ func (s *Server) handleShowSkill(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, newSkillJSON(*sk))
+}
+
+func (s *Server) handleSkillContent(w http.ResponseWriter, r *http.Request) {
+	a, ok := s.app(w, r)
+	if !ok {
+		return
+	}
+	id, ok := skillID(w, r)
+	if !ok {
+		return
+	}
+	c, err := a.SkillContent(id)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, newSkillContentJSON(c))
 }
 
 func (s *Server) handleImportSkills(w http.ResponseWriter, r *http.Request) {

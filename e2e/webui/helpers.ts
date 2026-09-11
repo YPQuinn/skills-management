@@ -96,9 +96,15 @@ export async function navTo(page: Page, name: 'Skills' | 'Sources' | 'Groups' | 
   await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name, exact: true }).click()
 }
 
+// Appica's toast carries role="dialog" too, and run outcomes stay open until
+// they are dismissed, so a bare dialog role can match a lingering toast.
+export function dialogPopup(page: Page): Locator {
+  return page.locator('[data-slot="dialog-popup"]')
+}
+
 export async function openCreateDialog(page: Page, triggerName: string): Promise<void> {
   await page.getByRole('button', { name: triggerName, exact: true }).click()
-  await expect(page.getByRole('dialog')).toBeVisible()
+  await expect(dialogPopup(page)).toBeVisible()
 }
 
 export function skillLink(page: Page, name: string): Locator {
@@ -128,12 +134,16 @@ export async function initializeStore(page: Page): Promise<void> {
   await expect(page.getByRole('heading', { name: 'Skills' })).toBeVisible()
 }
 
+// A chosen option closes the popup with an animation, so a listbox that still
+// looks visible may already be on its way out. Escape pressed at that moment
+// reaches the dialog behind the popup and closes it, so wait the popup out
+// first and only insist with Escape when it truly stays open.
 async function dismissOpenListbox(page: Page): Promise<void> {
-  const listbox = page.getByRole('listbox')
-  if ((await listbox.count()) === 0) return
-  if (!(await listbox.first().isVisible().catch(() => false))) return
+  const listbox = page.getByRole('listbox').first()
+  const closed = await listbox.waitFor({ state: 'hidden', timeout: 1_000 }).then(() => true).catch(() => false)
+  if (closed) return
   await page.keyboard.press('Escape')
-  await expect(listbox.first()).toBeHidden()
+  await expect(listbox).toBeHidden()
 }
 
 export async function chooseSelect(page: Page, label: string, option: string | RegExp): Promise<void> {

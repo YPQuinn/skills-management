@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import path from 'node:path'
-import { expectImported, keyboardChooseSelect, startUI, tabTo, writeSkillFixture } from './helpers'
+import { dialogPopup, expectImported, keyboardChooseSelect, startUI, tabTo, writeSkillFixture } from './helpers'
 
 test('keyboard-only Add Source, Import, Assignment, Distribution, destructive confirm, and focus restore', async ({ page }) => {
   const ui = await startUI()
@@ -18,7 +18,7 @@ test('keyboard-only Add Source, Import, Assignment, Distribution, destructive co
     await page.keyboard.press('Enter')
     await tabTo(page, page.getByRole('button', { name: 'Add Source' }))
     await page.keyboard.press('Enter')
-    await expect(page.getByRole('dialog')).toBeVisible()
+    await expect(dialogPopup(page)).toBeVisible()
     await tabTo(page, page.getByLabel('Location'))
     await page.keyboard.type(sourceRoot)
     await tabTo(page, page.getByLabel('Name (optional)'))
@@ -34,10 +34,10 @@ test('keyboard-only Add Source, Import, Assignment, Distribution, destructive co
     await page.keyboard.press('Enter')
     await tabTo(page, page.getByRole('button', { name: 'Create Group' }))
     await page.keyboard.press('Enter')
-    await expect(page.getByRole('dialog')).toBeVisible()
+    await expect(dialogPopup(page)).toBeVisible()
     await tabTo(page, page.getByLabel('Group Name'))
     await page.keyboard.type('key-group')
-    await tabTo(page, page.getByRole('dialog').getByRole('button', { name: 'Create Group' }))
+    await tabTo(page, dialogPopup(page).getByRole('button', { name: 'Create Group' }))
     await page.keyboard.press('Enter')
     await tabTo(page, page.getByRole('list', { name: 'Managed Groups' }).getByRole('link', { name: 'key-group' }))
     await page.keyboard.press('Enter')
@@ -63,13 +63,13 @@ test('keyboard-only Add Source, Import, Assignment, Distribution, destructive co
     await page.keyboard.press('Enter')
     await tabTo(page, page.getByRole('button', { name: 'Add Distribution Target' }))
     await page.keyboard.press('Enter')
-    await expect(page.getByRole('dialog')).toBeVisible()
+    await expect(dialogPopup(page)).toBeVisible()
     await keyboardChooseSelect(page, 'Target Type', 'Custom Directory')
     await tabTo(page, page.getByLabel('Target Name'))
     await page.keyboard.type('key-tgt')
     await tabTo(page, page.getByLabel('Directory Path'))
     await page.keyboard.type(targetDir)
-    await tabTo(page, page.getByRole('dialog').getByRole('button', { name: 'Add', exact: true }))
+    await tabTo(page, dialogPopup(page).getByRole('button', { name: 'Add', exact: true }))
     await page.keyboard.press('Enter')
     await tabTo(page, page.getByRole('table', { name: 'Registered Targets' }).getByRole('link', { name: 'key-tgt' }))
     await page.keyboard.press('Enter')

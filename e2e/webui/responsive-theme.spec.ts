@@ -18,7 +18,7 @@ test('desktop master-detail, narrow list/detail split, no overflow', async ({ pa
 
     await page.setViewportSize({ width: 1280, height: 800 })
     await page.goto(`${ui.url}/skills/wide`)
-    await expect(page.getByRole('heading', { name: 'wide' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'wide', level: 1 })).toBeVisible()
     await expect(page.getByRole('navigation', { name: 'Skill list' })).toBeVisible()
     // Rounded overflow clipping around the masked background can drop content during repaint.
     const background = page.locator('[data-slot="background-pattern"]')
@@ -38,7 +38,7 @@ test('desktop master-detail, narrow list/detail split, no overflow', async ({ pa
     await expect(mainNavList).toHaveCSS('overflow-y', 'hidden')
     await expectNoHorizontalOverflow(page)
     await page.getByRole('link', { name: 'wide', exact: true }).click()
-    await expect(page.getByRole('heading', { name: 'wide' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'wide', level: 1 })).toBeVisible()
     await expect(page.getByRole('link', { name: 'All Skills' })).toBeVisible()
     await expect(page.getByRole('navigation', { name: 'Skill list' })).toHaveCount(0)
     await expectNoHorizontalOverflow(page)

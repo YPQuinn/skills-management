@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import App from './App'
+import { skillAlphaContent } from './skill-fixtures'
 
 if (typeof window !== 'undefined') {
   window.matchMedia =
@@ -141,6 +142,9 @@ describe('WebUI Localization Behavior - No Extra Fetch / Delayed Status', () => 
       const urlStr = String(url)
       if (urlStr.endsWith('/api/v1/status')) {
         return new Response(JSON.stringify({ state: 'ready' }))
+      }
+      if (urlStr.endsWith('/api/v1/skills/101/content')) {
+        return new Response(JSON.stringify(skillAlphaContent))
       }
       if (urlStr.endsWith('/api/v1/skills/101')) {
         fetchCount++

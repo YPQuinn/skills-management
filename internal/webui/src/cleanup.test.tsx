@@ -5,7 +5,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { SkillDetailPage } from './skill-detail'
 import { TargetDeleteAction } from './target-delete-action'
 import { setupMatchMedia, mockResponse, detail } from './source-fixtures'
-import { skillAlpha } from './skill-fixtures'
+import { skillAlpha, skillAlphaContent } from './skill-fixtures'
 import { LocaleProvider } from './locale-provider'
 
 setupMatchMedia()
@@ -55,6 +55,9 @@ describe('Skill cleanup dialogs', () => {
       }
       if (urlStr === '/api/v1/skills/101') {
         return mockResponse(skillAlpha)
+      }
+      if (urlStr === '/api/v1/skills/101/content') {
+        return mockResponse(skillAlphaContent)
       }
       if (urlStr === '/api/v1/skills/101/detach' && init?.method === 'POST') {
         return mockResponse({ ...skillAlpha, binding: undefined, sync_status: 'unbound' })
@@ -163,6 +166,7 @@ describe('Skill cleanup dialogs', () => {
       const urlStr = String(url)
       if (urlStr === '/api/v1/skills') return mockResponse({ items: [skillAlpha], total: 1 })
       if (urlStr === '/api/v1/skills/101') return mockResponse(skillAlpha)
+      if (urlStr === '/api/v1/skills/101/content') return mockResponse(skillAlphaContent)
       if (urlStr === '/api/v1/skills/101/deletion') {
         return mockResponse({ error: { message: 'preview exploded' } }, false, 500)
       }
@@ -190,6 +194,7 @@ describe('Skill cleanup dialogs', () => {
       const urlStr = String(url)
       if (urlStr === '/api/v1/skills') return mockResponse({ items: [skillAlpha], total: 1 })
       if (urlStr === '/api/v1/skills/101/deletion') return mockResponse(skillDeletion)
+      if (urlStr === '/api/v1/skills/101/content') return mockResponse(skillAlphaContent)
       if (urlStr === '/api/v1/skills/101' && init?.method === 'DELETE') {
         return mockResponse({
           skill: { id: 101, slug: 'alpha', name: 'Alpha Skill' },

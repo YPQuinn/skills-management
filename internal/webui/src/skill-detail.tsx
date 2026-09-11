@@ -10,7 +10,7 @@ import { ArrowLeft, Link as LinkIcon, Unlink } from '@appica/icons-react'
 import { StatusLabel } from './status-label'
 import { fetchSkill } from './skill-api'
 import type { Skill } from './skill-api'
-import { SkillOverview } from './skill-overview'
+import { SkillContentTab } from './skill-content-tab'
 import { SkillSyncTab } from './skill-sync-tab'
 import { SkillCleanupActions } from './skill-cleanup-actions'
 import { useLocale } from './locale-context'
@@ -114,7 +114,7 @@ export function SkillDetailPage() {
         </TabsList>
 
         <TabsContent value="overview" className="pt-4">
-          <SkillOverview skill={skill} />
+          <SkillContentTab skill={skill} />
         </TabsContent>
 
         <TabsContent value="synchronization" className="pt-4">

@@ -63,6 +63,7 @@ func (s *Server) Handler() http.Handler {
 		r.Route("/skills", func(r chi.Router) {
 			r.Get("/", s.handleListSkills)
 			r.Get("/{id}", s.handleShowSkill)
+			r.Get("/{id}/content", s.handleSkillContent)
 			r.With(jsonMutationsOnly).Post("/import", s.handleImportSkills)
 			r.With(jsonMutationsOnly).Post("/{id}/check", s.handleCheckSkillSync)
 			r.Get("/{id}/diff", s.handleDiffSkill)

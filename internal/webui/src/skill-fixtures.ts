@@ -1,4 +1,4 @@
-import type { Skill, ImportResponse } from './skill-api'
+import type { Skill, SkillContent, ImportResponse } from './skill-api'
 
 export const skillAlpha: Skill = {
   id: 101,
@@ -35,6 +35,29 @@ export const skillBeta: Skill = {
   sync_status: 'unbound',
   sync_stale: false,
   has_previous_snapshot: false,
+}
+
+export const skillAlphaContent: SkillContent = {
+  skill_id: 101,
+  slug: 'alpha',
+  path: 'SKILL.md',
+  frontmatter: [
+    { key: 'name', value: 'alpha' },
+    { key: 'description', value: 'First test skill in local store' },
+    { key: 'allowed-tools', value: 'Bash, Read' },
+  ],
+  body: '# Alpha\n\nUse this Skill to exercise the local Store.\n\n- Loads fixtures\n- Renders Markdown\n\n```bash\nnpm test\n```\n',
+}
+
+export const skillBetaContent: SkillContent = {
+  skill_id: 102,
+  slug: 'beta',
+  path: 'SKILL.md',
+  frontmatter: [
+    { key: 'name', value: 'beta' },
+    { key: 'description', value: 'Second test skill without binding' },
+  ],
+  body: '# Beta\n\nBeta works without a Source Binding.\n',
 }
 
 export const mockImportSuccess: ImportResponse = {
