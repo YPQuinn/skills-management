@@ -71,7 +71,9 @@ describe('Layout background pattern', () => {
 
     expect(screen.getByRole('navigation', { name: 'Main navigation' })).toBeTruthy()
     for (const label of ['Skills', 'Sources', 'Groups', 'Targets']) {
-      expect(screen.getByRole('link', { name: label })).toBeTruthy()
+      const link = screen.getByRole('link', { name: label })
+      expect(link).toBeTruthy()
+      expect(link.querySelector('svg[data-icon="start"]')).toBeTruthy()
     }
   })
 
@@ -84,6 +86,8 @@ describe('Layout background pattern', () => {
     const classes = (list?.className ?? '').split(/\s+/)
     expect(classes).toContain('max-md:overflow-x-auto')
     expect(classes).toContain('max-md:overflow-y-hidden')
+    expect(classes).toContain('[&>li]:shrink-0')
+    expect(classes).toContain('[&_a]:whitespace-nowrap')
     expect(classes).not.toContain('overflow-x-auto')
   })
 

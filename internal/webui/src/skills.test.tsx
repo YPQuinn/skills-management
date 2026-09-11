@@ -73,6 +73,10 @@ describe('Skills Components', () => {
     expect(screen.getByText('local-one')).toBeTruthy()
     expect(screen.getByText('In sync')).toBeTruthy()
     expect(screen.getByText('Unbound')).toBeTruthy()
+    for (const name of ['Alpha Skill', 'Beta Skill']) {
+      const cell = screen.getByRole('link', { name }).closest('td')
+      expect(cell?.querySelector('svg')).toBeTruthy()
+    }
   })
 
   it('hides the slug when it matches the Skill name', async () => {

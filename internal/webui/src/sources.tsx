@@ -4,6 +4,7 @@ import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
 import { Badge } from '@appica/ui-react/badge'
 import { Table, TableCaption, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@appica/ui-react/table'
 import { ScrollArea } from '@appica/ui-react/scroll-area'
+import { Thumbnail } from '@appica/ui-react/thumbnail'
 import { ListPageSkeleton } from './list-page-skeleton'
 import { fetchSources } from './source-api'
 import type { SourceSummary } from './source-api'
@@ -11,6 +12,7 @@ import { SourceStatusBadge } from './source-status'
 import { AddSourceForm } from './add-source-form'
 import { SourceDetailPage } from './source-detail'
 import { ResourceCreateDialog } from './resource-create-dialog'
+import { SourceLocationIcon } from './source-location'
 import { useLocale } from './locale-context'
 
 export { SourceStatusBadge } from './source-status'
@@ -104,9 +106,14 @@ export function SourcesIndex() {
                 {sources.map((s) => (
                   <TableRow key={s.id}>
                     <TableCell className="font-medium text-foreground-strong">
-                      <Link to={`/sources/${encodeURIComponent(s.name)}`} className="underline decoration-border underline-offset-2 hover:decoration-foreground">
-                        {s.name}
-                      </Link>
+                      <span className="flex items-center gap-2.5">
+                        <Thumbnail variant="icon-soft" size="sm" shape="rounded" aria-hidden>
+                          <SourceLocationIcon source={s} />
+                        </Thumbnail>
+                        <Link to={`/sources/${encodeURIComponent(s.name)}`} className="underline decoration-border underline-offset-2 hover:decoration-foreground">
+                          {s.name}
+                        </Link>
+                      </span>
                     </TableCell>
                     <TableCell>
                       <Badge variant="soft">{s.kind}</Badge>

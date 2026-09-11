@@ -49,6 +49,8 @@ describe('SourcesIndex', () => {
     expect(screen.getByText('/tmp/skills')).toBeTruthy()
     expect(screen.getByText('Available')).toBeTruthy()
     expect(screen.getAllByText('local').length).toBeGreaterThan(0)
+    const nameCell = screen.getByRole('link', { name: 'local-one' }).closest('td')
+    expect(nameCell?.querySelector('svg[data-source-provider="local"]')).toBeTruthy()
   })
 
   it('submits the add form and opens the created Source detail', async () => {

@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import { Pagination, PaginationList, PaginationItem, PaginationLink, PaginationEllipsis } from '@appica/ui-react/pagination'
 import { ScrollArea } from '@appica/ui-react/scroll-area'
 import { Table, TableCaption, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@appica/ui-react/table'
-import { ChevronLeft, ChevronRight, Clock, Unlink } from '@appica/icons-react'
+import { Thumbnail } from '@appica/ui-react/thumbnail'
+import { ChevronLeft, ChevronRight, Clock, Unlink, Wand } from '@appica/icons-react'
 import type { Skill } from './skill-api'
 import { StatusLabel } from './status-label'
 import { SyncStatusBadge } from './sync-status'
@@ -44,18 +45,23 @@ export function SkillsIndexTable({
               {skills.map((s) => (
                 <TableRow key={s.id}>
                   <TableCell className="w-px whitespace-nowrap">
-                    <SkillIdentity
-                      name={s.name}
-                      slug={s.slug}
-                      nameNode={
-                        <Link
-                          to={`/skills/${encodeURIComponent(s.slug)}`}
-                          className="whitespace-nowrap underline decoration-border underline-offset-2 hover:decoration-foreground"
-                        >
-                          {s.name}
-                        </Link>
-                      }
-                    />
+                    <span className="flex items-center gap-2.5">
+                      <Thumbnail variant="icon-soft" size="sm" shape="rounded" aria-hidden>
+                        <Wand />
+                      </Thumbnail>
+                      <SkillIdentity
+                        name={s.name}
+                        slug={s.slug}
+                        nameNode={
+                          <Link
+                            to={`/skills/${encodeURIComponent(s.slug)}`}
+                            className="whitespace-nowrap underline decoration-border underline-offset-2 hover:decoration-foreground"
+                          >
+                            {s.name}
+                          </Link>
+                        }
+                      />
+                    </span>
                   </TableCell>
                   <TableCell className="max-w-0 text-foreground-muted">
                     <span className="line-clamp-2">{s.description}</span>

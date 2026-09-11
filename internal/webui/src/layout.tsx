@@ -14,6 +14,9 @@ import {
 import { useTheme } from '@appica/ui-react/hooks/use-theme'
 import {
   Sparkles,
+  CloudDownload,
+  Folder,
+  Target,
   BrandGithub,
   Settings,
   DeviceDesktop,
@@ -49,24 +52,28 @@ export function Layout({ children }: { children: React.ReactNode }) {
             activeLink={currentPath}
             className="flex-1 min-w-0 md:flex-initial md:absolute md:left-1/2 md:-translate-x-1/2"
           >
-            <NavigationList className="max-md:overflow-x-auto max-md:overflow-y-hidden">
+            <NavigationList className="max-md:overflow-x-auto max-md:overflow-y-hidden [&>li]:shrink-0 [&_a]:whitespace-nowrap">
               <NavigationItem>
                 <NavigationLink value="skills" render={<Link to="/skills" />}>
+                  <Sparkles data-icon="start" />
                   {t('navSkills')}
                 </NavigationLink>
               </NavigationItem>
               <NavigationItem>
                 <NavigationLink value="sources" render={<Link to="/sources" />}>
+                  <CloudDownload data-icon="start" />
                   {t('navSources')}
                 </NavigationLink>
               </NavigationItem>
               <NavigationItem>
                 <NavigationLink value="groups" render={<Link to="/groups" />}>
+                  <Folder data-icon="start" />
                   {t('navGroups')}
                 </NavigationLink>
               </NavigationItem>
               <NavigationItem>
                 <NavigationLink value="targets" render={<Link to="/targets" />}>
+                  <Target data-icon="start" />
                   {t('navTargets')}
                 </NavigationLink>
               </NavigationItem>
