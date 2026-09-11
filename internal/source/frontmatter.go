@@ -94,6 +94,76 @@ func ParseSkillDocument(data []byte) (SkillDocument, error) {
 	return SkillDocument{Fields: fields, Body: strings.TrimLeft(string(body), "\r\n")}, nil
 }
 
+// SetScalarField sets the top-level scalar frontmatter field key to value
+// (written unquoted as "key: value"), or removes it when remove is true,
+// preserving every other line of the SKILL.md document byte-for-byte. A
+// SKILL.md without a frontmatter block is an error: the Agent Skills
+// convention requires name and description, so a managed document always has
+// one. changed is false when the requested state already holds, so the
+// caller can skip a needless Store write.
+func SetScalarField(data []byte, key, value string, remove bool) (out []byte, changed bool, err error) {
+	bom := ""
+	text := string(data)
+	if strings.HasPrefix(text, "\ufeff") {
+		bom, text = "\ufeff", strings.TrimPrefix(text, "\ufeff")
+	}
+	lines := strings.Split(text, "\n")
+	if len(lines) < 3 || strings.TrimRight(lines[0], "\r") != "---" {
+		return nil, false, fmt.Errorf("missing YAML frontmatter")
+	}
+	closeIdx := -1
+	for i := 1; i < len(lines); i++ {
+		if strings.TrimRight(lines[i], "\r") == "---" {
+			closeIdx = i
+			break
+		}
+	}
+	if closeIdx == -1 {
+		return nil, false, fmt.Errorf("missing YAML frontmatter")
+	}
+	keyIdx := -1
+	for i := 1; i < closeIdx; i++ {
+		if k, ok := topLevelKey(strings.TrimRight(lines[i], "\r")); ok && k == key {
+			keyIdx = i
+			break
+		}
+	}
+	newLine := key + ": " + value
+	switch {
+	case remove:
+		if keyIdx == -1 {
+			return data, false, nil
+		}
+		lines = append(lines[:keyIdx], lines[keyIdx+1:]...)
+	case keyIdx != -1:
+		if strings.TrimRight(lines[keyIdx], "\r") == newLine {
+			return data, false, nil
+		}
+		lines[keyIdx] = newLine
+	default:
+		lines = append(lines[:closeIdx], append([]string{newLine}, lines[closeIdx:]...)...)
+	}
+	return []byte(bom + strings.Join(lines, "\n")), true, nil
+}
+
+// topLevelKey returns the key of a top-level scalar mapping line ("key:" or
+// "key: value" at column zero), rejecting indented keys, list items, and
+// comments so a nested or commented occurrence never matches.
+func topLevelKey(line string) (string, bool) {
+	if line == "" {
+		return "", false
+	}
+	switch line[0] {
+	case ' ', '\t', '#', '-':
+		return "", false
+	}
+	ci := strings.IndexByte(line, ':')
+	if ci < 0 {
+		return "", false
+	}
+	return strings.TrimSpace(line[:ci]), true
+}
+
 func skillFieldValue(n *yaml.Node) (string, error) {
 	if n.Kind == yaml.ScalarNode {
 		return n.Value, nil

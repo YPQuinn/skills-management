@@ -104,7 +104,6 @@ export function SkillDetailPage() {
             <SkillCleanupActions skill={skill} onSkillUpdated={setSkill} />
           </div>
         </div>
-        <p className="mt-2 text-foreground-muted">{skill.description}</p>
       </div>
 
       <Tabs value={tab} onValueChange={handleTabChange} variant="line">

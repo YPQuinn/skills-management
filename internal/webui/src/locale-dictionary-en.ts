@@ -186,7 +186,12 @@ export const translationsEn = {
   labelUpdated: 'Updated',
   labelStoreDigest: 'Store Digest',
   labelBaselineDigest: 'Baseline Digest',
-  titleFrontmatter: 'Frontmatter',
+  titleFrontmatter: 'Attributes',
+  titleSkillBody: 'Body',
+  labelDisableModelInvocation: 'Disable model invocation',
+  tipDisableModelInvocation:
+    'When on, the agent cannot invoke this Skill on its own; the user must trigger it.',
+  errUpdatingSkillFailed: 'Could not update the Skill',
   alertCouldNotLoadContent: 'Could not load Skill content',
   ariaLoadingSkillContent: 'Loading skill content',
   emptySkillBody: 'The SKILL.md body is empty.',

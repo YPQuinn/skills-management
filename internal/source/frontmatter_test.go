@@ -5,6 +5,84 @@ import (
 	"testing"
 )
 
+func TestSetScalarField(t *testing.T) {
+	cases := []struct {
+		name        string
+		data        string
+		value       string
+		remove      bool
+		want        string
+		wantChanged bool
+		wantErr     string
+	}{
+		{
+			name:        "append missing key before the closing delimiter",
+			data:        "---\nname: alpha\ndescription: desc\n---\n# Body\n",
+			value:       "true",
+			want:        "---\nname: alpha\ndescription: desc\ndisable-model-invocation: true\n---\n# Body\n",
+			wantChanged: true,
+		},
+		{
+			name:        "replace an existing value in place, keeping other lines",
+			data:        "---\nname: alpha\ndisable-model-invocation: false\ndescription: desc\n---\n# Body\n",
+			value:       "true",
+			want:        "---\nname: alpha\ndisable-model-invocation: true\ndescription: desc\n---\n# Body\n",
+			wantChanged: true,
+		},
+		{
+			name:        "already set is a no-op that returns the original bytes",
+			data:        "---\nname: alpha\ndisable-model-invocation: true\n---\n# Body\n",
+			value:       "true",
+			want:        "---\nname: alpha\ndisable-model-invocation: true\n---\n# Body\n",
+			wantChanged: false,
+		},
+		{
+			name:        "remove drops the line",
+			data:        "---\nname: alpha\ndisable-model-invocation: true\ndescription: desc\n---\n# Body\n",
+			remove:      true,
+			want:        "---\nname: alpha\ndescription: desc\n---\n# Body\n",
+			wantChanged: true,
+		},
+		{
+			name:        "remove a missing key is a no-op",
+			data:        "---\nname: alpha\n---\n# Body\n",
+			remove:      true,
+			want:        "---\nname: alpha\n---\n# Body\n",
+			wantChanged: false,
+		},
+		{
+			name:    "missing frontmatter is an error",
+			data:    "# Just markdown\n",
+			value:   "true",
+			wantErr: "missing YAML frontmatter",
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			out, changed, err := SetScalarField([]byte(c.data), "disable-model-invocation", c.value, c.remove)
+			if c.wantErr != "" {
+				if err == nil || !strings.Contains(err.Error(), c.wantErr) {
+					t.Fatalf("error: got %v, want substring %q", err, c.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if changed != c.wantChanged {
+				t.Fatalf("changed: got %v, want %v", changed, c.wantChanged)
+			}
+			if string(out) != c.want {
+				t.Fatalf("output:\n got %q\nwant %q", string(out), c.want)
+			}
+			// The edited document must still parse as valid frontmatter.
+			if _, err := ParseSkillDocument(out); err != nil {
+				t.Fatalf("re-parsing the edited document: %v", err)
+			}
+		})
+	}
+}
+
 func TestParseSkillDocument(t *testing.T) {
 	cases := []struct {
 		name    string

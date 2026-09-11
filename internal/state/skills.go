@@ -148,6 +148,26 @@ func UpdateSkillAndBinding(db *sql.DB, s Skill, b Binding) error {
 	return tx.Commit()
 }
 
+// SetSkillStoreDigest compare-and-sets one Skill's Store tree digest after a
+// deliberate in-place local Store edit (for example toggling a frontmatter
+// field), retaining the Baseline and Binding. Unlike an import or replace it
+// journals no operation: an in-place file edit performs no tree rename, so
+// its only durable record is the new content digest. The update matches on
+// the slug and the previously persisted digest, so a concurrent commit is
+// never silently overwritten.
+func SetSkillStoreDigest(db *sql.DB, skillID int64, slug, oldDigest, newDigest string, now time.Time) error {
+	res, err := db.Exec(`UPDATE skills SET store_digest = ?, updated_at = ?
+		WHERE id = ? AND slug = ? AND store_digest = ?`,
+		newDigest, timeToSQL(&now), skillID, slug, oldDigest)
+	if err != nil {
+		return err
+	}
+	if n, _ := res.RowsAffected(); n != 1 {
+		return fmt.Errorf("updating Store digest of Skill %d (%s): no matching row or digest changed", skillID, slug)
+	}
+	return nil
+}
+
 // CommitImport persists a committed import atomically: the Skill row, its
 // Binding, and the operation's phase transition to 'committed' (also fixing
 // the operation's Skill id) in one transaction. It returns the new Skill

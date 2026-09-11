@@ -276,6 +276,35 @@ func (s *Server) handleSkillContent(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, newSkillContentJSON(c))
 }
 
+// setSkillModelInvocationRequest toggles the disable-model-invocation
+// frontmatter field of one Skill's live SKILL.md. Field names are the
+// WebUI-frozen contract.
+type setSkillModelInvocationRequest struct {
+	Disabled bool `json:"disabled"`
+}
+
+func (s *Server) handleSetSkillModelInvocation(w http.ResponseWriter, r *http.Request) {
+	a, ok := s.app(w, r)
+	if !ok {
+		return
+	}
+	id, ok := skillID(w, r)
+	if !ok {
+		return
+	}
+	var req *setSkillModelInvocationRequest
+	if err := decodeJSON(r, &req); err != nil || req == nil {
+		emitError(w, codeBadRequest, "invalid JSON body", http.StatusBadRequest)
+		return
+	}
+	c, err := a.SetSkillModelInvocationDisabled(r.Context(), id, req.Disabled)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, newSkillContentJSON(c))
+}
+
 func (s *Server) handleImportSkills(w http.ResponseWriter, r *http.Request) {
 	a, ok := s.app(w, r)
 	if !ok {

@@ -115,11 +115,11 @@ describe('Skills Components', () => {
     expect(screen.queryByRole('tab', { name: 'Distribution' })).toBeNull()
 
     // The Overview tab renders the Skill's own SKILL.md.
-    expect(await screen.findByRole('heading', { name: 'Frontmatter' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Attributes' })).toBeTruthy()
     expect(screen.getByRole('heading', { name: 'Alpha', level: 2 })).toBeTruthy()
     expect(screen.getByText('npm test')).toBeTruthy()
-    // The description reaches the page twice: the header, then the frontmatter value.
-    expect(screen.getAllByText('First test skill in local store')).toHaveLength(2)
+    // The description now reaches the page only through the frontmatter value.
+    expect(screen.getAllByText('First test skill in local store')).toHaveLength(1)
   })
 
   it('handles unbound skill detail correctly', async () => {

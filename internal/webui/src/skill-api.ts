@@ -158,6 +158,22 @@ export function fetchSkillContent(id: number, signal?: AbortSignal): Promise<Ski
   })
 }
 
+export function setSkillModelInvocationDisabled(
+  id: number,
+  disabled: boolean,
+  signal?: AbortSignal,
+): Promise<SkillContent> {
+  return fetch(`/api/v1/skills/${id}/model-invocation`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ disabled }),
+    signal,
+  }).then(async (res) => {
+    if (!res.ok) throw await responseError(res, 'errUpdatingSkillFailed')
+    return (await res.json()) as SkillContent
+  })
+}
+
 export function importSkills(body: ImportRequest, signal?: AbortSignal): Promise<ImportResponse> {
   return fetch('/api/v1/skills/import', {
     method: 'POST',
