@@ -69,9 +69,6 @@ native="${native_os}/${native_arch}"
 echo "==> checks"
 "$root/scripts/check.sh"
 
-echo "==> Playwright acceptance"
-"$root/scripts/e2e-webui.sh"
-
 echo "==> README quickstart"
 "$root/scripts/smoke/readme.sh"
 

@@ -8,10 +8,10 @@ The CLI is `skillctl`. The same binary embeds a localhost WebUI.
 
 | Platform | Archive |
 | --- | --- |
-| macOS Apple silicon | `skillctl_v0.1.1_darwin_arm64.tar.gz` |
-| macOS Intel | `skillctl_v0.1.1_darwin_amd64.tar.gz` |
-| Linux amd64 | `skillctl_v0.1.1_linux_amd64.tar.gz` |
-| Linux arm64 | `skillctl_v0.1.1_linux_arm64.tar.gz` |
+| macOS Apple silicon | `skillctl_v0.1.2_darwin_arm64.tar.gz` |
+| macOS Intel | `skillctl_v0.1.2_darwin_amd64.tar.gz` |
+| Linux amd64 | `skillctl_v0.1.2_linux_amd64.tar.gz` |
+| Linux arm64 | `skillctl_v0.1.2_linux_arm64.tar.gz` |
 
 Windows, 32-bit systems, and other Unix targets are unsupported. Each archive is a single statically linked `skillctl` binary (`CGO_ENABLED=0`). The Linux binary has no system SQLite or C toolchain dependency.
 
@@ -24,8 +24,8 @@ Download the archive for this machine and `SHA256SUMS` from the release. Verify 
 Linux (amd64 example):
 
 ```text
-grep 'skillctl_v0.1.1_linux_amd64.tar.gz$' SHA256SUMS | sha256sum -c -
-tar -xzf skillctl_v0.1.1_linux_amd64.tar.gz
+grep 'skillctl_v0.1.2_linux_amd64.tar.gz$' SHA256SUMS | sha256sum -c -
+tar -xzf skillctl_v0.1.2_linux_amd64.tar.gz
 mkdir -p ~/.local/bin
 install -m 0755 skillctl ~/.local/bin/skillctl
 ```
@@ -33,8 +33,8 @@ install -m 0755 skillctl ~/.local/bin/skillctl
 macOS (Apple silicon example):
 
 ```text
-grep 'skillctl_v0.1.1_darwin_arm64.tar.gz$' SHA256SUMS | shasum -a 256 -c -
-tar -xzf skillctl_v0.1.1_darwin_arm64.tar.gz
+grep 'skillctl_v0.1.2_darwin_arm64.tar.gz$' SHA256SUMS | shasum -a 256 -c -
+tar -xzf skillctl_v0.1.2_darwin_arm64.tar.gz
 mkdir -p ~/.local/bin
 install -m 0755 skillctl ~/.local/bin/skillctl
 ```
@@ -119,7 +119,7 @@ Deleting `~/.skillctl` does not walk Targets. Leftover Managed Links become ordi
 
 ## Release validation
 
-Maintainers run `./scripts/release.sh v0.1.1` from a clean checkout at that exact tag. It runs the quality, browser, and README gates, then produces four archives and `SHA256SUMS`.
+Maintainers run `./scripts/release.sh v0.1.2` from a clean checkout at that exact tag. It runs the quality and README gates, then produces four archives and `SHA256SUMS`.
 
 Pushing a version tag also runs the **release archives** workflow: it packages once, then downloads and verifies those same archives on four native runners without rebuilding. Only after all jobs pass should the `release-archives` artifact's four archives and checksum file be published. The workflow has read-only repository permissions and does not create a GitHub Release. A manual rerun must select the version tag, not a branch.
 
