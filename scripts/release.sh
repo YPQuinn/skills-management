@@ -70,6 +70,8 @@ echo "==> checks"
 "$root/scripts/check.sh"
 
 echo "==> README quickstart"
+mkdir -p "$root/dist"
+CGO_ENABLED=0 go build -ldflags "$ldflags" -o "$root/dist/skillctl" ./cmd/skillctl
 "$root/scripts/smoke/readme.sh"
 
 echo "==> dist"
