@@ -4,6 +4,7 @@ import { Alert, AlertTitle, AlertDescription } from '@appica/ui-react/alert'
 import { Badge } from '@appica/ui-react/badge'
 import { Table, TableCaption, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@appica/ui-react/table'
 import { ScrollArea } from '@appica/ui-react/scroll-area'
+import { Thumbnail } from '@appica/ui-react/thumbnail'
 import { ListPageSkeleton } from './list-page-skeleton'
 import {
   fetchTargetAdapters,
@@ -17,7 +18,7 @@ import { outcomeKey, outcomeMark } from './target-distribution-labels'
 import { adapterLabel, scopeLabel } from './target-labels'
 import { CopyablePath } from './copyable-path'
 import { StatusLabel } from './status-label'
-import { Clock } from '@appica/icons-react'
+import { Clock, Send } from '@appica/icons-react'
 import { useLocale } from './locale-context'
 
 export function TargetsIndex() {
@@ -119,12 +120,17 @@ export function TargetsIndex() {
                 {targets.map((tgt) => (
                   <TableRow key={tgt.id}>
                     <TableCell className="font-medium text-foreground-strong">
-                      <Link
-                        to={`/targets/${encodeURIComponent(tgt.name)}`}
-                        className="underline decoration-border underline-offset-2 hover:decoration-foreground"
-                      >
-                        {tgt.name}
-                      </Link>
+                      <span className="flex items-center gap-2.5">
+                        <Thumbnail variant="icon-soft" size="sm" shape="rounded" aria-hidden>
+                          <Send />
+                        </Thumbnail>
+                        <Link
+                          to={`/targets/${encodeURIComponent(tgt.name)}`}
+                          className="underline decoration-border underline-offset-2 hover:decoration-foreground"
+                        >
+                          {tgt.name}
+                        </Link>
+                      </span>
                     </TableCell>
                     <TableCell>
                       <Badge variant="soft">{adapterLabel(tgt.adapter, adapters, t)}</Badge>

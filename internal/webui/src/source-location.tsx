@@ -1,5 +1,5 @@
 import { DeviceDesktop, BrandGithub, BrandGitlab, BrandGit } from '@appica/icons-react'
-import type { SourceDetail } from './source-api'
+import type { SourceSummary } from './source-api'
 
 type SourceLocationProvider = 'github' | 'gitlab' | 'git'
 
@@ -31,7 +31,7 @@ function sourceLocationProvider(location: string): SourceLocationProvider {
   return 'git'
 }
 
-export function SourceLocationIcon({ source }: { source: SourceDetail }) {
+export function SourceLocationIcon({ source }: { source: Pick<SourceSummary, 'kind' | 'location'> }) {
   if (source.kind === 'local') {
     return <DeviceDesktop className={iconClass} data-source-provider="local" />
   }

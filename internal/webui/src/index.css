@@ -12,3 +12,11 @@ html {
   border-radius: inherit;
   overflow: hidden;
 }
+
+/* Input/Select focus rings are 3px; dialog bodies have no block padding, so overflow clips them. */
+@layer components {
+  [data-slot="dialog-body"],
+  [data-slot="alert-dialog-body"] {
+    padding-block: 0.375rem;
+  }
+}
