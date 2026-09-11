@@ -3,7 +3,7 @@ import { render, screen, cleanup, fireEvent } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { SkillsIndex, SkillDetailPage, SkillExplorer } from './skills'
 import { setupMatchMedia, mockResponse } from './source-fixtures'
-import { skillAlpha, skillBeta } from './skill-fixtures'
+import { skillAlpha, skillAlphaContent, skillBeta, skillBetaContent } from './skill-fixtures'
 import { conflictSkill } from './skill-sync-fixtures'
 import type { Skill } from './skill-api'
 
@@ -34,6 +34,12 @@ describe('Skills Components', () => {
       }
       if (urlStr === '/api/v1/skills/102') {
         return mockResponse(skillBeta)
+      }
+      if (urlStr === '/api/v1/skills/101/content') {
+        return mockResponse(skillAlphaContent)
+      }
+      if (urlStr === '/api/v1/skills/102/content') {
+        return mockResponse(skillBetaContent)
       }
       if (urlStr === '/api/v1/skills/101/diff') {
         return mockResponse({
@@ -100,7 +106,6 @@ describe('Skills Components', () => {
     )
 
     expect(await screen.findByRole('heading', { name: 'Alpha Skill' })).toBeTruthy()
-    expect(screen.getByText('First test skill in local store')).toBeTruthy()
 
     const overviewTab = screen.getByRole('tab', { name: 'Overview' })
     const syncTab = screen.getByRole('tab', { name: 'Synchronization' })
@@ -109,9 +114,12 @@ describe('Skills Components', () => {
     expect(syncTab.className).not.toMatch(/!text-black/)
     expect(screen.queryByRole('tab', { name: 'Distribution' })).toBeNull()
 
-    expect(screen.getByText('Source Binding')).toBeTruthy()
-    expect(screen.getByText('local-one')).toBeTruthy()
-    expect(screen.getByText('skills/alpha')).toBeTruthy()
+    // The Overview tab renders the Skill's own SKILL.md.
+    expect(await screen.findByRole('heading', { name: 'Attributes' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Alpha', level: 2 })).toBeTruthy()
+    expect(screen.getByText('npm test')).toBeTruthy()
+    // The description now reaches the page only through the frontmatter value.
+    expect(screen.getAllByText('First test skill in local store')).toHaveLength(1)
   })
 
   it('handles unbound skill detail correctly', async () => {
@@ -124,7 +132,9 @@ describe('Skills Components', () => {
     )
 
     expect(await screen.findByRole('heading', { name: 'Beta Skill' })).toBeTruthy()
-    expect(screen.getByText(/This Skill is unbound/)).toBeTruthy()
+    expect(screen.getByText('unbound')).toBeTruthy()
+    // The Overview tab still renders the unbound Skill's own document.
+    expect(await screen.findByRole('heading', { name: 'Beta', level: 2 })).toBeTruthy()
   })
 
   it('renders master-detail SkillExplorer and supports fresh route behavior', async () => {

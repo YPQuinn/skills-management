@@ -26,14 +26,15 @@ test('axe has no critical or serious violations on setup and resource pages', as
     await openCreateDialog(page, 'Add Source')
     await page.getByLabel('Location').fill(sourceRoot)
     await page.getByRole('button', { name: 'Register and scan' }).click()
-    await expect(page.getByRole('heading', { name: /a11y|skills/i }).first()).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'upstream' })).toBeVisible()
+    await expect(page.getByText('skills/a11y')).toBeVisible()
     await page.getByRole('button', { name: 'Import all' }).click()
     await expectImported(page)
     await expectAxeClean(page)
 
     await navTo(page, 'Skills')
     await skillLink(page, 'a11y').click()
-    await expect(page.getByRole('heading', { name: 'a11y' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'a11y', level: 1 })).toBeVisible()
     await expectAxeClean(page)
 
     await navTo(page, 'Groups')

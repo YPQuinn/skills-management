@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { lstatSync, readFileSync, readlinkSync, unlinkSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
-import { chooseSelect, expectImported, initializeStore, inspectTarget, navTo, openCreateDialog, skillLink, startUI, writeSkillFixture } from './helpers'
+import { chooseSelect, dialogPopup, expectImported, initializeStore, inspectTarget, navTo, openCreateDialog, skillLink, startUI, writeSkillFixture } from './helpers'
 
 test.describe.configure({ mode: 'serial' })
 
@@ -31,12 +31,12 @@ test('Chromium WebUI core journey against embedded skillctl', async ({ page }) =
     await navTo(page, 'Groups')
     await openCreateDialog(page, 'Create Group')
     await page.getByLabel('Group Name').fill('crew')
-    await page.getByRole('dialog').getByRole('button', { name: 'Create Group' }).click()
+    await dialogPopup(page).getByRole('button', { name: 'Create Group' }).click()
     await page.getByRole('list', { name: 'Managed Groups' }).getByRole('link', { name: 'crew' }).click()
     await expect(page.getByRole('heading', { name: 'crew' })).toBeVisible()
     await chooseSelect(page, 'Select a Skill to add', /demo/)
     await page.getByRole('button', { name: 'Add Skill' }).click()
-    await expect(page.getByRole('table').getByRole('link', { name: 'demo', exact: true })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'demo', exact: true })).toBeVisible()
 
     const targetDir = path.join(ui.home, 'agent-skills')
     await navTo(page, 'Targets')
@@ -44,29 +44,29 @@ test('Chromium WebUI core journey against embedded skillctl', async ({ page }) =
     await chooseSelect(page, 'Target Type', 'Custom Directory')
     await page.getByLabel('Target Name').fill('editor')
     await page.getByLabel('Directory Path').fill(targetDir)
-    await page.getByRole('dialog').getByRole('button', { name: 'Add', exact: true }).click()
+    await dialogPopup(page).getByRole('button', { name: 'Add', exact: true }).click()
     await page.getByRole('table', { name: 'Registered Targets' }).getByRole('link', { name: 'editor' }).click()
     await expect(page.getByRole('heading', { name: 'editor' })).toBeVisible()
     await chooseSelect(page, 'Assignment Type', 'Skill Group')
     await chooseSelect(page, 'Skill Group', 'crew')
     await page.getByRole('button', { name: 'Assign' }).click()
     await page.getByRole('button', { name: 'Preview desired Skills' }).click()
-    await expect(page.getByRole('dialog').getByRole('heading', { name: 'All Skills List' })).toBeVisible()
+    await expect(dialogPopup(page).getByRole('heading', { name: 'All Skills List' })).toBeVisible()
     await expect(page.getByRole('table', { name: 'All Skills List' }).getByRole('link', { name: 'demo', exact: true })).toBeVisible()
     await page.getByRole('button', { name: 'Close' }).click()
-    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await expect(dialogPopup(page)).toHaveCount(0)
 
     await page.getByRole('button', { name: 'Preview' }).click()
-    await expect(page.getByRole('dialog').getByRole('heading', { name: 'Distribution plan' })).toBeVisible()
-    await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click()
-    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await expect(dialogPopup(page).getByRole('heading', { name: 'Distribution plan' })).toBeVisible()
+    await dialogPopup(page).getByRole('button', { name: 'Close' }).click()
+    await expect(dialogPopup(page)).toHaveCount(0)
     await page.getByRole('button', { name: 'Distribute' }).click()
     await expect(page.getByRole('alertdialog', { name: /Distribute/ })).toBeVisible()
     await page.getByRole('alertdialog').getByRole('button', { name: 'Distribute' }).click()
     await expect(page.getByRole('dialog', { name: /Distribution result/ })).toBeVisible()
-    await expect(page.getByRole('dialog').getByText('1 created')).toBeVisible()
-    await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click()
-    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await expect(dialogPopup(page).getByText('1 created')).toBeVisible()
+    await dialogPopup(page).getByRole('button', { name: 'Close' }).click()
+    await expect(dialogPopup(page)).toHaveCount(0)
     const link = path.join(targetDir, 'demo')
     const st = lstatSync(link)
     expect(st.isSymbolicLink()).toBeTruthy()
@@ -133,7 +133,7 @@ test('Chromium WebUI core journey against embedded skillctl', async ({ page }) =
   const restarted = await startUI(ui.home)
   try {
     await page.goto(restarted.url + '/skills/demo')
-    await expect(page.getByRole('heading', { name: 'demo' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'demo', level: 1 })).toBeVisible()
   } finally {
     await restarted.stop()
   }
@@ -166,7 +166,9 @@ test('WebUI recover_store rebuilds unbound Skills', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'Skills' })).toBeVisible()
     await expect(skillLink(page, 'kept')).toBeVisible()
     await skillLink(page, 'kept').click()
-    await expect(page.getByText('This Skill is unbound. It was imported or created without an active Source association.', { exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'kept', level: 1 })).toBeVisible()
+    await page.getByRole('tab', { name: 'Synchronization' }).click()
+    await expect(page.getByText('Unbound Skill', { exact: true })).toBeVisible()
   } finally {
     await again.stop()
   }

@@ -54,7 +54,7 @@ describe('Skill Synchronization Tab', () => {
 
     // Switching to Overview pushes a history entry without ?tab.
     await user.click(screen.getByRole('tab', { name: 'Overview' }))
-    expect(await screen.findByText('Source Binding')).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Alpha', level: 2 })).toBeTruthy()
     expect(screen.queryByText('Latest Sync Action')).toBeNull()
 
     // Browser back returns to the synchronization tab.
