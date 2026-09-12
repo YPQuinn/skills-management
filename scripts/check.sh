@@ -10,6 +10,9 @@ cd "$root"
 
 webui="$root/internal/webui"
 
+echo "==> installer smoke"
+"$root/scripts/smoke/installer.sh"
+
 echo "==> pnpm install"
 (cd "$webui" && pnpm install --frozen-lockfile)
 

@@ -60,28 +60,68 @@ Adapters discover conventional user and project Skill directories. They do not t
 
 ## Install
 
-Download the archive for your machine and `SHA256SUMS` from the [latest release](https://github.com/YPQuinn/skills-management/releases/latest).
+### Homebrew (recommended)
 
-### Supported platforms
+Install from the official Tap on macOS or Linux:
 
-| Platform | Release archive |
+```sh
+brew install YPQuinn/tap/skillctl
+```
+
+Upgrade later with `brew upgrade skillctl`. The Formula selects the archive for your operating system and architecture and verifies its published SHA-256 checksum.
+
+### Install script
+
+Without Homebrew, install the latest release into `~/.local/bin`:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/YPQuinn/skills-management/main/install.sh | sh
+```
+
+The installer detects the operating system and architecture, downloads the matching GitHub Release archive, and verifies it against the published `SHA256SUMS`. It never invokes `sudo` or changes your shell configuration. If necessary, add the installation directory to `PATH`:
+
+```sh
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+Pin a version or choose another user-writable installation directory by passing options to the script:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/YPQuinn/skills-management/main/install.sh | sh -s -- --version v0.1.3
+curl -fsSL https://raw.githubusercontent.com/YPQuinn/skills-management/main/install.sh | sh -s -- --install-dir "$HOME/bin"
+```
+
+To inspect the installer before running it:
+
+```sh
+curl -fsSLo install-skillctl.sh https://raw.githubusercontent.com/YPQuinn/skills-management/main/install.sh
+less install-skillctl.sh
+sh install-skillctl.sh
+rm install-skillctl.sh
+```
+
+### Manual installation
+
+Download `SHA256SUMS` and the archive for your machine from the [latest release](https://github.com/YPQuinn/skills-management/releases/latest):
+
+| Platform | Archive pattern |
 | --- | --- |
-| macOS Apple silicon | `skillctl_v0.1.3_darwin_arm64.tar.gz` |
-| macOS Intel | `skillctl_v0.1.3_darwin_amd64.tar.gz` |
-| Linux amd64 | `skillctl_v0.1.3_linux_amd64.tar.gz` |
-| Linux arm64 | `skillctl_v0.1.3_linux_arm64.tar.gz` |
+| macOS Apple silicon | `skillctl_vMAJOR.MINOR.PATCH_darwin_arm64.tar.gz` |
+| macOS Intel | `skillctl_vMAJOR.MINOR.PATCH_darwin_amd64.tar.gz` |
+| Linux amd64 | `skillctl_vMAJOR.MINOR.PATCH_linux_amd64.tar.gz` |
+| Linux arm64 | `skillctl_vMAJOR.MINOR.PATCH_linux_arm64.tar.gz` |
 
-Verify the downloaded archive, extract it, and place `skillctl` on `PATH`. For example, on macOS Apple silicon:
+Verify the selected archive before extracting it:
 
-```bash
-grep 'skillctl_v0.1.3_darwin_arm64.tar.gz$' SHA256SUMS | shasum -a 256 -c -
-tar -xzf skillctl_v0.1.3_darwin_arm64.tar.gz
+```sh
+grep ' skillctl_vMAJOR.MINOR.PATCH_darwin_arm64.tar.gz$' SHA256SUMS | shasum -a 256 -c -
+tar -xzf skillctl_vMAJOR.MINOR.PATCH_darwin_arm64.tar.gz
 mkdir -p ~/.local/bin
 install -m 0755 skillctl ~/.local/bin/skillctl
 skillctl --version
 ```
 
-On Linux, use `sha256sum -c -` instead of `shasum -a 256 -c -`.
+The example uses macOS Apple silicon. Substitute the archive for your platform; on Linux, use `sha256sum -c -` instead of `shasum -a 256 -c -`.
 
 > [!NOTE]
 > Windows, 32-bit systems, and other Unix targets are not supported. Release binaries are statically linked with `CGO_ENABLED=0`; the Linux build does not require a system SQLite library or C toolchain.
