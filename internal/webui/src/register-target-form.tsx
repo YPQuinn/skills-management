@@ -7,6 +7,7 @@ import { Field, FieldLabel } from '@appica/ui-react/field'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@appica/ui-react/select'
 import { Spinner } from '@appica/ui-react/spinner'
 import { CircleCheck, Plus } from '@appica/icons-react'
+import { AgentLogo } from './agent-logo'
 import { StatusLabel } from './status-label'
 import { registerTarget, type TargetAdapter, type CreateTargetInput } from './target-api'
 import { useLocale } from './locale-context'
@@ -29,6 +30,7 @@ export function RegisterTargetForm({ adapters, onRegistered }: RegisterTargetFor
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<unknown | null>(null)
 
+  const selectedAdapter = adapters.find((item) => item.key === adapter)
   const inflight = useRef<AbortController | null>(null)
 
   useEffect(() => {
@@ -136,14 +138,19 @@ export function RegisterTargetForm({ adapters, onRegistered }: RegisterTargetFor
                 value={adapter}
                 onValueChange={(val) => setAdapter(val as string)}
                 items={Object.fromEntries(adapters.map((a) => [a.key, a.name]))}
+                alignItemWithTrigger={false}
               >
-                <SelectTrigger aria-label={t('labelSelectAdapter')}>
+                <SelectTrigger
+                  aria-label={t('labelSelectAdapter')}
+                  startSlot={selectedAdapter ? <AgentLogo adapterKey={selectedAdapter.key} /> : null}
+                >
                   <SelectValue placeholder={t('labelSelectAdapter')} />
                 </SelectTrigger>
                 <SelectContent>
                   {adapters.map((a) => (
                     // The item's text slot only sizes to its content, so grow it to let the badge sit flush right.
                     <SelectItem key={a.key} value={a.key} className="[&>*:first-child]:grow">
+                      <AgentLogo adapterKey={a.key} />
                       <span className="grow">{a.name}</span>
                       {a.detection.status === 'detected' && (
                         <StatusLabel icon={CircleCheck} tone="muted">

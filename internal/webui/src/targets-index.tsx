@@ -16,6 +16,7 @@ import { RegisterTargetForm } from './register-target-form'
 import { ResourceCreateDialog } from './resource-create-dialog'
 import { outcomeKey, outcomeMark } from './target-distribution-labels'
 import { adapterLabel, scopeLabel } from './target-labels'
+import { AgentLogo } from './agent-logo'
 import { CopyablePath } from './copyable-path'
 import { StatusLabel } from './status-label'
 import { Clock, Send } from '@appica/icons-react'
@@ -133,7 +134,10 @@ export function TargetsIndex() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="soft">{adapterLabel(tgt.adapter, adapters, t)}</Badge>
+                      <Badge variant="soft">
+                        <AgentLogo adapterKey={tgt.adapter} className="size-3.5" />
+                        {adapterLabel(tgt.adapter, adapters, t)}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-foreground-muted text-xs">
                       {scopeLabel(tgt.scope, t)}
