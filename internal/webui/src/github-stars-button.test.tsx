@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { GitHubStarsButton } from './github-stars-button'
 
 const repository = 'YPQuinn/skills-management'
@@ -33,7 +33,28 @@ describe('GitHubStarsButton', () => {
     expect(await screen.findByText('42')).toBeTruthy()
     expect(fetchMock).toHaveBeenCalledWith(
       'https://api.github.com/repos/YPQuinn/skills-management',
+      { cache: 'no-store' },
     )
+  })
+
+  it('refreshes the count when the window regains focus', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ stargazers_count: 1 }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ stargazers_count: 2 }) })
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(
+      <GitHubStarsButton
+        repo={repository}
+        accessibleLabel="View and star skills-management on GitHub"
+      />,
+    )
+
+    expect(await screen.findByText('1')).toBeTruthy()
+    fireEvent.focus(window)
+    expect(await screen.findByText('2')).toBeTruthy()
+    expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
   it('keeps the repository link usable when the star count cannot be loaded', async () => {
@@ -50,5 +71,25 @@ describe('GitHubStarsButton', () => {
     expect(
       screen.getByRole('link', { name: 'View and star skills-management on GitHub' }),
     ).toBeTruthy()
+  })
+
+  it('keeps the last known count when a refresh fails', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ stargazers_count: 7 }) })
+      .mockRejectedValueOnce(new Error('offline'))
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(
+      <GitHubStarsButton
+        repo={repository}
+        accessibleLabel="View and star skills-management on GitHub"
+      />,
+    )
+
+    expect(await screen.findByText('7')).toBeTruthy()
+    fireEvent.focus(window)
+    expect(await screen.findByText('7')).toBeTruthy()
+    expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 })

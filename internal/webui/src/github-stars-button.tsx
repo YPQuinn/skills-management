@@ -24,7 +24,9 @@ export function GitHubStarsButton({ repo, accessibleLabel, className }: GitHubSt
 
     async function fetchStars() {
       try {
-        const response = await fetch(`https://api.github.com/repos/${repo}`)
+        const response = await fetch(`https://api.github.com/repos/${repo}`, {
+          cache: 'no-store',
+        })
         if (!response.ok) {
           throw new Error('Failed to fetch repository data')
         }
@@ -35,15 +37,21 @@ export function GitHubStarsButton({ repo, accessibleLabel, className }: GitHubSt
         }
       } catch {
         if (isMounted) {
-          setStarCount(0)
+          setStarCount((currentCount) => currentCount ?? 0)
         }
       }
     }
 
-    void fetchStars()
+    const refreshStars = () => {
+      void fetchStars()
+    }
+
+    refreshStars()
+    window.addEventListener('focus', refreshStars)
 
     return () => {
       isMounted = false
+      window.removeEventListener('focus', refreshStars)
     }
   }, [repo])
 
