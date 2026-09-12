@@ -30,7 +30,7 @@ function mockResponse(data: any, ok = true, status = 200) {
 
 const mockAdapters = [
   {
-    key: 'claude',
+    key: 'claude-code',
     name: 'Claude Code',
     detection: {
       status: 'detected',
@@ -44,7 +44,7 @@ const mockTargetSummary = {
   id: 1,
   name: 'Claude User Config',
   path: '/Users/test/.claude/skills',
-  adapter: 'claude',
+  adapter: 'claude-code',
   scope: 'user',
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-01T00:00:00Z',
@@ -52,7 +52,7 @@ const mockTargetSummary = {
 
 const mockTargetView = {
   ...mockTargetSummary,
-  compatible_adapters: ['claude'],
+  compatible_adapters: ['claude-code'],
   direct_skills: [
     {
       id: 101,
@@ -150,6 +150,44 @@ describe('Targets UI', () => {
     expect(screen.queryByRole('button', { name: 'Register as Target' })).toBeNull()
   })
 
+  it('shows the matching logo for every built-in Agent type', async () => {
+    const user = userEvent.setup()
+    const adapters = [
+      ['universal', 'Universal'],
+      ['claude-code', 'Claude Code'],
+      ['codex', 'Codex'],
+      ['cursor', 'Cursor'],
+      ['gemini-cli', 'Gemini CLI'],
+      ['opencode', 'OpenCode'],
+      ['pi', 'Pi'],
+      ['github-copilot', 'GitHub Copilot'],
+    ].map(([key, name]) => ({
+      key,
+      name,
+      detection: { status: 'not_detected', evidence: [], detected_at: '2026-01-01T00:00:00Z' },
+    }))
+
+    window.fetch = vi.fn().mockImplementation(async (url: RequestInfo | URL) => {
+      const u = String(url)
+      if (u === '/api/v1/targets/adapters') return mockResponse({ items: adapters, total: adapters.length })
+      if (u === '/api/v1/targets') return mockResponse({ items: [mockTargetSummary], total: 1 })
+      return mockResponse({ error: { message: 'not found' } }, false, 404)
+    })
+
+    renderTargets()
+    expect(await screen.findByRole('link', { name: 'Claude User Config' })).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: 'Add Distribution Target' }))
+
+    const trigger = screen.getByRole('combobox', { name: 'Agent Type' })
+    expect(trigger.querySelector('[data-agent-logo="universal"]')).toBeTruthy()
+    await user.click(trigger)
+
+    const listbox = await screen.findByRole('listbox')
+    for (const { key } of adapters) {
+      expect(listbox.querySelector(`[data-agent-logo="${key}"]`)).toBeTruthy()
+    }
+  })
+
   it('shows last Distribution outcome and stale on registered Targets', async () => {
     window.fetch = vi.fn().mockImplementation(async (url: RequestInfo | URL) => {
       const u = String(url)
@@ -193,6 +231,7 @@ describe('Targets UI', () => {
 
     const builtin = within(rows[1]).getAllByRole('cell')
     expect(builtin[1].textContent).toBe('Claude Code')
+    expect(builtin[1].querySelector('[data-agent-logo="claude-code"]')).toBeTruthy()
     expect(builtin[2].textContent).toBe('User (global)')
 
     const custom = within(rows[2]).getAllByRole('cell')

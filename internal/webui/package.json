@@ -13,6 +13,7 @@
   "dependencies": {
     "@appica/icons-react": "^1.0.0",
     "@appica/ui-react": "^1.0.0",
+    "@lobehub/icons-static-svg": "^1.95.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-markdown": "^10.1.0",
