@@ -16,12 +16,12 @@ if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
 fi
 ldflags="-X skillctl/internal/cli.version=${version} -X skillctl/internal/cli.gitCommit=${commit}"
 
-echo "==> npm ci"
-(cd "$webui" && npm ci)
+echo "==> pnpm install"
+(cd "$webui" && pnpm install --frozen-lockfile)
 
 echo "==> fresh Vite dist"
 rm -rf "$webui/dist"
-(cd "$webui" && npm run build)
+(cd "$webui" && pnpm run build)
 if [ ! -f "$webui/dist/index.html" ]; then
   echo "frontend build did not produce internal/webui/dist/index.html" >&2
   exit 1

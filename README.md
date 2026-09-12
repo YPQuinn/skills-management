@@ -220,7 +220,7 @@ Successful human-readable output goes to stdout and diagnostics go to stderr. JS
 
 ## Development
 
-Source builds require Go 1.26.4, Node.js 22, npm, and Git.
+Source builds require Go 1.26.4, Node.js 22, pnpm 12.4.1, and Git.
 
 ```bash
 git clone https://github.com/YPQuinn/skills-management.git
