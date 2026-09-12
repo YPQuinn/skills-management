@@ -71,6 +71,15 @@ describe('Layout background pattern', () => {
     expect(classes).not.toContain('border')
   })
 
+  it('renders the Skill Manager mark next to the product name', () => {
+    renderLayout()
+
+    const title = screen.getByText('Skill Manager')
+    const mark = title.previousElementSibling
+    expect(mark?.tagName).toBe('IMG')
+    expect(mark?.getAttribute('src')).toBe('/favicon.svg')
+  })
+
   it('keeps the main navigation accessible', () => {
     renderLayout()
 

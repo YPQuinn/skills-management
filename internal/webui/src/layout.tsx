@@ -42,7 +42,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <div data-testid="sticky-shell" className="sticky top-0 z-20">
         <header className="bg-background/75 backdrop-blur-lg px-6 py-3 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 font-bold text-lg text-foreground shrink-0">
-            <Sparkles className="size-5 shrink-0 text-foreground" />
+            <img src="/favicon.svg" alt="" aria-hidden width={24} height={24} className="size-6 shrink-0" />
             <span>{t('appTitle')}</span>
           </div>
 
