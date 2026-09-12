@@ -25,7 +25,7 @@ esac
 webui="$root/internal/webui"
 if [ ! -f "$webui/dist/index.html" ]; then
   echo "==> frontend"
-  (cd "$webui" && npm ci && npx vite build)
+  (cd "$webui" && pnpm install --frozen-lockfile && pnpm exec vite build)
 fi
 
 stage=$(mktemp -d)

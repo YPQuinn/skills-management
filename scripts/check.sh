@@ -10,21 +10,21 @@ cd "$root"
 
 webui="$root/internal/webui"
 
-echo "==> npm ci"
-(cd "$webui" && npm ci)
+echo "==> pnpm install"
+(cd "$webui" && pnpm install --frozen-lockfile)
 
 echo "==> TypeScript"
-(cd "$webui" && npx tsc -b --pretty false)
+(cd "$webui" && pnpm exec tsc -b --pretty false)
 
 echo "==> Oxlint"
-(cd "$webui" && npm run lint)
+(cd "$webui" && pnpm run lint)
 
 echo "==> Vitest"
-(cd "$webui" && npm run test)
+(cd "$webui" && pnpm run test)
 
 echo "==> fresh Vite dist"
 rm -rf "$webui/dist"
-(cd "$webui" && npx vite build)
+(cd "$webui" && pnpm exec vite build)
 if [ ! -f "$webui/dist/index.html" ]; then
   echo "frontend build did not produce internal/webui/dist/index.html" >&2
   exit 1

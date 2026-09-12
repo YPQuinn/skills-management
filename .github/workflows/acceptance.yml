@@ -24,11 +24,15 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.4.1
+          run_install: false
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
-          cache-dependency-path: internal/webui/package-lock.json
+          cache: pnpm
+          cache-dependency-path: internal/webui/pnpm-lock.yaml
       - name: quality gate
         env:
           GO_TEST_FLAGS: -race
@@ -48,11 +52,15 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.4.1
+          run_install: false
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
-          cache-dependency-path: internal/webui/package-lock.json
+          cache: pnpm
+          cache-dependency-path: internal/webui/pnpm-lock.yaml
       # Frontend type checking, lint, and Vitest are platform-independent and
       # already ran on Linux. macOS builds the SPA only because internal/webui
       # embeds it, then runs the filesystem-sensitive Go suite.
@@ -71,9 +79,13 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.4.1
+          run_install: false
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
-          cache-dependency-path: internal/webui/package-lock.json
+          cache: pnpm
+          cache-dependency-path: internal/webui/pnpm-lock.yaml
       - run: ./scripts/smoke/native-archive.sh
