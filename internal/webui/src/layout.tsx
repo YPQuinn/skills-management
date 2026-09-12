@@ -1,7 +1,7 @@
 import { useLocation, Link } from 'react-router-dom'
 import { BackgroundPattern } from '@appica/ui-react/background-pattern'
 import { Navigation, NavigationList, NavigationItem, NavigationLink } from '@appica/ui-react/navigation'
-import { Button, buttonVariants } from '@appica/ui-react/button'
+import { Button } from '@appica/ui-react/button'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -17,7 +17,6 @@ import {
   CloudDownload,
   Folder,
   Target,
-  BrandGithub,
   Settings,
   DeviceDesktop,
   Sun,
@@ -26,6 +25,7 @@ import {
 } from '@appica/icons-react'
 import { useLocale } from './locale-context'
 import type { Locale } from './locale-dictionary'
+import { GitHubStarsButton } from './github-stars-button'
 
 type ThemeChoice = 'system' | 'light' | 'dark'
 
@@ -81,15 +81,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </Navigation>
 
           <div className="flex items-center gap-2 shrink-0">
-            <a
-              href="https://github.com/"
-              target="_blank"
-              rel="noreferrer"
-              className={buttonVariants({ variant: 'ghost', size: 'icon-md' })}
-              aria-label={t('ariaGitHub')}
-            >
-              <BrandGithub />
-            </a>
+            <GitHubStarsButton
+              repo="YPQuinn/skills-management"
+              accessibleLabel={t('ariaGitHubStar')}
+            />
 
             <DropdownMenu>
               <DropdownMenuTrigger

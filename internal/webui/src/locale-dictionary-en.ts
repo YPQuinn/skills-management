@@ -13,7 +13,7 @@ export const translationsEn = {
   ariaTheme: 'Theme',
   ariaLanguage: 'Language',
   ariaSettings: 'Settings',
-  ariaGitHub: 'GitHub repository',
+  ariaGitHubStar: 'View and star skills-management on GitHub',
   ariaMainNavigation: 'Main navigation',
   themeSystem: 'System',
   themeLight: 'Light',
