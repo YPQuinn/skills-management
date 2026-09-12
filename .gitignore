@@ -7,3 +7,4 @@ internal/webui/node_modules
 /.pi-subagents
 .DS_Store
 /node_modules
+/.pi
