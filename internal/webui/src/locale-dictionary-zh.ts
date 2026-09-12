@@ -14,7 +14,7 @@ export const translationsZhCN: Record<keyof typeof translationsEn, string> = {
   ariaTheme: '主题',
   ariaLanguage: '语言',
   ariaSettings: '设置',
-  ariaGitHub: 'GitHub 仓库',
+  ariaGitHubStar: '在 GitHub 上查看 skills-management 并加星',
   ariaMainNavigation: '主导航',
   themeSystem: '系统',
   themeLight: '浅色',

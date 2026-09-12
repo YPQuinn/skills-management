@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { ThemeProvider } from '@appica/ui-react/providers/theme-provider'
@@ -40,8 +40,13 @@ function renderLayout() {
 }
 
 describe('Layout background pattern', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})))
+  })
+
   afterEach(() => {
     cleanup()
+    vi.unstubAllGlobals()
   })
 
   it('wraps the content panel in the Appica dots pattern with top/side borders and no spotlight', () => {
@@ -75,6 +80,15 @@ describe('Layout background pattern', () => {
       expect(link).toBeTruthy()
       expect(link.querySelector('svg[data-icon="start"]')).toBeTruthy()
     }
+  })
+
+  it('links to this project through the GitHub Stars button', () => {
+    renderLayout()
+
+    const link = screen.getByRole('link', {
+      name: 'View and star skills-management on GitHub',
+    })
+    expect(link.getAttribute('href')).toBe('https://github.com/YPQuinn/skills-management')
   })
 
   it('keeps the centered nav from becoming a vertical scroll container', () => {
