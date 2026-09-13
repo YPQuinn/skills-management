@@ -87,7 +87,7 @@ export PATH="$HOME/.local/bin:$PATH"
 Pin a version or choose another user-writable installation directory by passing options to the script:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/YPQuinn/skills-management/main/install.sh | sh -s -- --version v0.1.3
+curl -fsSL https://raw.githubusercontent.com/YPQuinn/skills-management/main/install.sh | sh -s -- --version v0.1.4
 curl -fsSL https://raw.githubusercontent.com/YPQuinn/skills-management/main/install.sh | sh -s -- --install-dir "$HOME/bin"
 ```
 
