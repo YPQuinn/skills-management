@@ -89,6 +89,14 @@ func ReplaceSourceObservation(db *sql.DB, id int64, s source.Source) error {
 	return tx.Commit()
 }
 
+// UpdateSourceName changes the operator-facing name of one Source. The
+// unique index refuses a collision; the caller maps that to a conflict.
+func UpdateSourceName(db *sql.DB, id int64, name string, updatedAt time.Time) error {
+	_, err := db.Exec(`UPDATE sources SET name = ?, updated_at = ? WHERE id = ?`,
+		name, timeToSQL(&updatedAt), id)
+	return err
+}
+
 // UpdateSourceStatus persists a failed re-check: the previous Inventory,
 // commit, and digest are retained; only availability, the observation error,
 // and the latest check start/completion/result are updated.

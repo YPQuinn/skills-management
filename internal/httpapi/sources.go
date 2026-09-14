@@ -62,6 +62,10 @@ type createSourceRequest struct {
 // but the strict decoder still requires exactly one JSON object.
 type checkSourceRequest struct{}
 
+type renameSourceRequest struct {
+	Name string `json:"name"`
+}
+
 func newSourceSummaryJSON(s source.Summary) sourceSummaryJSON {
 	return sourceSummaryJSON{
 		ID: s.ID, Name: s.Name, Kind: string(s.Kind), Location: s.Location,
@@ -171,6 +175,28 @@ func (s *Server) handleShowSource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	src, err := a.ShowSource(id)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, newSourceJSON(src))
+}
+
+func (s *Server) handleRenameSource(w http.ResponseWriter, r *http.Request) {
+	a, ok := s.app(w, r)
+	if !ok {
+		return
+	}
+	id, ok := sourceID(w, r)
+	if !ok {
+		return
+	}
+	var req *renameSourceRequest
+	if err := decodeJSON(r, &req); err != nil || req == nil {
+		emitError(w, codeBadRequest, "invalid JSON body", http.StatusBadRequest)
+		return
+	}
+	src, err := a.RenameSource(id, req.Name)
 	if err != nil {
 		writeAppError(w, err)
 		return

@@ -4,6 +4,7 @@ import { SourceStatusBadge } from './source-status'
 import type { SourceDetail } from './source-api'
 import { SourceLocationIcon } from './source-location'
 import { SourceDeleteAction } from './source-delete-action'
+import { SourceRenameAction } from './source-rename-action'
 import { useLocale } from './locale-context'
 
 export function SourceDetailHeader({
@@ -45,7 +46,12 @@ export function SourceDetailHeader({
           )}
         </p>
       </div>
-      {sourceId !== null && <SourceDeleteAction sourceId={sourceId} name={source.name} />}
+      {sourceId !== null && (
+        <div className="flex items-center gap-2">
+          <SourceRenameAction sourceId={sourceId} name={source.name} />
+          <SourceDeleteAction sourceId={sourceId} name={source.name} />
+        </div>
+      )}
     </div>
   )
 }

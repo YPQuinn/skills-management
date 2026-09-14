@@ -3,8 +3,10 @@ package app
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"skillctl/internal/source"
+	"skillctl/internal/state"
 )
 
 // validateSourceName checks an operator-facing Source name: it must survive
@@ -36,4 +38,30 @@ func defaultSourceName(loc source.Locator) string {
 		return "source"
 	}
 	return base
+}
+
+// RenameSource changes the operator-facing name of one Source. An empty
+// name is invalid (it does not fall back to the location default). The
+// same name after trimming is a no-op and does not write. Inventory,
+// location, and bindings are unchanged.
+func (a *App) RenameSource(id int64, name string) (*source.Source, error) {
+	current, err := a.ShowSource(id)
+	if err != nil {
+		return nil, err
+	}
+	name = strings.TrimSpace(name)
+	if err := validateSourceName(name); err != nil {
+		return nil, Errorf(CodeInvalidArgument, "%v", err)
+	}
+	if name == current.Name {
+		return current, nil
+	}
+	now := time.Now().UTC()
+	if err := state.UpdateSourceName(a.db, id, name, now); err != nil {
+		if state.IsUniqueViolation(err) {
+			return nil, Errorf(CodeConflict, "a Source named %q is already registered", name)
+		}
+		return nil, Errorf(CodeInternal, "renaming Source %d: %v", id, err)
+	}
+	return a.ShowSource(id)
 }

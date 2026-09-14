@@ -125,9 +125,6 @@ export function GroupDetailPage() {
     )
   }
 
-  const memberSet = new Set(group.members.map((m) => m.id))
-  const availableSkills = allSkills.filter((s) => !memberSet.has(s.id))
-
   return (
     <div className="space-y-6">
       <div>
@@ -160,7 +157,7 @@ export function GroupDetailPage() {
 
       <GroupMembersSection
         members={group.members}
-        availableSkills={availableSkills}
+        skills={allSkills}
         submitting={submitting}
         onAddMember={handleAddMember}
         onRemoveMember={handleRemoveMember}

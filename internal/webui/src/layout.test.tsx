@@ -77,7 +77,7 @@ describe('Layout background pattern', () => {
     const title = screen.getByText('Skill Manager')
     const mark = title.previousElementSibling
     expect(mark?.tagName).toBe('IMG')
-    expect(mark?.getAttribute('src')).toBe('/favicon.svg')
+    expect(mark?.getAttribute('src')).toBe('/favicon.svg?v=2')
   })
 
   it('keeps the main navigation accessible', () => {

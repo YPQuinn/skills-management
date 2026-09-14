@@ -90,6 +90,15 @@ func TestCLISourcesLocalLifecycle(t *testing.T) {
 		}
 	}
 
+	out, code = run(t, home, "source", "rename", "e2e-local", "e2e-renamed")
+	if code != 0 || !strings.Contains(out, `Renamed Source "e2e-local" to "e2e-renamed"`) {
+		t.Fatalf("source rename: exit %d\n%s", code, out)
+	}
+	out, code = run(t, home, "source", "show", "e2e-renamed")
+	if code != 0 || !strings.Contains(out, "Source 1: e2e-renamed") {
+		t.Fatalf("show after rename: exit %d\n%s", code, out)
+	}
+
 	// check reflects a new upstream Skill
 	writeE2ESkill(t, root, "gamma")
 	out, code = run(t, home, "source", "check", fmt.Sprint(id), "--json")
@@ -109,11 +118,11 @@ func TestCLISourcesLocalLifecycle(t *testing.T) {
 	if err := os.Rename(root, root+"-moved"); err != nil {
 		t.Fatal(err)
 	}
-	out, code = run(t, home, "source", "check", "e2e-local")
+	out, code = run(t, home, "source", "check", "e2e-renamed")
 	if code != 0 || !strings.Contains(out, "unavailable") {
 		t.Fatalf("check unavailable: exit %d\n%s", code, out)
 	}
-	out, code = run(t, home, "source", "show", "e2e-local")
+	out, code = run(t, home, "source", "show", "e2e-renamed")
 	if code != 0 || !strings.Contains(out, "stale") || !strings.Contains(out, "skills/gamma") {
 		t.Fatalf("stale show: exit %d\n%s", code, out)
 	}
@@ -127,7 +136,7 @@ func TestCLISourcesLocalLifecycle(t *testing.T) {
 
 	// durable state across processes: a fresh binary process reads SQLite
 	out, code = run(t, home, "source", "list")
-	if code != 0 || !strings.Contains(out, "e2e-local") {
+	if code != 0 || !strings.Contains(out, "e2e-renamed") {
 		t.Fatalf("list in a fresh process: exit %d\n%s", code, out)
 	}
 }

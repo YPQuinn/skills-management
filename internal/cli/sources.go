@@ -25,6 +25,7 @@ func NewSourceCmd(bm *bootstrap.Manager) *cobra.Command {
 		NewSourceAddCmd(bm),
 		NewSourceListCmd(bm),
 		NewSourceShowCmd(bm),
+		NewSourceRenameCmd(bm),
 		NewSourceCheckCmd(bm),
 		NewSourceSyncCmd(bm),
 		NewSourceDeleteCmd(bm),
@@ -171,6 +172,39 @@ func NewSourceShowCmd(bm *bootstrap.Manager) *cobra.Command {
 			for _, i := range s.Issues {
 				fmt.Fprintf(cmd.OutOrStdout(), "Invalid: %s\t%s\n", i.RelativeDir, i.Reason)
 			}
+			return nil
+		},
+	}
+	cmd.Flags().BoolVar(&jsonRequested, "json", false, "print one JSON value on stdout")
+	return cmd
+}
+
+func NewSourceRenameCmd(bm *bootstrap.Manager) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "rename <name-or-id> <new-name>",
+		Short: "Rename a Source",
+		Args:  exactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			a, err := bm.App()
+			if err != nil {
+				return err
+			}
+			id, err := a.ResolveSourceArg(args[0])
+			if err != nil {
+				return err
+			}
+			old, err := a.ShowSource(id)
+			if err != nil {
+				return err
+			}
+			s, err := a.RenameSource(id, args[1])
+			if err != nil {
+				return err
+			}
+			if jsonRequested {
+				return printJSON(cmd, newSourceJSONView(s))
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "Renamed Source %q to %q\n", old.Name, s.Name)
 			return nil
 		},
 	}
