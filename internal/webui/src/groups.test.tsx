@@ -56,8 +56,8 @@ const mockAdapters = {
 
 const mockSkills = {
   items: [
-    { id: 10, slug: 'go-lint', name: 'Go Linter' },
-    { id: 11, slug: 'sql-check', name: 'SQL Checker' },
+    { id: 10, slug: 'go-lint', name: 'Go Linter', binding: { source_name: 'local-one' } },
+    { id: 11, slug: 'sql-check', name: 'SQL Checker', binding: { source_name: 'local-one' } },
     { id: 12, slug: 'docker-fmt', name: 'Docker Formatter' },
     { id: 13, slug: 'k8s-apply', name: 'K8s Apply' },
     { id: 14, slug: 'handoff', name: 'handoff' },
@@ -155,6 +155,7 @@ describe('Groups UI', () => {
     expect(await screen.findByRole('heading', { name: 'backend-tools' })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Go Linter' })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'SQL Checker' })).toBeTruthy()
+    expect(screen.getAllByRole('link', { name: 'local-one' })).toHaveLength(2)
     expect(screen.getByRole('heading', { name: 'Assigned Targets (1)' })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Dev Server' }).getAttribute('href')).toBe('/targets/Dev%20Server')
     expect(screen.getByText('Claude Code')).toBeTruthy()

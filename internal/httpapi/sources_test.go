@@ -170,6 +170,80 @@ func TestSourcesRESTLifecycle(t *testing.T) {
 	}
 }
 
+func TestSourcesRESTRename(t *testing.T) {
+	ts := startServer(t)
+	resp := ts.do(t, "POST", "/api/v1/setup", `{"store_path": ""}`, "application/json", "", "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("setup: got %d, body %s", resp.StatusCode, readBody(t, resp))
+	}
+	resp.Body.Close()
+
+	root := t.TempDir()
+	writeAPISkill(t, root, "alpha")
+	other := t.TempDir()
+	writeAPISkill(t, other, "beta")
+	resp = ts.do(t, "POST", "/api/v1/sources",
+		fmt.Sprintf(`{"kind": "local", "location": %q, "name": "local-one"}`, root),
+		"application/json", "", "")
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("create: got %d, body %s", resp.StatusCode, readBody(t, resp))
+	}
+	var created sourceJSON
+	if err := json.Unmarshal([]byte(readBody(t, resp)), &created); err != nil {
+		t.Fatal(err)
+	}
+	resp = ts.do(t, "POST", "/api/v1/sources",
+		fmt.Sprintf(`{"kind": "local", "location": %q, "name": "taken"}`, other),
+		"application/json", "", "")
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("create taken: got %d, body %s", resp.StatusCode, readBody(t, resp))
+	}
+	readBody(t, resp)
+
+	// empty body is invalid
+	resp = ts.do(t, "POST", fmt.Sprintf("/api/v1/sources/%d/rename", created.ID),
+		`{}`, "application/json", "", "")
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("empty name: got %d, body %s", resp.StatusCode, readBody(t, resp))
+	}
+	if env := decodeError(t, readBody(t, resp)); env.Error.Code != "invalid_argument" {
+		t.Fatalf("empty name code: got %q", env.Error.Code)
+	}
+
+	resp = ts.do(t, "POST", fmt.Sprintf("/api/v1/sources/%d/rename", created.ID),
+		`{"name": "taken"}`, "application/json", "", "")
+	if resp.StatusCode != http.StatusConflict {
+		t.Fatalf("conflict: got %d, body %s", resp.StatusCode, readBody(t, resp))
+	}
+	if env := decodeError(t, readBody(t, resp)); env.Error.Code != "conflict" {
+		t.Fatalf("conflict code: got %q", env.Error.Code)
+	}
+
+	resp = ts.do(t, "POST", "/api/v1/sources/999/rename", `{"name": "next"}`, "application/json", "", "")
+	if resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("missing: got %d, body %s", resp.StatusCode, readBody(t, resp))
+	}
+
+	resp = ts.do(t, "POST", fmt.Sprintf("/api/v1/sources/%d/rename", created.ID),
+		`{"name": "team"}`, "application/json", "", "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("rename: got %d, body %s", resp.StatusCode, readBody(t, resp))
+	}
+	var renamed sourceJSON
+	if err := json.Unmarshal([]byte(readBody(t, resp)), &renamed); err != nil {
+		t.Fatal(err)
+	}
+	if renamed.Name != "team" || renamed.ID != created.ID || len(renamed.Inventory) != 1 {
+		t.Fatalf("renamed: %+v", renamed)
+	}
+
+	resp = ts.do(t, "GET", "/api/v1/sources", "", "", "", "")
+	items := decodeListSources(t, readBody(t, resp))
+	if len(items) != 2 || items[0].Name != "taken" || items[1].Name != "team" {
+		t.Fatalf("list after rename: %+v", items)
+	}
+}
+
 func TestSourcesRESTValidation(t *testing.T) {
 	ts := readyServer(t, nil)
 	cases := []struct {

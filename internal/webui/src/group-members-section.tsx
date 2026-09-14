@@ -1,17 +1,16 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { Button } from '@appica/ui-react/button'
 import { Spinner } from '@appica/ui-react/spinner'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@appica/ui-react/select'
 import { Trash, UserPlus } from '@appica/icons-react'
 import type { SkillRef } from './group-api'
 import type { Skill } from './skill-api'
-import { skillLabel } from './skill-identity'
+import { SkillCardIdentity, skillLabel } from './skill-identity'
 import { useLocale } from './locale-context'
 
 interface GroupMembersSectionProps {
   members: SkillRef[]
-  availableSkills: Skill[]
+  skills: Skill[]
   submitting: boolean
   onAddMember: (skillIds: number[]) => void
   onRemoveMember: (skillId: number) => void
@@ -19,13 +18,20 @@ interface GroupMembersSectionProps {
 
 export function GroupMembersSection({
   members,
-  availableSkills,
+  skills,
   submitting,
   onAddMember,
   onRemoveMember,
 }: GroupMembersSectionProps) {
   const { t } = useLocale()
   const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([])
+  const memberIds = new Set(members.map((member) => member.id))
+  const availableSkills = skills.filter((skill) => !memberIds.has(skill.id))
+  const sourceById = new Map(
+    skills.flatMap((skill) =>
+      skill.binding?.source_name ? [[skill.id, skill.binding.source_name] as const] : [],
+    ),
+  )
 
   const skillLabels = Object.fromEntries(
     availableSkills.map((skill) => [String(skill.id), skillLabel(skill.name, skill.slug)]),
@@ -87,29 +93,35 @@ export function GroupMembersSection({
         <p className="text-foreground-muted text-sm py-4">{t('emptyGroupMembers')}</p>
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
-          {members.map((member) => (
-            <div
-              key={member.id}
-              className="flex items-center gap-3 rounded-lg border border-border px-3 py-2"
-            >
-              <Link
-                to={`/skills/${encodeURIComponent(member.slug)}`}
-                className="min-w-0 flex-1 truncate font-medium text-foreground-strong underline decoration-border underline-offset-2 hover:decoration-foreground"
+          {members.map((member) => {
+            const source = sourceById.get(member.id)
+            return (
+              <div
+                key={member.id}
+                className="flex items-center gap-2.5 rounded-lg border border-border px-3 py-2.5"
               >
-                {member.name}
-              </Link>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={submitting}
-                aria-label={t('ariaRemoveMemberFor', { name: member.name })}
-                onClick={() => onRemoveMember(member.id)}
-                className="text-error-emphasis hover:text-error-emphasis"
-              >
-                <Trash className="size-4" />
-              </Button>
-            </div>
-          ))}
+                <SkillCardIdentity
+                  name={member.name}
+                  slug={member.slug}
+                  sources={
+                    source
+                      ? [{ label: source, href: `/sources/${encodeURIComponent(source)}` }]
+                      : undefined
+                  }
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={submitting}
+                  aria-label={t('ariaRemoveMemberFor', { name: member.name })}
+                  onClick={() => onRemoveMember(member.id)}
+                  className="text-error-emphasis hover:text-error-emphasis"
+                >
+                  <Trash className="size-4" />
+                </Button>
+              </div>
+            )
+          })}
         </div>
       )}
     </div>

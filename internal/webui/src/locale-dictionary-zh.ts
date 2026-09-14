@@ -232,6 +232,13 @@ export const translationsZhCN: Record<keyof typeof translationsEn, string> = {
 
   // Source Detail Page
   linkAllSources: '所有来源',
+  btnRename: '重命名',
+  btnRenaming: '正在重命名…',
+  renameSourceTitle: '重命名来源',
+  renameSourceDesc: '更改操作员可见名称。绑定关系仍属于该来源。',
+  labelName: '名称',
+  alertRenameFailed: '重命名失败',
+  toastRenamed: '来源已重命名',
   btnRescan: '重新扫描',
   ariaLoadingSource: '正在加载来源',
   alertCouldNotLoadSource: '无法加载来源',
@@ -313,6 +320,7 @@ export const translationsZhCN: Record<keyof typeof translationsEn, string> = {
   errImportingSkillsFailed: '导入技能失败',
   errRegisteringSourceFailed: '注册来源失败',
   errRescanningSourceFailed: '重新扫描来源失败',
+  errRenamingSourceFailed: '重命名来源失败',
   errGroupNotFound: '未找到分组',
   errTargetNotFound: '未找到目标',
   errCreatingGroupFailed: '创建分组失败',

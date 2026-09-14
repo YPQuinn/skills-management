@@ -226,6 +226,48 @@ func TestListSourcesAndResolveByName(t *testing.T) {
 	}
 }
 
+func TestUpdateSourceName(t *testing.T) {
+	db, err := Open(filepath.Join(t.TempDir(), "state.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	id, err := InsertSource(db, testSource("alpha"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := InsertSource(db, testSource("beta")); err != nil {
+		t.Fatal(err)
+	}
+
+	now := time.Now().UTC()
+	if err := UpdateSourceName(db, id, "gamma", now); err != nil {
+		t.Fatal(err)
+	}
+	got, err := GetSource(db, id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Name != "gamma" {
+		t.Fatalf("renamed: got %q", got.Name)
+	}
+	if len(got.Entries) != 1 || got.Entries[0].Name != "A" {
+		t.Fatalf("inventory must survive a rename: %+v", got.Entries)
+	}
+	resolved, err := SourceIDByName(db, "gamma")
+	if err != nil || resolved != id {
+		t.Fatalf("by new name: %d, %v", resolved, err)
+	}
+	if _, err := SourceIDByName(db, "alpha"); !errors.Is(err, sql.ErrNoRows) {
+		t.Fatalf("old name must be gone: %v", err)
+	}
+
+	if err := UpdateSourceName(db, id, "beta", now); err == nil || !IsUniqueViolation(err) {
+		t.Fatalf("duplicate rename: got %v, want a unique violation", err)
+	}
+}
+
 func TestSourcePersistenceAcrossReopen(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "state.db")
 	db, err := Open(path)

@@ -55,6 +55,7 @@ func (s *Server) Handler() http.Handler {
 			r.Get("/", s.handleListSources)
 			r.With(jsonMutationsOnly).Post("/", s.handleCreateSource)
 			r.Get("/{id}", s.handleShowSource)
+			r.With(jsonMutationsOnly).Post("/{id}/rename", s.handleRenameSource)
 			r.With(jsonMutationsOnly).Post("/{id}/check", s.handleCheckSource)
 			r.With(jsonMutationsOnly).Post("/{id}/sync", s.handleSyncSource)
 			r.Get("/{id}/deletion", s.handlePreviewDeleteSource)

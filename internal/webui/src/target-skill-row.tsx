@@ -1,11 +1,10 @@
-import { Link } from 'react-router-dom'
-import { Badge } from '@appica/ui-react/badge'
 import { Button } from '@appica/ui-react/button'
 import { Checkbox } from '@appica/ui-react/checkbox'
 import { Spinner } from '@appica/ui-react/spinner'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@appica/ui-react/tooltip'
-import { Sparkles, Folder, Link as LinkIcon, Unlink, Trash, Check, AlertTriangle } from '@appica/icons-react'
+import { Link as LinkIcon, Unlink, Trash, Check, AlertTriangle } from '@appica/icons-react'
 import { StatusLabel } from './status-label'
+import { SkillCardIdentity, type SkillCardSource } from './skill-identity'
 import { useLocale } from './locale-context'
 import type { SkillRow } from './target-skills-model'
 
@@ -23,26 +22,13 @@ interface TargetSkillRowProps {
   onRemove: () => void
 }
 
-function OriginChips({ row }: { row: SkillRow }) {
-  const { t } = useLocale()
-  return (
-    <span className="flex flex-wrap items-center gap-1">
-      {row.direct && (
-        <Badge variant="soft">
-          <Sparkles className="size-3 mr-1 inline" />
-          {t('originDirect')}
-        </Badge>
-      )}
-      {row.groups.map((g) => (
-        <Link key={g} to={`/groups/${encodeURIComponent(g)}`}>
-          <Badge variant="outline">
-            <Folder className="size-3 mr-1 inline" />
-            {g}
-          </Badge>
-        </Link>
-      ))}
-    </span>
-  )
+function rowSources(row: SkillRow, originDirect: string): SkillCardSource[] {
+  const sources: SkillCardSource[] = []
+  if (row.direct) sources.push({ label: originDirect })
+  for (const group of row.groups) {
+    sources.push({ label: group, href: `/groups/${encodeURIComponent(group)}` })
+  }
+  return sources
 }
 
 export function TargetSkillRow({
@@ -60,29 +46,28 @@ export function TargetSkillRow({
   const canAdopt = !row.linked && row.observed === 'conflict' && row.adoptable
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-border px-3 py-2">
+    <div className="flex items-center gap-2.5 rounded-lg border border-border px-3 py-2.5">
       <Checkbox checked={selected} disabled={disabled} onCheckedChange={onSelect} aria-label={t('ariaSelectSkill', { name: row.name })} />
-      <span className="flex min-w-0 flex-1 flex-col">
-        <span className="flex flex-wrap items-center gap-2">
-          <Link
-            to={`/skills/${encodeURIComponent(row.slug)}`}
-            className="font-medium text-foreground-strong underline decoration-border underline-offset-2 hover:decoration-foreground"
-          >
-            {row.name}
-          </Link>
-          {row.observed === 'conflict' && (
-            <StatusLabel icon={AlertTriangle} tone="error">
-              {t('observedConflict')}
-            </StatusLabel>
-          )}
-          {row.observed === 'broken_link' && (
-            <StatusLabel icon={Unlink} tone="warning">
-              {t('observedBrokenLink')}
-            </StatusLabel>
-          )}
-        </span>
-        <OriginChips row={row} />
-      </span>
+      <SkillCardIdentity
+        name={row.name}
+        slug={row.slug}
+        sources={rowSources(row, t('originDirect'))}
+        trailing={
+          row.observed === 'conflict' || row.observed === 'broken_link' ? (
+            <span className="ml-1.5 inline-flex items-center">
+              {row.observed === 'conflict' ? (
+                <StatusLabel icon={AlertTriangle} tone="error">
+                  {t('observedConflict')}
+                </StatusLabel>
+              ) : (
+                <StatusLabel icon={Unlink} tone="warning">
+                  {t('observedBrokenLink')}
+                </StatusLabel>
+              )}
+            </span>
+          ) : null
+        }
+      />
 
       {row.linked ? (
         <Button variant="outline" size="sm" disabled={disabled} focusableWhenDisabled onClick={onUnlink}>

@@ -232,6 +232,13 @@ export const translationsEn = {
 
   // Source Detail Page
   linkAllSources: 'All Sources',
+  btnRename: 'Rename',
+  btnRenaming: 'Renaming…',
+  renameSourceTitle: 'Rename Source',
+  renameSourceDesc: 'Change the operator-facing name. Bindings stay attached to this Source.',
+  labelName: 'Name',
+  alertRenameFailed: 'Rename failed',
+  toastRenamed: 'Source renamed',
   btnRescan: 'Rescan',
   ariaLoadingSource: 'Loading source',
   alertCouldNotLoadSource: 'Could not load Source',
@@ -313,6 +320,7 @@ export const translationsEn = {
   errImportingSkillsFailed: 'Importing skills failed',
   errRegisteringSourceFailed: 'Registering the Source failed',
   errRescanningSourceFailed: 'Rescanning the Source failed',
+  errRenamingSourceFailed: 'Renaming the Source failed',
   errGroupNotFound: 'Group not found',
   errTargetNotFound: 'Target not found',
   errCreatingGroupFailed: 'Creating Group failed',

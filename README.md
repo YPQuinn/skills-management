@@ -175,7 +175,8 @@ A Git Source may be an HTTPS/SSH URL or GitHub repository shorthand. `--ref` sel
 ```text
 skillctl source add acme/agent-skills --name team --ref main --subpath skills
 skillctl source show team
-skillctl skill import --source team --all
+skillctl source rename team team-skills
+skillctl skill import --source team-skills --all
 ```
 
 Source registration scans inventory but never imports automatically.
@@ -249,7 +250,7 @@ Use `skillctl init --store /absolute/path` to choose another Store location. Ini
 ## CLI reference
 
 ```text
-skillctl source --help    # register, inspect, check, sync, and delete Sources
+skillctl source --help    # register, inspect, rename, check, sync, and delete Sources
 skillctl skill --help     # import, inspect, sync, resolve, roll back, and delete Skills
 skillctl group --help     # create Groups and manage membership
 skillctl target --help    # register, assign, inspect, distribute, adopt, and delete Targets

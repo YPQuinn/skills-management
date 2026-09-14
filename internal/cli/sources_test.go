@@ -139,6 +139,31 @@ func TestSourcesCLILifecycle(t *testing.T) {
 		}
 	}
 
+	out, err = runCmd(t, NewSourceRenameCmd(bm), "local-one", "local-two")
+	if err != nil {
+		t.Fatalf("rename: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, `Renamed Source "local-one" to "local-two"`) {
+		t.Fatalf("rename output: %q", out)
+	}
+	out, err = runCmd(t, NewSourceShowCmd(bm), "local-two")
+	if err != nil {
+		t.Fatalf("show after rename: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "Source 1: local-two") {
+		t.Fatalf("show after rename: %q", out)
+	}
+	out, err = runCmd(t, NewSourceRenameCmd(bm), "local-two", "local-two", "--json")
+	if err != nil {
+		t.Fatalf("rename same --json: %v\n%s", err, out)
+	}
+	var renamed struct {
+		Name string `json:"name"`
+	}
+	if err := json.Unmarshal([]byte(out), &renamed); err != nil || renamed.Name != "local-two" {
+		t.Fatalf("rename --json: %+v, %v\n%s", renamed, err, out)
+	}
+
 	// an unavailable Source is reported but the check succeeds
 	if err := os.Rename(root, root+"-moved"); err != nil {
 		t.Fatal(err)
@@ -192,6 +217,8 @@ func TestSourcesCLIErrors(t *testing.T) {
 	}{
 		{"show without id", NewSourceShowCmd(bm), nil},
 		{"show with two ids", NewSourceShowCmd(bm), []string{"1", "2"}},
+		{"rename without names", NewSourceRenameCmd(bm), nil},
+		{"rename with one arg", NewSourceRenameCmd(bm), []string{"1"}},
 		{"check without id", NewSourceCheckCmd(bm), nil},
 		{"check with two ids", NewSourceCheckCmd(bm), []string{"1", "2"}},
 	} {

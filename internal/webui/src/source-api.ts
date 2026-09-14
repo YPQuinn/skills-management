@@ -78,3 +78,15 @@ export function createSource(body: Record<string, string>, signal?: AbortSignal)
     return (await res.json()) as SourceDetail
   })
 }
+
+export function renameSource(id: number, name: string, signal?: AbortSignal): Promise<SourceDetail> {
+  return fetch(`/api/v1/sources/${id}/rename`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+    signal,
+  }).then(async (res) => {
+    if (!res.ok) throw await responseError(res, 'errRenamingSourceFailed')
+    return (await res.json()) as SourceDetail
+  })
+}
