@@ -86,6 +86,8 @@ export const translationsDistributionZhCN = {
   btnUnlink: '取消链接',
   btnUnlinking: '取消中…',
   btnRemove: '移除',
+  ariaLinkSkill: '建立链接 {name}',
+  ariaUnlinkSkill: '取消链接 {name}',
   ariaRemoveSkill: '移除 {name}',
   ariaSelectSkill: '选择 {name}',
   ariaSelectAllPage: '全选本页',

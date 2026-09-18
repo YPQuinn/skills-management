@@ -70,20 +70,46 @@ export function TargetSkillRow({
       />
 
       {row.linked ? (
-        <Button variant="outline" size="sm" disabled={disabled} focusableWhenDisabled onClick={onUnlink}>
-          {busyAction === 'unlink' ? <Spinner data-icon="start" currentColor className="text-[1.2em]" /> : <Unlink data-icon="start" />}
-          {busyAction === 'unlink' ? t('btnUnlinking') : t('btnUnlink')}
-        </Button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={disabled}
+                focusableWhenDisabled
+                onClick={onUnlink}
+                aria-label={busyAction === 'unlink' ? t('btnUnlinking') : t('ariaUnlinkSkill', { name: row.name })}
+              >
+                {busyAction === 'unlink' ? <Spinner currentColor className="size-4" /> : <Unlink className="size-4" />}
+              </Button>
+            }
+          />
+          <TooltipContent>{busyAction === 'unlink' ? t('btnUnlinking') : t('btnUnlink')}</TooltipContent>
+        </Tooltip>
       ) : canAdopt ? (
         <Button variant="soft" size="sm" disabled={disabled} focusableWhenDisabled onClick={onAdopt}>
           {busyAction === 'adopt' ? <Spinner data-icon="start" currentColor className="text-[1.2em]" /> : <Check data-icon="start" />}
           {busyAction === 'adopt' ? t('btnAdopting') : t('btnAdopt')}
         </Button>
       ) : (
-        <Button variant="soft" size="sm" disabled={disabled} focusableWhenDisabled onClick={onLink}>
-          {busyAction === 'link' ? <Spinner data-icon="start" currentColor className="text-[1.2em]" /> : <LinkIcon data-icon="start" />}
-          {busyAction === 'link' ? t('btnLinking') : t('btnLink')}
-        </Button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={disabled}
+                focusableWhenDisabled
+                onClick={onLink}
+                aria-label={busyAction === 'link' ? t('btnLinking') : t('ariaLinkSkill', { name: row.name })}
+              >
+                {busyAction === 'link' ? <Spinner currentColor className="size-4" /> : <LinkIcon className="size-4" />}
+              </Button>
+            }
+          />
+          <TooltipContent>{busyAction === 'link' ? t('btnLinking') : t('btnLink')}</TooltipContent>
+        </Tooltip>
       )}
 
       {row.groups.length > 0 ? (

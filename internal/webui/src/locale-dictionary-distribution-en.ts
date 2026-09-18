@@ -87,6 +87,8 @@ export const translationsDistributionEn = {
   btnUnlink: 'Unlink',
   btnUnlinking: 'Unlinking…',
   btnRemove: 'Remove',
+  ariaLinkSkill: 'Link {name}',
+  ariaUnlinkSkill: 'Unlink {name}',
   ariaRemoveSkill: 'Remove {name}',
   ariaSelectSkill: 'Select {name}',
   ariaSelectAllPage: 'Select all on this page',
