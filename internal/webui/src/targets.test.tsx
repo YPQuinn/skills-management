@@ -341,6 +341,42 @@ describe('Targets UI', () => {
     expect(screen.getByRole('link', { name: 'SQL Checker' })).toBeTruthy()
     // Both member Skills carry the originating Group chip as a link.
     expect(screen.getAllByRole('link', { name: 'backend-tools' }).length).toBe(2)
+    // Unlinked-row link is icon-only, matching unlink/remove.
+    const link = screen.getByRole('button', { name: 'Link Go Linter' })
+    expect(link.textContent).toBe('')
+    expect(screen.queryByRole('button', { name: 'Link' })).toBeNull()
+  })
+
+  it('renders linked-row unlink as an icon-only control', async () => {
+    vi.mocked(window.fetch).mockImplementation(async (url: RequestInfo | URL) => {
+      const u = String(url)
+      if (u === '/api/v1/targets') return mockResponse({ items: [mockTargetSummary], total: 1 })
+      if (u === '/api/v1/targets/1') return mockResponse(mockTargetView)
+      if (u === '/api/v1/targets/1/inspect') {
+        return mockResponse({
+          ...mockStatus,
+          items: [
+            {
+              skill_id: 10,
+              slug: 'go-lint',
+              desired: 'present',
+              observed: 'linked',
+              managed: true,
+              adoptable: false,
+              stale: false,
+            },
+          ],
+        })
+      }
+      if (u === '/api/v1/skills') return mockResponse({ items: [], total: 0 })
+      if (u === '/api/v1/groups') return mockResponse({ items: [], total: 0 })
+      return mockResponse({ error: { message: 'not found' } }, false, 404)
+    })
+
+    renderTargets('/targets/Claude%20User%20Config')
+    const unlink = await screen.findByRole('button', { name: 'Unlink Go Linter' })
+    expect(unlink.textContent).toBe('')
+    expect(screen.queryByRole('button', { name: 'Unlink' })).toBeNull()
   })
 
   it('assigns a Group through the searchable picker', async () => {
